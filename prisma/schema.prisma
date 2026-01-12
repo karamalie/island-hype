@@ -1,0 +1,480 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============ CORE ENTITIES ============
+
+model Location {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String  @db.Text
+  shortDesc   String? @db.VarChar(300)
+
+  atoll     String
+  island    String?
+  latitude  Float?
+  longitude Float?
+
+  // Transfer info
+  transferTime Int?          // Duration in minutes
+  transferType TransferType? // Primary transfer type
+  transferInfo String?       @db.Text // Additional transfer details
+
+  images     LocationImage[]
+  coverImage String?
+
+  accommodations Accommodation[]
+  experiences    LocationExperience[]
+  activities     Activity[]
+  packages       Package[]
+
+  isFeatured Boolean @default(false)
+  isActive   Boolean @default(true)
+  sortOrder  Int     @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([atoll])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+model LocationImage {
+  id         String   @id @default(cuid())
+  url        String
+  alt        String?
+  sortOrder  Int      @default(0)
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@index([locationId])
+}
+
+enum TransferType {
+  SPEEDBOAT
+  SEAPLANE
+  DOMESTIC_FLIGHT
+  FERRY
+  YACHT
+}
+
+model Accommodation {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  type        AccommodationType
+  shortDesc   String?           @db.VarChar(300)
+  description String            @db.Text
+
+  starRating Int?     @db.SmallInt
+  roomTypes  String[]
+  amenities  String[]
+
+  images     AccommodationImage[]
+  coverImage String?
+
+  locationId String
+  location   Location  @relation(fields: [locationId], references: [id])
+  packages   Package[]
+
+  contactEmail String?
+  contactPhone String?
+
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([locationId])
+  @@index([type])
+  @@index([isActive])
+}
+
+model AccommodationImage {
+  id              String        @id @default(cuid())
+  url             String
+  alt             String?
+  sortOrder       Int           @default(0)
+  accommodationId String
+  accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+
+  @@index([accommodationId])
+}
+
+enum AccommodationType {
+  RESORT
+  GUESTHOUSE
+  HOTEL
+  LIVEABOARD
+}
+
+model Experience {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  shortDesc   String? @db.VarChar(300)
+  description String  @db.Text
+  icon        String?
+
+  images     ExperienceImage[]
+  coverImage String?
+
+  locations LocationExperience[]
+  packages  PackageExperience[]
+
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model ExperienceImage {
+  id           String     @id @default(cuid())
+  url          String
+  alt          String?
+  sortOrder    Int        @default(0)
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@index([experienceId])
+}
+
+model LocationExperience {
+  id           String     @id @default(cuid())
+  locationId   String
+  location     Location   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  description  String?    @db.Text
+
+  @@unique([locationId, experienceId])
+  @@index([locationId])
+  @@index([experienceId])
+}
+
+model Activity {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  shortDesc   String?          @db.VarChar(300)
+  description String           @db.Text
+  category    ActivityCategory
+  duration    Int?             // Duration in minutes
+
+  images     ActivityImage[]
+  coverImage String?
+
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id])
+
+  // Dual pricing
+  localPrice         Float? // MVR price for locals
+  internationalPrice Float? // USD price for internationals
+
+  packageActivities PackageActivity[]
+
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([locationId])
+  @@index([category])
+  @@index([isActive])
+}
+
+model ActivityImage {
+  id         String   @id @default(cuid())
+  url        String
+  alt        String?
+  sortOrder  Int      @default(0)
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+}
+
+enum ActivityCategory {
+  WATER_SPORTS
+  DIVING
+  SNORKELING
+  FISHING
+  EXCURSION
+  WELLNESS
+  CULTURAL
+  ADVENTURE
+}
+
+// ============ PACKAGES ============
+
+model Package {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  shortDesc   String?  @db.VarChar(300)
+  description String   @db.Text
+  highlights  String[]
+
+  minNights Int  @default(1)
+  maxNights Int?
+  maxGuests Int?
+
+  // Travel windows
+  bookingWindowStart DateTime?
+  bookingWindowEnd   DateTime?
+  travelWindowStart  DateTime?
+  travelWindowEnd    DateTime?
+
+  // Additional info
+  terms              String? @db.Text
+  cancellationPolicy String? @db.Text
+  bookingInfo        String? @db.Text
+
+  images     PackageImage[]
+  coverImage String?
+
+  locationId      String
+  location        Location      @relation(fields: [locationId], references: [id])
+  accommodationId String
+  accommodation   Accommodation @relation(fields: [accommodationId], references: [id])
+
+  pricing     PackagePricing[]
+  inclusions  PackageInclusion[]
+  itinerary   PackageItinerary[]
+  experiences PackageExperience[]
+  activities  PackageActivity[]
+  offers      Offer[]
+  inquiries   Inquiry[]
+
+  isFeatured Boolean @default(false)
+  isActive   Boolean @default(true)
+  sortOrder  Int     @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([locationId])
+  @@index([accommodationId])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+model PackageImage {
+  id        String  @id @default(cuid())
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+  packageId String
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([packageId])
+}
+
+model PackagePricing {
+  id        String @id @default(cuid())
+  packageId String
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  market    Market
+
+  // Base prices (per person for the package duration)
+  basePrice       Float  // Single person base price
+  couplePrice     Float  // Price for 2 people
+  extraAdultPrice Float? // Additional adult
+  childPrice      Float? // Child (typically 2-11)
+  infantPrice     Float? // Infant (typically 0-2)
+
+  // Supplements
+  singleSupplement Float? // Extra charge for single occupancy
+
+  // Age definitions
+  childAgeMin Int @default(2)
+  childAgeMax Int @default(11)
+
+  // Validity
+  validFrom  DateTime?
+  validUntil DateTime?
+  notes      String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([packageId, market])
+  @@index([packageId])
+}
+
+enum Market {
+  LOCAL
+  INTERNATIONAL
+}
+
+model PackageInclusion {
+  id        String            @id @default(cuid())
+  packageId String
+  package   Package           @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  category  InclusionCategory
+  item      String            // What's included
+  details   String?           // Additional details
+  sortOrder Int               @default(0)
+
+  @@index([packageId])
+}
+
+enum InclusionCategory {
+  ACCOMMODATION
+  MEALS
+  TRANSFER
+  ACTIVITY
+  EQUIPMENT
+  SERVICE
+}
+
+model PackageItinerary {
+  id          String  @id @default(cuid())
+  packageId   String
+  package     Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  dayNumber   Int
+  title       String
+  description String  @db.Text
+
+  @@unique([packageId, dayNumber])
+  @@index([packageId])
+}
+
+model PackageExperience {
+  id           String     @id @default(cuid())
+  packageId    String
+  package      Package    @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, experienceId])
+  @@index([packageId])
+  @@index([experienceId])
+}
+
+model PackageActivity {
+  id         String   @id @default(cuid())
+  packageId  String
+  package    Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  isIncluded Boolean  @default(true) // true = included in price, false = optional add-on
+
+  @@unique([packageId, activityId])
+  @@index([packageId])
+  @@index([activityId])
+}
+
+// ============ OFFERS ============
+
+model Offer {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  badge       String?  // Display badge like "15% OFF", "HONEYMOON"
+
+  discountType  DiscountType
+  discountValue Float        // Percentage or fixed amount
+  code          String?      // Promo code if applicable
+
+  validFrom DateTime
+  validUntil DateTime
+
+  // Conditions
+  minNights Int?
+  minGuests Int?
+  market    Market? // null = applies to all markets
+
+  packageId String
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([packageId])
+  @@index([isActive])
+  @@index([validFrom, validUntil])
+  @@index([code])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_NIGHTS
+}
+
+// ============ INQUIRIES ============
+
+model Inquiry {
+  id          String  @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  nationality String?
+
+  packageId   String?
+  package     Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  packageName String?  // Store name in case package is deleted
+
+  checkIn  DateTime?
+  checkOut DateTime?
+  adults   Int       @default(2)
+  children Int       @default(0)
+  infants  Int       @default(0)
+
+  message         String  @db.Text
+  specialRequests String? @db.Text
+
+  arrivalFlight   String?
+  departureFlight String?
+
+  market Market
+
+  // Estimated prices at time of inquiry
+  estimatedPriceUSD Float?
+  estimatedPriceMVR Float?
+
+  status InquiryStatus @default(NEW)
+  notes  String?       @db.Text
+
+  respondedAt DateTime?
+  respondedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([packageId])
+  @@index([status])
+  @@index([market])
+  @@index([createdAt])
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  NEGOTIATING
+  BOOKED
+  CANCELLED
+  CLOSED
+}
+
+// ============ SITE SETTINGS ============
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
