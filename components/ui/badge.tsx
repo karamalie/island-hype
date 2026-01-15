@@ -1,46 +1,63 @@
 // components/ui/badge.tsx
-import { forwardRef, HTMLAttributes } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
-export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: "default" | "primary" | "secondary" | "outline" | "glass";
-  size?: "sm" | "md" | "lg";
-}
-
-const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ className, variant = "default", size = "md", ...props }, ref) => {
-    const variants = {
-      default:
-        "bg-[var(--color-gray-100)] text-[var(--color-gray-700)] dark:bg-[var(--color-gray-800)] dark:text-[var(--color-gray-300)]",
-      primary:
-        "bg-[var(--color-primary-100)] text-[var(--color-primary-700)] dark:bg-[var(--color-primary-900)] dark:text-[var(--color-primary-300)]",
-      secondary:
-        "bg-[var(--color-accent-100)] text-[var(--color-accent-700)] dark:bg-[var(--color-accent-900)] dark:text-[var(--color-accent-300)]",
-      outline: "border border-[var(--border-color)] bg-transparent",
-      glass: "glass",
-    };
-
-    const sizes = {
-      sm: "px-2 py-0.5 text-xs",
-      md: "px-2.5 py-1 text-xs",
-      lg: "px-3 py-1.5 text-sm",
-    };
-
-    return (
-      <span
-        ref={ref}
-        className={cn(
-          "inline-flex items-center font-medium rounded-full",
-          variants[variant],
-          sizes[size],
-          className
-        )}
-        {...props}
-      />
-    );
+const badgeVariants = cva(
+  "inline-flex items-center gap-2 rounded-full font-medium transition-colors",
+  {
+    variants: {
+      variant: {
+        default: "bg-gray-100 text-gray-800",
+        primary: "bg-teal-500 text-white",
+        secondary: "bg-gray-800 text-white",
+        outline: "border border-gray-300 text-gray-700 bg-transparent",
+        // White badge for dark backgrounds (glass/hero sections)
+        white: "bg-white/10 backdrop-blur-sm border border-white/20 text-white",
+        // Light badge for light backgrounds - USE THIS ON WHITE BACKGROUNDS
+        light: "bg-gray-100 text-gray-700 border border-gray-200",
+        glass: "bg-white/10 backdrop-blur-sm border border-white/20 text-white",
+        success: "bg-green-100 text-green-800",
+        warning: "bg-amber-100 text-amber-800",
+        error: "bg-red-100 text-red-800",
+      },
+      size: {
+        sm: "px-2 py-0.5 text-xs",
+        md: "px-3 py-1 text-sm",
+        lg: "px-4 py-1.5 text-sm",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "md",
+    },
   }
 );
 
-Badge.displayName = "Badge";
+export interface BadgeProps
+  extends
+    React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {
+  icon?: ReactNode;
+}
 
-export { Badge };
+function Badge({
+  className,
+  variant,
+  size,
+  icon,
+  children,
+  ...props
+}: BadgeProps) {
+  return (
+    <span
+      className={cn(badgeVariants({ variant, size }), className)}
+      {...props}
+    >
+      {icon && <span className="flex-shrink-0">{icon}</span>}
+      {children}
+    </span>
+  );
+}
+
+export { Badge, badgeVariants };

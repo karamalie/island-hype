@@ -3,19 +3,42 @@ import { forwardRef, HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "glass" | "glass-dark" | "outline" | "elevated";
+  variant?:
+    | "default"
+    | "outline"
+    | "elevated"
+    | "glass"
+    | "glass-dark"
+    | "clean" // No border, just rounded
+    | "clean-elevated" // Soft shadow for light backgrounds
+    | "clean-bordered"; // Subtle border
+  hover?: boolean; // Add hover lift effect
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = "default", ...props }, ref) => {
+  ({ className, variant = "default", hover = false, ...props }, ref) => {
     const variants = {
-      default:
-        "bg-white dark:bg-[var(--color-gray-900)] border border-[var(--border-color)]",
-      glass: "glass",
-      "glass-dark": "glass-dark",
+      // Default with border
+      default: "bg-white border border-[var(--border-color)]",
+      // Border only, transparent
       outline: "bg-transparent border border-[var(--border-color)]",
-      elevated: "bg-white dark:bg-[var(--color-gray-900)] shadow-lg",
+      // Shadow elevation
+      elevated: "bg-white shadow-lg",
+      // Glass for image/dark backgrounds
+      glass: "glass-card",
+      // Dark glass
+      "glass-dark": "glass-dark",
+      // Clean - just white rounded (no border/shadow)
+      clean: "bg-white",
+      // Clean with soft shadow (for light backgrounds like Image 2)
+      "clean-elevated": "bg-white shadow-soft",
+      // Clean with subtle border
+      "clean-bordered": "bg-white border border-[var(--color-gray-200)]",
     };
+
+    const hoverStyles = hover
+      ? "transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg cursor-pointer"
+      : "";
 
     return (
       <div
@@ -23,6 +46,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           "rounded-2xl overflow-hidden",
           variants[variant],
+          hoverStyles,
           className
         )}
         {...props}

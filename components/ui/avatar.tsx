@@ -1,5 +1,5 @@
 // components/ui/avatar.tsx
-import { forwardRef, ImgHTMLAttributes } from "react";
+import { forwardRef, ImgHTMLAttributes, HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export interface AvatarProps extends ImgHTMLAttributes<HTMLImageElement> {
@@ -21,7 +21,7 @@ const Avatar = forwardRef<HTMLImageElement, AvatarProps>(
       return (
         <div
           className={cn(
-            "rounded-full bg-[var(--color-gray-200)] dark:bg-[var(--color-gray-700)] flex items-center justify-center font-medium text-[var(--color-gray-600)] dark:text-[var(--color-gray-300)]",
+            "rounded-full bg-[var(--color-gray-200)] flex items-center justify-center font-medium text-[var(--color-gray-600)]",
             sizes[size],
             className
           )}
@@ -37,7 +37,7 @@ const Avatar = forwardRef<HTMLImageElement, AvatarProps>(
         src={src}
         alt={alt}
         className={cn(
-          "rounded-full object-cover border-2 border-white dark:border-[var(--color-gray-800)] shadow-sm",
+          "rounded-full object-cover border-2 border-white shadow-sm",
           sizes[size],
           className
         )}
@@ -61,7 +61,5 @@ const AvatarGroup = forwardRef<
 });
 
 AvatarGroup.displayName = "AvatarGroup";
-
-import { HTMLAttributes } from "react";
 
 export { Avatar, AvatarGroup };

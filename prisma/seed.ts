@@ -31,6 +31,7 @@ async function main() {
   // ============================================
   // EXPERIENCES
   // ============================================
+  // Images go in: experiences bucket
   const experiences = await Promise.all([
     prisma.experience.create({
       data: {
@@ -41,7 +42,7 @@ async function main() {
         description:
           "The Maldives offers world-class diving with crystal-clear waters, vibrant coral reefs, and an incredible diversity of marine life. From beginner-friendly house reefs to advanced channel dives, there's something for every diver.",
         icon: "🤿",
-        coverImage: "/images/experiences/diving.jpg",
+        coverImage: "diving.jpg",
       },
     }),
     prisma.experience.create({
@@ -53,7 +54,7 @@ async function main() {
         description:
           "No certification needed! The Maldives' shallow lagoons and house reefs offer spectacular snorkeling right off the beach. Encounter sea turtles, reef sharks, and thousands of tropical fish.",
         icon: "🐠",
-        coverImage: "/images/experiences/snorkeling.jpg",
+        coverImage: "snorkeling.jpg",
       },
     }),
     prisma.experience.create({
@@ -65,7 +66,7 @@ async function main() {
         description:
           "The Maldives is the ultimate honeymoon destination. Enjoy private water villas, candlelit beach dinners, couples spa treatments, and unforgettable sunset cruises.",
         icon: "💑",
-        coverImage: "/images/experiences/honeymoon.jpg",
+        coverImage: "honeymoon.jpg",
       },
     }),
     prisma.experience.create({
@@ -77,7 +78,7 @@ async function main() {
         description:
           "Family-friendly resorts in the Maldives offer kids clubs, family villas, and activities that both children and adults will love. From dolphin cruises to sandbank picnics.",
         icon: "👨‍👩‍👧‍👦",
-        coverImage: "/images/experiences/family.jpg",
+        coverImage: "family.jpg",
       },
     }),
     prisma.experience.create({
@@ -89,7 +90,7 @@ async function main() {
         description:
           "Get your adrenaline pumping with jet skis, parasailing, wakeboarding, and water skiing. Or take it easy with kayaking and stand-up paddleboarding.",
         icon: "🚤",
-        coverImage: "/images/experiences/water-sports.jpg",
+        coverImage: "water-sports.jpg",
       },
     }),
     prisma.experience.create({
@@ -101,7 +102,7 @@ async function main() {
         description:
           "Indulge in world-class spa treatments in stunning overwater pavilions. From traditional Maldivian treatments to yoga and meditation retreats.",
         icon: "🧘",
-        coverImage: "/images/experiences/wellness.jpg",
+        coverImage: "wellness.jpg",
       },
     }),
     prisma.experience.create({
@@ -113,7 +114,7 @@ async function main() {
         description:
           "Experience the real Maldives with island hopping to local communities, traditional fishing trips, Maldivian cooking classes, and cultural performances.",
         icon: "🏝️",
-        coverImage: "/images/experiences/culture.jpg",
+        coverImage: "culture.jpg",
       },
     }),
     prisma.experience.create({
@@ -125,7 +126,7 @@ async function main() {
         description:
           "There's no better way to end a day in the Maldives than on a sunset cruise. Watch dolphins leap as the sky turns orange and pink over the Indian Ocean.",
         icon: "🌅",
-        coverImage: "/images/experiences/sunset-cruise.jpg",
+        coverImage: "sunset-cruise.jpg",
       },
     }),
   ]);
@@ -135,6 +136,7 @@ async function main() {
   // ============================================
   // LOCATIONS
   // ============================================
+  // Images go in: locations bucket
   const locations = await Promise.all([
     prisma.location.create({
       data: {
@@ -145,7 +147,7 @@ async function main() {
           "The most popular local island, known for water sports and vibrant beach life.",
         description:
           "Maafushi is the Maldives' most visited local island, located just 27km from Malé. It offers an authentic Maldivian experience with guesthouses, restaurants, and easy access to nearby resorts and dive sites. Perfect for budget-conscious travelers who still want paradise.",
-        coverImage: "/images/locations/maafushi.jpg",
+        coverImage: "maafushi.jpg",
         latitude: 3.9419,
         longitude: 73.4909,
         transferTime: 30,
@@ -153,10 +155,10 @@ async function main() {
         isFeatured: true,
         experiences: {
           create: [
-            { experience: { connect: { id: experiences[0].id } } }, // Diving
-            { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
-            { experience: { connect: { id: experiences[4].id } } }, // Water Sports
-            { experience: { connect: { id: experiences[6].id } } }, // Local Culture
+            { experience: { connect: { id: experiences[0].id } } },
+            { experience: { connect: { id: experiences[1].id } } },
+            { experience: { connect: { id: experiences[4].id } } },
+            { experience: { connect: { id: experiences[6].id } } },
           ],
         },
       },
@@ -170,7 +172,7 @@ async function main() {
           "Famous for world-class surfing and the original Coca-Cola factory.",
         description:
           "Thulusdhoo is a surfer's paradise with consistent waves at 'Cokes' and 'Chickens' breaks. Beyond surfing, it's a charming local island with a fascinating history as home to the Maldives' first Coca-Cola bottling plant.",
-        coverImage: "/images/locations/thulusdhoo.jpg",
+        coverImage: "thulusdhoo.jpg",
         latitude: 4.3747,
         longitude: 73.6492,
         transferTime: 45,
@@ -178,9 +180,9 @@ async function main() {
         isFeatured: false,
         experiences: {
           create: [
-            { experience: { connect: { id: experiences[4].id } } }, // Water Sports
-            { experience: { connect: { id: experiences[6].id } } }, // Local Culture
-            { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
+            { experience: { connect: { id: experiences[4].id } } },
+            { experience: { connect: { id: experiences[6].id } } },
+            { experience: { connect: { id: experiences[1].id } } },
           ],
         },
       },
@@ -193,7 +195,7 @@ async function main() {
         shortDesc: "A tiny island paradise famous for nurse shark encounters.",
         description:
           "Fulidhoo is a small, peaceful island in Vaavu Atoll. It's famous for the nurse shark point where you can snorkel with dozens of gentle nurse sharks. The island offers an escape from crowds with pristine beaches.",
-        coverImage: "/images/locations/fulidhoo.jpg",
+        coverImage: "fulidhoo.jpg",
         latitude: 3.5917,
         longitude: 73.4342,
         transferTime: 90,
@@ -201,9 +203,9 @@ async function main() {
         isFeatured: true,
         experiences: {
           create: [
-            { experience: { connect: { id: experiences[0].id } } }, // Diving
-            { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
-            { experience: { connect: { id: experiences[6].id } } }, // Local Culture
+            { experience: { connect: { id: experiences[0].id } } },
+            { experience: { connect: { id: experiences[1].id } } },
+            { experience: { connect: { id: experiences[6].id } } },
           ],
         },
       },
@@ -216,7 +218,7 @@ async function main() {
         shortDesc: "The whale shark capital with a stunning 3km long beach.",
         description:
           "Dhigurah is famous for year-round whale shark encounters at South Ari Marine Protected Area. The island features a spectacular 3km white sand beach - one of the longest in the Maldives. A must-visit for marine life enthusiasts.",
-        coverImage: "/images/locations/dhigurah.jpg",
+        coverImage: "dhigurah.jpg",
         latitude: 3.5136,
         longitude: 72.9281,
         transferTime: 120,
@@ -224,9 +226,9 @@ async function main() {
         isFeatured: true,
         experiences: {
           create: [
-            { experience: { connect: { id: experiences[0].id } } }, // Diving
-            { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
-            { experience: { connect: { id: experiences[7].id } } }, // Sunset Cruise
+            { experience: { connect: { id: experiences[0].id } } },
+            { experience: { connect: { id: experiences[1].id } } },
+            { experience: { connect: { id: experiences[7].id } } },
           ],
         },
       },
@@ -239,7 +241,7 @@ async function main() {
         shortDesc: "Award-winning luxury resort with exceptional house reef.",
         description:
           "Baros Maldives is a multi-award-winning luxury resort just 25 minutes from the airport. Known for its exceptional house reef, intimate atmosphere, and classic Maldivian elegance. Perfect for honeymoons and romantic getaways.",
-        coverImage: "/images/locations/baros.jpg",
+        coverImage: "baros.jpg",
         latitude: 4.2667,
         longitude: 73.4333,
         transferTime: 25,
@@ -247,10 +249,10 @@ async function main() {
         isFeatured: true,
         experiences: {
           create: [
-            { experience: { connect: { id: experiences[2].id } } }, // Honeymoon
-            { experience: { connect: { id: experiences[0].id } } }, // Diving
-            { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
-            { experience: { connect: { id: experiences[5].id } } }, // Wellness
+            { experience: { connect: { id: experiences[2].id } } },
+            { experience: { connect: { id: experiences[0].id } } },
+            { experience: { connect: { id: experiences[1].id } } },
+            { experience: { connect: { id: experiences[5].id } } },
           ],
         },
       },
@@ -263,7 +265,7 @@ async function main() {
         shortDesc: "Ultra-luxury eco-resort in a UNESCO Biosphere Reserve.",
         description:
           "Soneva Fushi pioneered barefoot luxury in the Maldives. Set within the UNESCO Baa Atoll Biosphere Reserve, it offers incredible marine biodiversity, an observatory, cinema, and the famous no-shoes policy.",
-        coverImage: "/images/locations/soneva-fushi.jpg",
+        coverImage: "soneva-fushi.jpg",
         latitude: 5.1128,
         longitude: 73.0697,
         transferTime: 30,
@@ -271,10 +273,10 @@ async function main() {
         isFeatured: true,
         experiences: {
           create: [
-            { experience: { connect: { id: experiences[2].id } } }, // Honeymoon
-            { experience: { connect: { id: experiences[3].id } } }, // Family
-            { experience: { connect: { id: experiences[0].id } } }, // Diving
-            { experience: { connect: { id: experiences[5].id } } }, // Wellness
+            { experience: { connect: { id: experiences[2].id } } },
+            { experience: { connect: { id: experiences[3].id } } },
+            { experience: { connect: { id: experiences[0].id } } },
+            { experience: { connect: { id: experiences[5].id } } },
           ],
         },
       },
@@ -286,8 +288,8 @@ async function main() {
   // ============================================
   // ACCOMMODATIONS
   // ============================================
+  // Images go in: accommodations bucket
   const accommodations = await Promise.all([
-    // Maafushi Accommodations
     prisma.accommodation.create({
       data: {
         name: "Arena Beach Hotel",
@@ -296,9 +298,9 @@ async function main() {
         shortDesc: "Beachfront guesthouse with stunning sunset views.",
         description:
           "Arena Beach Hotel is one of Maafushi's premier guesthouses, located directly on the bikini beach. Enjoy modern rooms, a rooftop restaurant, and easy access to water sports.",
-        coverImage: "/images/accommodations/arena-beach.jpg",
+        coverImage: "arena-beach.jpg",
         starRating: 4,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
     prisma.accommodation.create({
@@ -309,12 +311,11 @@ async function main() {
         shortDesc: "Modern comfort meets Maldivian hospitality.",
         description:
           "Kaani Beach Hotel offers contemporary rooms with ocean views, an infinity pool, and excellent dining. Located at the quieter end of Maafushi.",
-        coverImage: "/images/accommodations/kaani-beach.jpg",
+        coverImage: "kaani-beach.jpg",
         starRating: 4,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
-    // Fulidhoo
     prisma.accommodation.create({
       data: {
         name: "Thundi Guesthouse",
@@ -323,12 +324,11 @@ async function main() {
         shortDesc: "Cozy island retreat steps from the beach.",
         description:
           "Thundi Guesthouse offers a warm, family-run experience on peaceful Fulidhoo. Simple but comfortable rooms and home-cooked Maldivian meals.",
-        coverImage: "/images/accommodations/thundi.jpg",
+        coverImage: "thundi.jpg",
         starRating: 3,
-        locationId: locations[2].id, // Fulidhoo
+        locationId: locations[2].id,
       },
     }),
-    // Dhigurah
     prisma.accommodation.create({
       data: {
         name: "Dhigurah Beach View",
@@ -337,12 +337,11 @@ async function main() {
         shortDesc: "Direct access to the famous 3km beach.",
         description:
           "Wake up to stunning beach views at this comfortable guesthouse. Perfect base for whale shark excursions with PADI dive center on-site.",
-        coverImage: "/images/accommodations/dhigurah-beach-view.jpg",
+        coverImage: "dhigurah-beach-view.jpg",
         starRating: 3,
-        locationId: locations[3].id, // Dhigurah
+        locationId: locations[3].id,
       },
     }),
-    // Baros
     prisma.accommodation.create({
       data: {
         name: "Baros Maldives",
@@ -351,12 +350,11 @@ async function main() {
         shortDesc: "Iconic luxury resort with world-class service.",
         description:
           "Baros Maldives features elegant water villas, overwater spa, fine dining restaurants, and one of the best house reefs in the Maldives. A true barefoot luxury experience.",
-        coverImage: "/images/accommodations/baros-resort.jpg",
+        coverImage: "baros-resort.jpg",
         starRating: 5,
-        locationId: locations[4].id, // Baros
+        locationId: locations[4].id,
       },
     }),
-    // Soneva Fushi
     prisma.accommodation.create({
       data: {
         name: "Soneva Fushi Resort",
@@ -365,9 +363,9 @@ async function main() {
         shortDesc: "Pioneering barefoot luxury in paradise.",
         description:
           "Soneva Fushi offers ultra-luxury villas with private pools, Butler service, and incredible experiences from stargazing to chocolate rooms. Sustainable luxury at its finest.",
-        coverImage: "/images/accommodations/soneva-fushi-resort.jpg",
+        coverImage: "soneva-fushi-resort.jpg",
         starRating: 5,
-        locationId: locations[5].id, // Soneva Fushi
+        locationId: locations[5].id,
       },
     }),
   ]);
@@ -377,6 +375,7 @@ async function main() {
   // ============================================
   // ACTIVITIES
   // ============================================
+  // Images go in: activities bucket
   const activities = await Promise.all([
     prisma.activity.create({
       data: {
@@ -386,11 +385,11 @@ async function main() {
         shortDesc: "Swim with the gentle giants of the ocean.",
         description:
           "Join a guided snorkeling trip to encounter whale sharks in their natural habitat. These magnificent creatures can grow up to 12 meters long but are completely harmless.",
-        coverImage: "/images/activities/whale-shark.jpg",
+        coverImage: "whale-shark.jpg",
         duration: 180,
         localPrice: 1500,
         internationalPrice: 120,
-        locationId: locations[3].id, // Dhigurah
+        locationId: locations[3].id,
       },
     }),
     prisma.activity.create({
@@ -401,11 +400,11 @@ async function main() {
         shortDesc: "Watch dolphins play as the sun sets.",
         description:
           "Cruise into the sunset while pods of spinner dolphins leap and play around your boat. Includes refreshments and photo opportunities.",
-        coverImage: "/images/activities/dolphin-cruise.jpg",
+        coverImage: "dolphin-cruise.jpg",
         duration: 120,
         localPrice: 800,
         internationalPrice: 65,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
     prisma.activity.create({
@@ -416,11 +415,11 @@ async function main() {
         shortDesc: "Traditional Maldivian line fishing under the stars.",
         description:
           "Experience traditional Maldivian fishing at night. Catch red snapper, grouper, and more. Your catch can be prepared for dinner!",
-        coverImage: "/images/activities/night-fishing.jpg",
+        coverImage: "night-fishing.jpg",
         duration: 180,
         localPrice: 600,
         internationalPrice: 50,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
     prisma.activity.create({
@@ -431,11 +430,11 @@ async function main() {
         shortDesc: "Private lunch on a pristine sandbank.",
         description:
           "Be dropped off on a tiny sandbank surrounded by crystal clear water. Enjoy a BBQ lunch, snorkeling, and total privacy.",
-        coverImage: "/images/activities/sandbank.jpg",
+        coverImage: "sandbank.jpg",
         duration: 240,
         localPrice: 1200,
         internationalPrice: 95,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
     prisma.activity.create({
@@ -446,11 +445,11 @@ async function main() {
         shortDesc: "Your first underwater adventure.",
         description:
           "No certification needed! Learn the basics in a pool session then experience an actual reef dive accompanied by an instructor.",
-        coverImage: "/images/activities/discover-scuba.jpg",
+        coverImage: "discover-scuba.jpg",
         duration: 180,
         localPrice: 1800,
         internationalPrice: 130,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
     prisma.activity.create({
@@ -461,11 +460,11 @@ async function main() {
         shortDesc: "Watch mantas feed in the spotlight.",
         description:
           "An unforgettable night dive experience watching manta rays glide gracefully through spotlights as they feed on plankton.",
-        coverImage: "/images/activities/manta-night.jpg",
+        coverImage: "manta-night.jpg",
         duration: 120,
         localPrice: 2500,
         internationalPrice: 180,
-        locationId: locations[3].id, // Dhigurah
+        locationId: locations[3].id,
       },
     }),
     prisma.activity.create({
@@ -476,11 +475,11 @@ async function main() {
         shortDesc: "Explore the atoll at high speed.",
         description:
           "Ride through channels and around islands on a guided jet ski tour. Stop for snorkeling at secret spots only locals know.",
-        coverImage: "/images/activities/jet-ski.jpg",
+        coverImage: "jet-ski.jpg",
         duration: 90,
         localPrice: 2000,
         internationalPrice: 150,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
     prisma.activity.create({
@@ -491,11 +490,11 @@ async function main() {
         shortDesc: "Soar above the turquoise lagoon.",
         description:
           "Get a bird's eye view of the islands and reefs from 100 meters up. Safe, exciting, and great photo opportunities.",
-        coverImage: "/images/activities/parasailing.jpg",
+        coverImage: "parasailing.jpg",
         duration: 30,
         localPrice: 1200,
         internationalPrice: 85,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
     prisma.activity.create({
@@ -506,11 +505,11 @@ async function main() {
         shortDesc: "Learn to cook traditional Maldivian dishes.",
         description:
           "Visit the local market, learn about Maldivian ingredients, then cook traditional dishes like mas huni and garudhiya with a local chef.",
-        coverImage: "/images/activities/cooking.jpg",
+        coverImage: "cooking.jpg",
         duration: 180,
         localPrice: 800,
         internationalPrice: 60,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
     prisma.activity.create({
@@ -521,11 +520,11 @@ async function main() {
         shortDesc: "Greet the day with beachfront yoga.",
         description:
           "Start your morning with a peaceful yoga session on the beach as the sun rises over the Indian Ocean.",
-        coverImage: "/images/activities/yoga.jpg",
+        coverImage: "yoga.jpg",
         duration: 60,
         localPrice: 400,
         internationalPrice: 30,
-        locationId: locations[0].id, // Maafushi
+        locationId: locations[0].id,
       },
     }),
   ]);
@@ -535,8 +534,8 @@ async function main() {
   // ============================================
   // PACKAGES
   // ============================================
+  // Images go in: packages bucket
 
-  // Package 1: Maafushi Budget Adventure
   const package1 = await prisma.package.create({
     data: {
       name: "Maafushi Beach Getaway",
@@ -545,7 +544,7 @@ async function main() {
         "Experience the best of local island life with water sports and island hopping.",
       description:
         "Discover why Maafushi is the most popular local island in the Maldives. This value-packed getaway combines beach relaxation, water sports, and authentic cultural experiences.",
-      coverImage: "/images/packages/maafushi-getaway.jpg",
+      coverImage: "maafushi-getaway.jpg",
       minNights: 4,
       maxGuests: 4,
       isFeatured: true,
@@ -627,29 +626,28 @@ async function main() {
       },
       experiences: {
         create: [
-          { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
-          { experience: { connect: { id: experiences[4].id } } }, // Water Sports
-          { experience: { connect: { id: experiences[7].id } } }, // Sunset Cruise
+          { experience: { connect: { id: experiences[1].id } } },
+          { experience: { connect: { id: experiences[4].id } } },
+          { experience: { connect: { id: experiences[7].id } } },
         ],
       },
       activities: {
         create: [
-          { activity: { connect: { id: activities[1].id } }, isIncluded: true }, // Dolphin Cruise
-          { activity: { connect: { id: activities[3].id } }, isIncluded: true }, // Sandbank
+          { activity: { connect: { id: activities[1].id } }, isIncluded: true },
+          { activity: { connect: { id: activities[3].id } }, isIncluded: true },
           {
             activity: { connect: { id: activities[6].id } },
             isIncluded: false,
-          }, // Jet Ski
+          },
           {
             activity: { connect: { id: activities[7].id } },
             isIncluded: false,
-          }, // Parasailing
+          },
         ],
       },
     },
   });
 
-  // Package 2: Dhigurah Whale Shark Explorer
   const package2 = await prisma.package.create({
     data: {
       name: "Whale Shark Explorer",
@@ -658,7 +656,7 @@ async function main() {
         "Swim with whale sharks in the world's best destination for encounters.",
       description:
         "South Ari Atoll is the whale shark capital of the world. This package guarantees multiple whale shark excursions along with incredible diving and the beautiful 3km beach of Dhigurah.",
-      coverImage: "/images/packages/whale-shark.jpg",
+      coverImage: "whale-shark.jpg",
       minNights: 5,
       maxGuests: 6,
       isFeatured: true,
@@ -763,23 +761,22 @@ async function main() {
       },
       experiences: {
         create: [
-          { experience: { connect: { id: experiences[0].id } } }, // Diving
-          { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
+          { experience: { connect: { id: experiences[0].id } } },
+          { experience: { connect: { id: experiences[1].id } } },
         ],
       },
       activities: {
         create: [
-          { activity: { connect: { id: activities[0].id } }, isIncluded: true }, // Whale Shark
+          { activity: { connect: { id: activities[0].id } }, isIncluded: true },
           {
             activity: { connect: { id: activities[5].id } },
             isIncluded: false,
-          }, // Manta Night Dive
+          },
         ],
       },
     },
   });
 
-  // Package 3: Baros Romantic Escape
   const package3 = await prisma.package.create({
     data: {
       name: "Baros Romantic Escape",
@@ -787,7 +784,7 @@ async function main() {
       shortDesc: "Ultimate luxury honeymoon in an award-winning resort.",
       description:
         "Baros Maldives has been winning hearts (and awards) for over 50 years. This romantic package includes a water villa, private dining experiences, couples spa, and unforgettable moments.",
-      coverImage: "/images/packages/baros-romance.jpg",
+      coverImage: "baros-romance.jpg",
       minNights: 5,
       maxGuests: 2,
       isFeatured: true,
@@ -862,15 +859,14 @@ async function main() {
       },
       experiences: {
         create: [
-          { experience: { connect: { id: experiences[2].id } } }, // Honeymoon
-          { experience: { connect: { id: experiences[0].id } } }, // Diving
-          { experience: { connect: { id: experiences[5].id } } }, // Wellness
+          { experience: { connect: { id: experiences[2].id } } },
+          { experience: { connect: { id: experiences[0].id } } },
+          { experience: { connect: { id: experiences[5].id } } },
         ],
       },
     },
   });
 
-  // Package 4: Soneva Fushi Family Adventure
   const package4 = await prisma.package.create({
     data: {
       name: "Soneva Fushi Family Paradise",
@@ -879,7 +875,7 @@ async function main() {
         "Ultra-luxury family experience in a UNESCO Biosphere Reserve.",
       description:
         "The ultimate family vacation at the legendary Soneva Fushi. Kids will love The Den (kids club), chocolate room, observatory, and outdoor cinema. Parents will appreciate barefoot luxury and world-class service.",
-      coverImage: "/images/packages/soneva-family.jpg",
+      coverImage: "soneva-family.jpg",
       minNights: 6,
       maxGuests: 6,
       isFeatured: true,
@@ -955,15 +951,14 @@ async function main() {
       },
       experiences: {
         create: [
-          { experience: { connect: { id: experiences[3].id } } }, // Family
-          { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
-          { experience: { connect: { id: experiences[5].id } } }, // Wellness
+          { experience: { connect: { id: experiences[3].id } } },
+          { experience: { connect: { id: experiences[1].id } } },
+          { experience: { connect: { id: experiences[5].id } } },
         ],
       },
     },
   });
 
-  // Package 5: Fulidhoo Nurse Shark Adventure
   const package5 = await prisma.package.create({
     data: {
       name: "Fulidhoo Shark Safari",
@@ -971,7 +966,7 @@ async function main() {
       shortDesc: "Snorkel with nurse sharks on a peaceful local island.",
       description:
         "Fulidhoo offers an incredible experience: snorkeling with dozens of nurse sharks at the famous shark point. Combined with the island's peaceful atmosphere, this is a unique Maldives adventure.",
-      coverImage: "/images/packages/fulidhoo-sharks.jpg",
+      coverImage: "fulidhoo-sharks.jpg",
       minNights: 4,
       maxGuests: 4,
       isFeatured: false,
@@ -1028,8 +1023,8 @@ async function main() {
       },
       experiences: {
         create: [
-          { experience: { connect: { id: experiences[1].id } } }, // Snorkeling
-          { experience: { connect: { id: experiences[6].id } } }, // Local Culture
+          { experience: { connect: { id: experiences[1].id } } },
+          { experience: { connect: { id: experiences[6].id } } },
         ],
       },
     },

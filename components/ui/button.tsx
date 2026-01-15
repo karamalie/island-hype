@@ -3,7 +3,15 @@ import { forwardRef, ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "glass" | "dark";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "outline"
+    | "ghost"
+    | "glass"
+    | "dark"
+    | "white"
+    | "white-outline";
   size?: "sm" | "md" | "lg" | "xl" | "icon";
   isLoading?: boolean;
 }
@@ -22,28 +30,39 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 ease-out focus-ring disabled:opacity-50 disabled:pointer-events-none";
+      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 ease-out focus-ring disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
 
     const variants = {
+      // Default dark button
       primary:
-        "bg-[var(--color-gray-900)] text-white hover:bg-[var(--color-gray-800)] dark:bg-white dark:text-[var(--color-gray-900)] dark:hover:bg-[var(--color-gray-100)]",
+        "bg-[var(--color-gray-900)] text-white hover:bg-[var(--color-gray-800)] active:bg-[var(--color-gray-950)]",
+      // Light gray background
       secondary:
-        "bg-[var(--color-gray-100)] text-[var(--color-gray-900)] hover:bg-[var(--color-gray-200)] dark:bg-[var(--color-gray-800)] dark:text-white dark:hover:bg-[var(--color-gray-700)]",
+        "bg-[var(--color-gray-100)] text-[var(--color-gray-900)] hover:bg-[var(--color-gray-200)]",
+      // Border only
       outline:
-        "border border-[var(--color-gray-300)] bg-transparent text-[var(--color-gray-900)] hover:bg-[var(--color-gray-100)] dark:border-[var(--color-gray-700)] dark:text-white dark:hover:bg-[var(--color-gray-800)]",
+        "border border-[var(--color-gray-300)] bg-transparent text-[var(--color-gray-900)] hover:bg-[var(--color-gray-100)]",
+      // No background
       ghost:
-        "bg-transparent text-[var(--color-gray-900)] hover:bg-[var(--color-gray-100)] dark:text-white dark:hover:bg-[var(--color-gray-800)]",
-      glass:
-        "glass text-[var(--color-gray-900)] hover:bg-white/90 dark:text-white dark:hover:bg-black/70",
+        "bg-transparent text-[var(--color-gray-900)] hover:bg-[var(--color-gray-100)]",
+      // Glassmorphism (for hero/dark backgrounds)
+      glass: "glass-btn text-white hover:bg-white/20",
+      // Solid dark
       dark: "bg-[var(--color-gray-900)] text-white hover:bg-[var(--color-gray-800)]",
+      // White solid (for dark backgrounds)
+      white:
+        "bg-white text-[var(--color-gray-900)] hover:bg-white/90 active:bg-white/80",
+      // White outline (for dark backgrounds)
+      "white-outline":
+        "border border-white/30 bg-transparent text-white hover:bg-white/10",
     };
 
     const sizes = {
-      sm: "h-8 px-3 text-sm rounded-full",
-      md: "h-10 px-5 text-sm rounded-full",
+      sm: "h-9 px-4 text-sm rounded-full",
+      md: "h-11 px-5 text-sm rounded-full",
       lg: "h-12 px-6 text-base rounded-full",
       xl: "h-14 px-8 text-lg rounded-full",
-      icon: "h-10 w-10 rounded-full",
+      icon: "h-11 w-11 rounded-full",
     };
 
     return (

@@ -15,8 +15,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const variants = {
       default:
-        "bg-[var(--color-gray-100)] border-transparent focus:bg-white focus:border-[var(--color-gray-300)] dark:bg-[var(--color-gray-800)] dark:focus:bg-[var(--color-gray-900)] dark:focus:border-[var(--color-gray-700)]",
-      glass: "glass focus:bg-white/90 dark:focus:bg-black/70",
+        "bg-[var(--color-gray-100)] border-transparent focus:bg-white focus:border-[var(--color-gray-300)]",
+      glass: "glass-input",
       outline:
         "bg-transparent border-[var(--border-color)] focus:border-[var(--color-gray-400)]",
     };

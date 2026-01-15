@@ -1,45 +1,52 @@
 // components/ui/icon-button.tsx
-import { forwardRef, ButtonHTMLAttributes } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { forwardRef } from "react";
 
-export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "ghost" | "glass";
-  size?: "sm" | "md" | "lg";
-}
+const iconButtonVariants = cva(
+  "inline-flex items-center justify-center rounded-full transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none",
+  {
+    variants: {
+      variant: {
+        default: "bg-gray-900 text-white hover:bg-gray-800",
+        outline:
+          "border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:border-gray-400",
+        ghost: "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+        white: "bg-white text-gray-900 hover:bg-gray-100 shadow-sm",
+        // Glass variant for dark backgrounds
+        glass:
+          "bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20",
+        primary: "bg-teal-500 text-white hover:bg-teal-600",
+      },
+      size: {
+        sm: "w-8 h-8",
+        md: "w-10 h-10",
+        lg: "w-12 h-12",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "md",
+    },
+  }
+);
+
+export interface IconButtonProps
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof iconButtonVariants> {}
 
 const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, variant = "default", size = "md", ...props }, ref) => {
-    const variants = {
-      default:
-        "bg-white text-[var(--color-gray-700)] hover:bg-[var(--color-gray-100)] border border-[var(--border-color)] dark:bg-[var(--color-gray-800)] dark:text-[var(--color-gray-300)] dark:hover:bg-[var(--color-gray-700)]",
-      outline:
-        "border border-[var(--border-color)] bg-transparent hover:bg-[var(--color-gray-100)] dark:hover:bg-[var(--color-gray-800)]",
-      ghost:
-        "bg-transparent hover:bg-[var(--color-gray-100)] dark:hover:bg-[var(--color-gray-800)]",
-      glass: "glass hover:bg-white/90 dark:hover:bg-black/70",
-    };
-
-    const sizes = {
-      sm: "h-8 w-8",
-      md: "h-10 w-10",
-      lg: "h-12 w-12",
-    };
-
+  ({ className, variant, size, ...props }, ref) => {
     return (
       <button
         ref={ref}
-        className={cn(
-          "inline-flex items-center justify-center rounded-full transition-all duration-200 focus-ring disabled:opacity-50 disabled:pointer-events-none",
-          variants[variant],
-          sizes[size],
-          className
-        )}
+        className={cn(iconButtonVariants({ variant, size }), className)}
         {...props}
       />
     );
   }
 );
-
 IconButton.displayName = "IconButton";
 
-export { IconButton };
+export { IconButton, iconButtonVariants };
