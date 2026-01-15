@@ -1,8 +1,8 @@
 // lib/market.ts
 import { headers } from "next/headers";
-import { PricingMarket } from "@prisma/client";
+import { Market as PrismaMarket } from "@prisma/client";
 
-export type Market = PricingMarket;
+export type Market = PrismaMarket;
 
 // Exchange rate - you might want to fetch this dynamically in production
 const MVR_TO_USD_RATE = 15.42; // 1 USD = 15.42 MVR (approximate)
