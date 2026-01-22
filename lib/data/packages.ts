@@ -29,6 +29,46 @@ export type PackageWithRelations = Package & {
   };
 };
 
+// Type for full package details page
+export type PackageDetails = Package & {
+  location: Location;
+  accommodation: Accommodation;
+  pricing: PackagePricing[];
+  inclusions: Array<{
+    id: string;
+    category: string;
+    item: string;
+    details: string | null;
+    sortOrder: number;
+  }>;
+  itinerary: Array<{
+    id: string;
+    dayNumber: number;
+    title: string;
+    description: string;
+  }>;
+  experiences: Array<{
+    experience: Experience;
+  }>;
+  activities: Array<{
+    activity: {
+      id: string;
+      name: string;
+      description: string | null;
+      duration: number | null;
+      category: string;
+    };
+    isIncluded: boolean;
+  }>;
+  offers: Offer[];
+  images: Array<{
+    id: string;
+    url: string;
+    alt: string | null;
+    sortOrder: number;
+  }>;
+};
+
 // Filter interface
 export interface PackageFilters {
   experience?: string;
@@ -338,4 +378,76 @@ export async function getFilterOptions(): Promise<FilterOptions> {
     locations,
     accommodationTypes: accommodationTypes.map((a) => a.type),
   };
+}
+
+/**
+ * Get package details by slug for details page
+ */
+export async function getPackageBySlug(
+  slug: string,
+  market: Market = "INTERNATIONAL"
+): Promise<PackageDetails | null> {
+  const pkg = await prisma.package.findUnique({
+    where: {
+      slug,
+      isActive: true,
+    },
+    include: {
+      location: true,
+      accommodation: true,
+      pricing: {
+        where: {
+          market,
+        },
+      },
+      inclusions: {
+        orderBy: {
+          sortOrder: "asc",
+        },
+      },
+      itinerary: {
+        orderBy: {
+          dayNumber: "asc",
+        },
+      },
+      experiences: {
+        include: {
+          experience: true,
+        },
+      },
+      activities: {
+        include: {
+          activity: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              duration: true,
+              category: true,
+            },
+          },
+        },
+      },
+      offers: {
+        where: {
+          validFrom: {
+            lte: new Date(),
+          },
+          validUntil: {
+            gte: new Date(),
+          },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+      images: {
+        orderBy: {
+          sortOrder: "asc",
+        },
+      },
+    },
+  });
+
+  return pkg as PackageDetails | null;
 }
