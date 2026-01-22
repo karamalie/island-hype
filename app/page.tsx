@@ -9,8 +9,8 @@ import {
   ExperiencesCarousel,
   FeaturedPackages,
   HowToBook,
-  Footer,
 } from "@/components/home";
+import { Footer } from "@/components/layout/footer";
 
 export default async function Home() {
   // Fetch all data in parallel

@@ -11,6 +11,7 @@ import { Avatar, AvatarGroup } from "@/components/ui/avatar";
 import { SlideCounter } from "@/components/ui/slide-counter";
 import type { FeaturedPackage } from "@/lib/data/home";
 import { getImageUrl } from "@/lib/image-urls";
+import { Navbar } from "../layout/nav-bar";
 
 interface HeroCarouselProps {
   packages: FeaturedPackage[];
@@ -80,7 +81,9 @@ export function HeroCarousel({ packages }: HeroCarouselProps) {
       </div>
 
       {/* Glass Navigation */}
-      <nav className="absolute top-6 left-1/2 -translate-x-1/2 z-50">
+      <Navbar variant="overlay" showLogo={false} />
+
+      {/* <nav className="absolute top-6 left-1/2 -translate-x-1/2 z-50">
         <div className="glass-nav px-2 py-2 flex items-center gap-1">
           <Button variant="white" size="sm" className="rounded-full">
             Home
@@ -114,17 +117,17 @@ export function HeroCarousel({ packages }: HeroCarouselProps) {
             Contact
           </Button>
         </div>
-      </nav>
+      </nav> */}
 
       {/* Book Now Button */}
-      <div className="absolute top-6 right-8 z-50 flex items-center gap-2">
+      {/* <div className="absolute top-6 right-8 z-50 flex items-center gap-2">
         <Button variant="glass" className="text-white gap-2">
           Book Now
         </Button>
         <IconButton variant="glass" size="sm">
           <Icons.arrowUpRight className="w-4 h-4" />
         </IconButton>
-      </div>
+      </div> */}
 
       {/* Main Content Container */}
       <div className="relative z-10 h-screen max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
