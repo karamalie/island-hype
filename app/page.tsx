@@ -1,22 +1,22 @@
 // app/page.tsx
 import {
   getFeaturedPackages,
-  getExperiences,
   getAccommodations,
+  getLocations,
 } from "@/lib/data/home";
 import {
   HeroCarousel,
-  ExperiencesCarousel,
   FeaturedPackages,
   HowToBook,
+  SectionCarousel,
 } from "@/components/home";
 import { Footer } from "@/components/layout/footer";
 
 export default async function Home() {
   // Fetch all data in parallel
-  const [packages, experiences, accommodations] = await Promise.all([
+  const [packages, locations, accommodations] = await Promise.all([
     getFeaturedPackages(),
-    getExperiences(),
+    getLocations(),
     getAccommodations(),
   ]);
 
@@ -26,8 +26,8 @@ export default async function Home() {
       <HeroCarousel packages={packages} />
 
       {/* Experiences/Accommodations/Packages Carousel */}
-      <ExperiencesCarousel
-        experiences={experiences}
+      <SectionCarousel
+        locations={locations}
         accommodations={accommodations}
         packages={packages}
       />

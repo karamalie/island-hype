@@ -15,9 +15,9 @@ interface NavbarProps {
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/experiences", label: "Experiences" },
   { href: "/packages", label: "Packages" },
   { href: "/locations", label: "Locations" },
+  { href: "/accommodations", label: "Accommodations" },
   { href: "/contact", label: "Contact" },
 ];
 

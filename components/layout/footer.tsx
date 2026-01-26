@@ -64,7 +64,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Experiences
+                  Packages
                 </a>
               </li>
               <li>
@@ -72,7 +72,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Packages
+                  Accommodations
                 </a>
               </li>
               <li>

@@ -1,4 +1,4 @@
-// components/home/experiences-carousel.tsx
+// components/home/packages-carousel.tsx
 "use client";
 
 import { useState, useRef } from "react";
@@ -9,26 +9,22 @@ import { Icons } from "@/components/ui/icons";
 import { Pill, PillGroup } from "@/components/ui/pill";
 import { Card } from "@/components/ui/card";
 import { getImageUrl, type StorageBucket } from "@/lib/image-urls";
-import type {
-  Experience,
-  Accommodation,
-  FeaturedPackage,
-} from "@/lib/data/home";
+import type { Accommodation, FeaturedPackage, Location } from "@/lib/data/home";
 
-type TabType = "experiences" | "accommodations" | "packages";
+type TabType = "locations" | "accommodations" | "packages";
 
-// Union type for all possible items
-type CarouselItem = Experience | Accommodation | FeaturedPackage;
+// Union type for possible items
+type CarouselItem = Location | Accommodation | FeaturedPackage;
 
-interface ExperiencesCarouselProps {
-  experiences: Experience[];
+interface SectionCarouselProps {
+  locations: Location[];
   accommodations: Accommodation[];
   packages: FeaturedPackage[];
 }
 
 // Type guards to check item type
-function isExperience(item: CarouselItem): item is Experience {
-  return "icon" in item;
+function isLocation(item: CarouselItem): item is Location {
+  return "atoll" in item && !("locationId" in item) && !("minNights" in item);
 }
 
 function isAccommodation(item: CarouselItem): item is Accommodation {
@@ -41,18 +37,18 @@ function isPackage(item: CarouselItem): item is FeaturedPackage {
 
 // Get the correct bucket for each item type
 function getBucket(item: CarouselItem): StorageBucket {
-  if (isExperience(item)) return "experiences";
+  if (isLocation(item)) return "locations";
   if (isAccommodation(item)) return "accommodations";
   if (isPackage(item)) return "packages";
   return "images";
 }
 
-export function ExperiencesCarousel({
-  experiences,
+export function SectionCarousel({
+  locations,
   accommodations,
   packages,
-}: ExperiencesCarouselProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("experiences");
+}: SectionCarouselProps) {
+  const [activeTab, setActiveTab] = useState<TabType>("locations");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
@@ -68,14 +64,14 @@ export function ExperiencesCarousel({
   // Get current items based on active tab
   const getCurrentItems = (): CarouselItem[] => {
     switch (activeTab) {
-      case "experiences":
-        return experiences;
+      case "locations":
+        return locations;
       case "accommodations":
         return accommodations;
       case "packages":
         return packages;
       default:
-        return experiences;
+        return locations;
     }
   };
 
@@ -83,8 +79,8 @@ export function ExperiencesCarousel({
 
   // Get subtitle based on item type
   const getSubtitle = (item: CarouselItem): string => {
-    if (isExperience(item)) {
-      return item.icon || "";
+    if (isLocation(item)) {
+      return `${item.atoll}${item.island ? `, ${item.island}` : ""}`;
     }
     if (isAccommodation(item)) {
       return item.location?.name || "";
@@ -194,10 +190,10 @@ export function ExperiencesCarousel({
         {/* Filter Pills */}
         <PillGroup className="justify-center mb-12">
           <Pill
-            variant={activeTab === "experiences" ? "filled" : "outline"}
-            onClick={() => setActiveTab("experiences")}
+            variant={activeTab === "locations" ? "filled" : "outline"}
+            onClick={() => setActiveTab("locations")}
           >
-            Experiences
+            Locations
           </Pill>
           <Pill
             variant={activeTab === "accommodations" ? "filled" : "outline"}

@@ -17,7 +17,6 @@ import { Navbar } from "@/components/layout/nav-bar";
 
 interface PageProps {
   searchParams: Promise<{
-    experience?: string;
     location?: string;
     accommodationType?: string;
     minPrice?: string;
@@ -50,7 +49,6 @@ export default async function PackagesPage({ searchParams }: PageProps) {
   // Fetch packages with filters
   const packages = await getPackages(
     {
-      experience: params.experience,
       location: params.location,
       accommodationType: params.accommodationType,
       minPrice: params.minPrice ? parseFloat(params.minPrice) : undefined,

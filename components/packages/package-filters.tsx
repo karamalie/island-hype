@@ -28,7 +28,6 @@ export function PackageFilters({ filterOptions }: PackageFiltersProps) {
   const [showFilters, setShowFilters] = useState(false);
 
   // Get current filters from URL
-  const currentExperience = searchParams.get("experience") || "";
   const currentLocation = searchParams.get("location") || "";
   const currentAccommodationType = searchParams.get("accommodationType") || "";
   const currentSearch = searchParams.get("search") || "";
@@ -59,7 +58,6 @@ export function PackageFilters({ filterOptions }: PackageFiltersProps) {
   };
 
   const hasActiveFilters =
-    currentExperience ||
     currentLocation ||
     currentAccommodationType ||
     currentSearch ||
@@ -70,7 +68,7 @@ export function PackageFilters({ filterOptions }: PackageFiltersProps) {
       {/* Main Filter Bar */}
       <div className="glass rounded-2xl p-4 grid grid-cols-1 md:grid-cols-12 gap-4 shadow-sm">
         {/* Search */}
-        <div className="md:col-span-4">
+        <div className="md:col-span-6">
           <label className="text-sm font-semibold mb-2 block text-gray-900">
             Search Packages
           </label>
@@ -84,25 +82,6 @@ export function PackageFilters({ filterOptions }: PackageFiltersProps) {
               className="pl-10 text-gray-900 placeholder:text-gray-400"
             />
           </div>
-        </div>
-
-        {/* Experience Type */}
-        <div className="md:col-span-2">
-          <label className="text-sm font-semibold mb-2 block text-gray-900">
-            Experience
-          </label>
-          <select
-            value={currentExperience}
-            onChange={(e) => updateFilters("experience", e.target.value)}
-            className="w-full h-10 px-3 rounded-full border border-gray-300 bg-white text-sm text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-gray-400"
-          >
-            <option value="">All Types</option>
-            {filterOptions.experiences.map((exp) => (
-              <option key={exp.id} value={exp.slug}>
-                {exp.icon} {exp.name} ({exp._count.packages})
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Location */}
@@ -243,20 +222,7 @@ export function PackageFilters({ filterOptions }: PackageFiltersProps) {
           <span className="text-sm font-semibold text-gray-900">
             Active filters:
           </span>
-          {currentExperience && (
-            <Badge
-              variant="outline"
-              className="gap-2 cursor-pointer text-gray-900 border-gray-300 hover:bg-gray-100 transition-colors"
-              onClick={() => updateFilters("experience", "")}
-            >
-              {
-                filterOptions.experiences.find(
-                  (e) => e.slug === currentExperience
-                )?.name
-              }
-              <X className="w-3 h-3" />
-            </Badge>
-          )}
+
           {currentLocation && (
             <Badge
               variant="outline"
