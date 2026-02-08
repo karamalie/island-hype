@@ -29,6 +29,19 @@ export function getImageUrl(bucket: StorageBucket, path: string): string {
 }
 
 /**
+ * Extract the storage-relative path from a full URL.
+ * If already a relative path, returns as-is.
+ * e.g. "https://xxx.supabase.co/storage/v1/object/public/locations/abc/img.jpg" → "abc/img.jpg"
+ */
+export function getStoragePath(url: string, bucket: StorageBucket): string {
+  if (!url || !url.startsWith("http")) return url;
+  const marker = `/storage/v1/object/public/${bucket}/`;
+  const idx = url.indexOf(marker);
+  if (idx !== -1) return url.slice(idx + marker.length);
+  return url;
+}
+
+/**
  * Get optimized image URL using Supabase transform
  * Safe to use in client components
  */

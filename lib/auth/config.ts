@@ -9,11 +9,11 @@ export interface AdminUser {
 export const adminUsers: AdminUser[] = [
   {
     id: "1",
-    username: "kara",
+    username: "karam",
     passwordHash:
-      "$2b$10$KHcO9RL8iiewIA5921C/Y.tIOY.Qdt3Y2CtrwendL2mGnunTRII5K",
-    name: "Kara",
-    email: "kara@islandhype.com",
+      "$2b$10$.b/J2a4vE7Ca1512Nv4R1uVKjDi8mU/tIGQUbK.Oo9/js8GbK.bf.",
+    name: "Karam",
+    email: "karam@islandhype.com",
   },
   {
     id: "2",

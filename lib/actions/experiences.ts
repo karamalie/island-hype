@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { revalidatePath } from "next/cache";
 import { generateSlug } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/lib/storage";
+import { getStoragePath } from "@/lib/image-urls";
 
 export async function getExperiences() {
   return prisma.experience.findMany({
@@ -36,9 +37,18 @@ export async function createExperience(formData: FormData) {
     return { success: false, error: "Name and description are required" };
   }
 
+  // Handle cover image upload
+  const coverFile = formData.get("coverImage") as File | null;
+  let coverImage: string | null = null;
+  if (coverFile && coverFile.size > 0) {
+    const uploadResult = await uploadImage(coverFile, { bucket: "experiences" });
+    if (uploadResult.error) return { success: false, error: uploadResult.error };
+    coverImage = uploadResult.path;
+  }
+
   try {
     const experience = await prisma.experience.create({
-      data: { name, slug, shortDesc, description, icon, isActive, sortOrder },
+      data: { name, slug, shortDesc, description, icon, isActive, sortOrder, coverImage },
     });
     revalidatePath("/admin/experiences");
     revalidatePath("/");
@@ -125,15 +135,55 @@ export async function uploadExperienceImage(
 
     await prisma.experienceImage.create({
       data: {
-        url: result.url,
+        url: result.path,
         alt: file.name,
         experienceId,
       },
     });
     revalidatePath(`/admin/experiences/${experienceId}`);
-    return { success: true, url: result.url };
+    return { success: true, url: result.url, id: result.path };
   } catch {
     return { success: false, error: "Failed to upload image" };
+  }
+}
+
+export async function uploadExperienceCoverImage(experienceId: string, formData: FormData) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  const file = formData.get("file") as File;
+  if (!file) return { success: false, error: "No file provided" };
+
+  try {
+    const result = await uploadImage(file, { bucket: "experiences" });
+    if (result.error) return { success: false, error: result.error };
+
+    await prisma.experience.update({
+      where: { id: experienceId },
+      data: { coverImage: result.path },
+    });
+    revalidatePath(`/admin/experiences/${experienceId}`);
+    revalidatePath("/");
+    return { success: true, url: result.url };
+  } catch {
+    return { success: false, error: "Failed to upload cover image" };
+  }
+}
+
+export async function setExperienceCoverImage(experienceId: string, imageUrl: string) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.experience.update({
+      where: { id: experienceId },
+      data: { coverImage: getStoragePath(imageUrl, "experiences") },
+    });
+    revalidatePath(`/admin/experiences/${experienceId}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to set cover image" };
   }
 }
 
@@ -147,10 +197,7 @@ export async function deleteExperienceImage(imageId: string) {
     });
     if (!image) return { success: false, error: "Image not found" };
 
-    const urlParts = image.url.split("/experiences/");
-    if (urlParts[1]) {
-      await deleteImage("experiences", urlParts[1]);
-    }
+    await deleteImage("experiences", image.url);
 
     await prisma.experienceImage.delete({ where: { id: imageId } });
     revalidatePath(`/admin/experiences/${image.experienceId}`);

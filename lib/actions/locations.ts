@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { revalidatePath } from "next/cache";
 import { generateSlug } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/lib/storage";
+import { getStoragePath } from "@/lib/image-urls";
 import type { TransferType } from "@prisma/client";
 
 export async function getLocations() {
@@ -55,12 +56,21 @@ export async function createLocation(formData: FormData) {
     return { success: false, error: "Name, description, and atoll are required" };
   }
 
+  // Handle cover image upload
+  const coverFile = formData.get("coverImage") as File | null;
+  let coverImage: string | null = null;
+  if (coverFile && coverFile.size > 0) {
+    const uploadResult = await uploadImage(coverFile, { bucket: "locations" });
+    if (uploadResult.error) return { success: false, error: uploadResult.error };
+    coverImage = uploadResult.path;
+  }
+
   try {
     const location = await prisma.location.create({
       data: {
         name, slug, description, shortDesc, atoll, island,
         latitude, longitude, transferType, transferTime, transferInfo,
-        isFeatured, isActive, sortOrder,
+        isFeatured, isActive, sortOrder, coverImage,
       },
     });
     revalidatePath("/admin/locations");
@@ -177,10 +187,10 @@ export async function uploadLocationImage(locationId: string, formData: FormData
     if (result.error) return { success: false, error: result.error };
 
     await prisma.locationImage.create({
-      data: { url: result.url, alt: file.name, locationId },
+      data: { url: result.path, alt: file.name, locationId },
     });
     revalidatePath(`/admin/locations/${locationId}`);
-    return { success: true, url: result.url };
+    return { success: true, url: result.url, id: result.path };
   } catch {
     return { success: false, error: "Failed to upload image" };
   }
@@ -194,8 +204,7 @@ export async function deleteLocationImage(imageId: string) {
     const image = await prisma.locationImage.findUnique({ where: { id: imageId } });
     if (!image) return { success: false, error: "Image not found" };
 
-    const urlParts = image.url.split("/locations/");
-    if (urlParts[1]) await deleteImage("locations", urlParts[1]);
+    await deleteImage("locations", image.url);
 
     await prisma.locationImage.delete({ where: { id: imageId } });
     revalidatePath(`/admin/locations/${image.locationId}`);
@@ -212,13 +221,36 @@ export async function setCoverImage(locationId: string, imageUrl: string) {
   try {
     await prisma.location.update({
       where: { id: locationId },
-      data: { coverImage: imageUrl },
+      data: { coverImage: getStoragePath(imageUrl, "locations") },
     });
     revalidatePath(`/admin/locations/${locationId}`);
     revalidatePath("/");
     return { success: true };
   } catch {
     return { success: false, error: "Failed to set cover image" };
+  }
+}
+
+export async function uploadLocationCoverImage(locationId: string, formData: FormData) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  const file = formData.get("file") as File;
+  if (!file) return { success: false, error: "No file provided" };
+
+  try {
+    const result = await uploadImage(file, { bucket: "locations" });
+    if (result.error) return { success: false, error: result.error };
+
+    await prisma.location.update({
+      where: { id: locationId },
+      data: { coverImage: result.path },
+    });
+    revalidatePath(`/admin/locations/${locationId}`);
+    revalidatePath("/");
+    return { success: true, url: result.url };
+  } catch {
+    return { success: false, error: "Failed to upload cover image" };
   }
 }
 

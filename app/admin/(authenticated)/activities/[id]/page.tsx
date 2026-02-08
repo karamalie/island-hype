@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getActivity } from "@/lib/actions/activities";
+import { getImageUrl } from "@/lib/image-urls";
 import { ActivityForm } from "./activity-form";
 
 export default async function EditActivityPage({
@@ -17,10 +18,24 @@ export default async function EditActivityPage({
     orderBy: { name: "asc" },
   });
 
+  // Resolve coverImage to full URL (seeded data stores bare filenames)
+  const resolvedActivity = {
+    ...activity,
+    coverImage: activity.coverImage
+      ? getImageUrl("activities", activity.coverImage)
+      : null,
+  };
+
+  // Resolve gallery image paths to full URLs
+  const resolvedImages = activity.images.map((img) => ({
+    ...img,
+    url: getImageUrl("activities", img.url),
+  }));
+
   return (
     <ActivityForm
-      activity={activity}
-      images={activity.images}
+      activity={resolvedActivity}
+      images={resolvedImages}
       locations={locations}
     />
   );

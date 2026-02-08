@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { revalidatePath } from "next/cache";
 import { generateSlug } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/lib/storage";
+import { getStoragePath } from "@/lib/image-urls";
 import type { Market, InclusionCategory } from "@prisma/client";
 
 export async function getPackages() {
@@ -62,12 +63,21 @@ export async function createPackage(formData: FormData) {
     return { success: false, error: "Name, description, location, and accommodation are required" };
   }
 
+  // Handle cover image upload
+  const coverFile = formData.get("coverImage") as File | null;
+  let coverImage: string | null = null;
+  if (coverFile && coverFile.size > 0) {
+    const uploadResult = await uploadImage(coverFile, { bucket: "packages" });
+    if (uploadResult.error) return { success: false, error: uploadResult.error };
+    coverImage = uploadResult.path;
+  }
+
   try {
     const pkg = await prisma.package.create({
       data: {
         name, slug, shortDesc, description, highlights,
         locationId, accommodationId, minNights, maxNights, maxGuests,
-        isFeatured, isActive, sortOrder,
+        isFeatured, isActive, sortOrder, coverImage,
       },
     });
     revalidatePath("/admin/packages");
@@ -447,10 +457,10 @@ export async function uploadPackageImage(packageId: string, formData: FormData) 
     if (result.error) return { success: false, error: result.error };
 
     await prisma.packageImage.create({
-      data: { url: result.url, alt: file.name, packageId },
+      data: { url: result.path, alt: file.name, packageId },
     });
     revalidatePath(`/admin/packages/${packageId}`);
-    return { success: true, url: result.url };
+    return { success: true, url: result.url, id: result.path };
   } catch {
     return { success: false, error: "Failed to upload image" };
   }
@@ -464,14 +474,36 @@ export async function deletePackageImage(imageId: string) {
     const image = await prisma.packageImage.findUnique({ where: { id: imageId } });
     if (!image) return { success: false, error: "Image not found" };
 
-    const urlParts = image.url.split("/packages/");
-    if (urlParts[1]) await deleteImage("packages", urlParts[1]);
+    await deleteImage("packages", image.url);
 
     await prisma.packageImage.delete({ where: { id: imageId } });
     revalidatePath(`/admin/packages/${image.packageId}`);
     return { success: true };
   } catch {
     return { success: false, error: "Failed to delete image" };
+  }
+}
+
+export async function uploadPackageCoverImage(packageId: string, formData: FormData) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  const file = formData.get("file") as File;
+  if (!file) return { success: false, error: "No file provided" };
+
+  try {
+    const result = await uploadImage(file, { bucket: "packages" });
+    if (result.error) return { success: false, error: result.error };
+
+    await prisma.package.update({
+      where: { id: packageId },
+      data: { coverImage: result.path },
+    });
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath("/");
+    return { success: true, url: result.url };
+  } catch {
+    return { success: false, error: "Failed to upload cover image" };
   }
 }
 
@@ -482,7 +514,7 @@ export async function setPackageCoverImage(packageId: string, imageUrl: string) 
   try {
     await prisma.package.update({
       where: { id: packageId },
-      data: { coverImage: imageUrl },
+      data: { coverImage: getStoragePath(imageUrl, "packages") },
     });
     revalidatePath(`/admin/packages/${packageId}`);
     revalidatePath("/");

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getPackage } from "@/lib/actions/packages";
+import { getImageUrl } from "@/lib/image-urls";
 import { PackageForm } from "./package-form";
 
 export default async function EditPackagePage({
@@ -25,9 +26,21 @@ export default async function EditPackagePage({
     }),
   ]);
 
+  // Resolve paths to full URLs (DB stores relative paths only)
+  const resolvedPkg = {
+    ...pkg,
+    coverImage: pkg.coverImage
+      ? getImageUrl("packages", pkg.coverImage)
+      : null,
+    images: pkg.images.map((img) => ({
+      ...img,
+      url: getImageUrl("packages", img.url),
+    })),
+  };
+
   return (
     <PackageForm
-      pkg={pkg}
+      pkg={resolvedPkg}
       locations={locations}
       accommodations={accommodations}
       allExperiences={allExperiences}

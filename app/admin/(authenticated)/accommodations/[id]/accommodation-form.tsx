@@ -6,16 +6,18 @@ import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
+import { ImageGallery } from "@/components/admin/shared/image-gallery";
+import { CoverImageUpload } from "@/components/admin/shared/cover-image-upload";
 import {
   createAccommodation,
   updateAccommodation,
   deleteAccommodation,
   uploadAccommodationImage,
   deleteAccommodationImage,
-  setAccommodationCoverImage,
+  uploadAccommodationCoverImage,
 } from "@/lib/actions/accommodations";
 import { generateSlug } from "@/lib/utils";
-import { X, Star, Plus } from "lucide-react";
+import { X, Plus } from "lucide-react";
 
 const inputClass =
   "w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors";
@@ -63,10 +65,8 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
   const [contactPhone, setContactPhone] = useState(accommodation?.contactPhone || "");
   const [isActive, setIsActive] = useState(accommodation?.isActive ?? true);
   const [sortOrder, setSortOrder] = useState(accommodation?.sortOrder || 0);
-  const [coverImg, setCoverImg] = useState(accommodation?.coverImage || "");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [currentImages, setCurrentImages] = useState(images);
 
   function handleNameChange(value: string) {
     setName(value);
@@ -105,6 +105,7 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
     formData.set("contactPhone", contactPhone);
     formData.set("isActive", String(isActive));
     formData.set("sortOrder", String(sortOrder));
+    if (!isEdit && coverFile) formData.set("coverImage", coverFile);
 
     const result = isEdit
       ? await updateAccommodation(accommodation.id, formData)
@@ -134,39 +135,26 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
     }
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !accommodation) return;
-    setUploading(true);
+  async function handleCoverUpload(file: File) {
+    if (!accommodation) return { success: false, error: "Save the accommodation first" };
+    const formData = new FormData();
+    formData.set("file", file);
+    const result = await uploadAccommodationCoverImage(accommodation.id, formData);
+    if (result.success) router.refresh();
+    return result;
+  }
+
+  async function handleImageUpload(file: File) {
+    if (!accommodation) return { success: false, error: "Save the accommodation first" };
     const formData = new FormData();
     formData.set("file", file);
     const result = await uploadAccommodationImage(accommodation.id, formData);
-    setUploading(false);
-    if (result.success && result.url) {
-      setCurrentImages([...currentImages, { id: Date.now().toString(), url: result.url, alt: file.name }]);
-      toast.success("Image uploaded");
-      router.refresh();
-    } else {
-      toast.error(result.error || "Upload failed");
-    }
-    e.target.value = "";
+    if (result.success) router.refresh();
+    return result;
   }
 
   async function handleImageDelete(imageId: string) {
-    const result = await deleteAccommodationImage(imageId);
-    if (result.success) {
-      setCurrentImages(currentImages.filter((img) => img.id !== imageId));
-      toast.success("Image deleted");
-    }
-  }
-
-  async function handleSetCover(url: string) {
-    if (!accommodation) return;
-    const result = await setAccommodationCoverImage(accommodation.id, url);
-    if (result.success) {
-      setCoverImg(url);
-      toast.success("Cover image set");
-    }
+    return deleteAccommodationImage(imageId);
   }
 
   return (
@@ -179,6 +167,13 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
       <div className="space-y-6 max-w-2xl">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+            <CoverImageUpload
+              currentImageUrl={accommodation?.coverImage || undefined}
+              onFileChange={!isEdit ? setCoverFile : undefined}
+              onUpload={isEdit ? handleCoverUpload : undefined}
+              required={!isEdit}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
@@ -309,35 +304,11 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
         </form>
 
         {isEdit && (
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 className="text-base font-semibold text-slate-900 mb-4">Images</h2>
-            <div className="grid grid-cols-4 gap-3 mb-4">
-              {currentImages.map((img) => (
-                <div
-                  key={img.id}
-                  className={`relative group rounded-lg overflow-hidden border-2 cursor-pointer ${coverImg === img.url ? "border-blue-500" : "border-slate-200"}`}
-                  onClick={() => handleSetCover(img.url)}
-                >
-                  <img src={img.url} alt={img.alt || ""} className="w-full h-24 object-cover" />
-                  {coverImg === img.url && (
-                    <div className="absolute top-1 left-1">
-                      <Star className="w-4 h-4 text-blue-500 fill-blue-500" />
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleImageDelete(img.id); }}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-slate-500 mb-2">Click an image to set it as the cover.</p>
-            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="text-sm text-slate-600" />
-            {uploading && <p className="text-xs text-slate-500 mt-1">Uploading...</p>}
-          </div>
+          <ImageGallery
+            images={images}
+            onUpload={handleImageUpload}
+            onDelete={handleImageDelete}
+          />
         )}
       </div>
     </div>

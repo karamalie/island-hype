@@ -18,10 +18,12 @@ import {
   updatePackageActivities,
   uploadPackageImage,
   deletePackageImage,
-  setPackageCoverImage,
+  uploadPackageCoverImage,
 } from "@/lib/actions/packages";
 import { generateSlug } from "@/lib/utils";
-import { X, Star, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2 } from "lucide-react";
+import { ImageGallery } from "@/components/admin/shared/image-gallery";
+import { CoverImageUpload } from "@/components/admin/shared/cover-image-upload";
 import type { InclusionCategory, Market } from "@prisma/client";
 
 const inputClass =
@@ -195,9 +197,11 @@ export function PackageForm({
     pkg?.activities.map((a) => ({ activityId: a.activity.id, isIncluded: a.isIncluded })) || []
   );
 
+  // Cover image (create mode)
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+
   // Images
-  const [currentImages, setCurrentImages] = useState(pkg?.images || []);
-  const [coverImg, setCoverImg] = useState(pkg?.coverImage || "");
+  const currentImages = pkg?.images || [];
 
   // Terms
   const [terms, setTerms] = useState(pkg?.terms || "");
@@ -210,7 +214,6 @@ export function PackageForm({
   const [savingInclusions, setSavingInclusions] = useState(false);
   const [savingItinerary, setSavingItinerary] = useState(false);
   const [savingExpAct, setSavingExpAct] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [savingTerms, setSavingTerms] = useState(false);
 
   function handleNameChange(value: string) {
@@ -255,6 +258,7 @@ export function PackageForm({
     formData.set("isFeatured", String(isFeatured));
     formData.set("isActive", String(isActive));
     formData.set("sortOrder", String(sortOrder));
+    if (!isEdit && coverFile) formData.set("coverImage", coverFile);
 
     const result = isEdit
       ? await updatePackage(pkg.id, formData)
@@ -368,39 +372,26 @@ export function PackageForm({
     }
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !pkg) return;
-    setUploading(true);
+  async function handleCoverUpload(file: File) {
+    if (!pkg) return { success: false, error: "Save the package first" };
+    const formData = new FormData();
+    formData.set("file", file);
+    const result = await uploadPackageCoverImage(pkg.id, formData);
+    if (result.success) router.refresh();
+    return result;
+  }
+
+  async function handleImageUpload(file: File) {
+    if (!pkg) return { success: false, error: "Save the package first" };
     const formData = new FormData();
     formData.set("file", file);
     const result = await uploadPackageImage(pkg.id, formData);
-    setUploading(false);
-    if (result.success && result.url) {
-      setCurrentImages([...currentImages, { id: Date.now().toString(), url: result.url, alt: file.name }]);
-      toast.success("Image uploaded");
-      router.refresh();
-    } else {
-      toast.error(result.error || "Upload failed");
-    }
-    e.target.value = "";
+    if (result.success) router.refresh();
+    return result;
   }
 
   async function handleImageDelete(imageId: string) {
-    const result = await deletePackageImage(imageId);
-    if (result.success) {
-      setCurrentImages(currentImages.filter((img) => img.id !== imageId));
-      toast.success("Image deleted");
-    }
-  }
-
-  async function handleSetCover(url: string) {
-    if (!pkg) return;
-    const result = await setPackageCoverImage(pkg.id, url);
-    if (result.success) {
-      setCoverImg(url);
-      toast.success("Cover image set");
-    }
+    return deletePackageImage(imageId);
   }
 
   function updatePricing(market: "local" | "international", field: string, value: string) {
@@ -503,6 +494,13 @@ export function PackageForm({
         {activeTab === "basic" && (
           <form onSubmit={handleSaveBasic} className="space-y-6">
             <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+              <CoverImageUpload
+                currentImageUrl={pkg?.coverImage || undefined}
+                onFileChange={!isEdit ? setCoverFile : undefined}
+                onUpload={isEdit ? handleCoverUpload : undefined}
+                required={!isEdit}
+              />
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
@@ -714,27 +712,11 @@ export function PackageForm({
 
         {/* IMAGES TAB */}
         {activeTab === "images" && isEdit && (
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h3 className="text-base font-semibold text-slate-900 mb-4">Images</h3>
-            <div className="grid grid-cols-4 gap-3 mb-4">
-              {currentImages.map((img) => (
-                <div
-                  key={img.id}
-                  className={`relative group rounded-lg overflow-hidden border-2 cursor-pointer ${coverImg === img.url ? "border-blue-500" : "border-slate-200"}`}
-                  onClick={() => handleSetCover(img.url)}
-                >
-                  <img src={img.url} alt={img.alt || ""} className="w-full h-24 object-cover" />
-                  {coverImg === img.url && <div className="absolute top-1 left-1"><Star className="w-4 h-4 text-blue-500 fill-blue-500" /></div>}
-                  <button type="button" onClick={(e) => { e.stopPropagation(); handleImageDelete(img.id); }} className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-slate-500 mb-2">Click an image to set it as the cover.</p>
-            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="text-sm text-slate-600" />
-            {uploading && <p className="text-xs text-slate-500 mt-1">Uploading...</p>}
-          </div>
+          <ImageGallery
+            images={currentImages}
+            onUpload={handleImageUpload}
+            onDelete={handleImageDelete}
+          />
         )}
 
         {/* TERMS TAB */}

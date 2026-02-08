@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAccommodation } from "@/lib/actions/accommodations";
+import { getImageUrl } from "@/lib/image-urls";
 import { AccommodationForm } from "./accommodation-form";
 
 export default async function EditAccommodationPage({
@@ -17,10 +18,24 @@ export default async function EditAccommodationPage({
     orderBy: { name: "asc" },
   });
 
+  // Resolve coverImage to full URL (seeded data stores bare filenames)
+  const resolvedAccommodation = {
+    ...accommodation,
+    coverImage: accommodation.coverImage
+      ? getImageUrl("accommodations", accommodation.coverImage)
+      : null,
+  };
+
+  // Resolve gallery image paths to full URLs
+  const resolvedImages = accommodation.images.map((img) => ({
+    ...img,
+    url: getImageUrl("accommodations", img.url),
+  }));
+
   return (
     <AccommodationForm
-      accommodation={accommodation}
-      images={accommodation.images}
+      accommodation={resolvedAccommodation}
+      images={resolvedImages}
       locations={locations}
     />
   );

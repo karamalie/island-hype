@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { revalidatePath } from "next/cache";
 import { generateSlug } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/lib/storage";
+import { getStoragePath } from "@/lib/image-urls";
 import type { ActivityCategory } from "@prisma/client";
 
 export async function getActivities() {
@@ -53,6 +54,15 @@ export async function createActivity(formData: FormData) {
     };
   }
 
+  // Handle cover image upload
+  const coverFile = formData.get("coverImage") as File | null;
+  let coverImage: string | null = null;
+  if (coverFile && coverFile.size > 0) {
+    const uploadResult = await uploadImage(coverFile, { bucket: "activities" });
+    if (uploadResult.error) return { success: false, error: uploadResult.error };
+    coverImage = uploadResult.path;
+  }
+
   try {
     const activity = await prisma.activity.create({
       data: {
@@ -67,6 +77,7 @@ export async function createActivity(formData: FormData) {
         internationalPrice,
         isActive,
         sortOrder,
+        coverImage,
       },
     });
     revalidatePath("/admin/activities");
@@ -175,12 +186,52 @@ export async function uploadActivityImage(
     if (result.error) return { success: false, error: result.error };
 
     await prisma.activityImage.create({
-      data: { url: result.url, alt: file.name, activityId },
+      data: { url: result.path, alt: file.name, activityId },
     });
     revalidatePath(`/admin/activities/${activityId}`);
-    return { success: true, url: result.url };
+    return { success: true, url: result.url, id: result.path };
   } catch {
     return { success: false, error: "Failed to upload image" };
+  }
+}
+
+export async function uploadActivityCoverImage(activityId: string, formData: FormData) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  const file = formData.get("file") as File;
+  if (!file) return { success: false, error: "No file provided" };
+
+  try {
+    const result = await uploadImage(file, { bucket: "activities" });
+    if (result.error) return { success: false, error: result.error };
+
+    await prisma.activity.update({
+      where: { id: activityId },
+      data: { coverImage: result.path },
+    });
+    revalidatePath(`/admin/activities/${activityId}`);
+    revalidatePath("/");
+    return { success: true, url: result.url };
+  } catch {
+    return { success: false, error: "Failed to upload cover image" };
+  }
+}
+
+export async function setActivityCoverImage(activityId: string, imageUrl: string) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.activity.update({
+      where: { id: activityId },
+      data: { coverImage: getStoragePath(imageUrl, "activities") },
+    });
+    revalidatePath(`/admin/activities/${activityId}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to set cover image" };
   }
 }
 
@@ -194,10 +245,7 @@ export async function deleteActivityImage(imageId: string) {
     });
     if (!image) return { success: false, error: "Image not found" };
 
-    const urlParts = image.url.split("/activities/");
-    if (urlParts[1]) {
-      await deleteImage("activities", urlParts[1]);
-    }
+    await deleteImage("activities", image.url);
 
     await prisma.activityImage.delete({ where: { id: imageId } });
     revalidatePath(`/admin/activities/${image.activityId}`);
