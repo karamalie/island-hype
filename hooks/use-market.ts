@@ -2,9 +2,7 @@
 "use client";
 
 import { useSyncExternalStore, useCallback } from "react";
-import type { PricingMarket } from "@prisma/client";
-
-type Market = PricingMarket;
+import type { Market } from "@prisma/client";
 
 /**
  * Get market value from cookie

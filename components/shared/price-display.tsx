@@ -22,10 +22,10 @@ export function PriceDisplay({
   showCurrency = true,
   period,
 }: PriceDisplayProps) {
-  const { market, currency } = useMarket();
+  const market = useMarket();
 
   const price = market === "LOCAL" ? localPrice : internationalPrice;
-  const formattedPrice = formatPrice(price, currency);
+  const formattedPrice = formatPrice(price, market);
 
   const sizes = {
     sm: "text-lg font-semibold",
