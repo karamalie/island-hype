@@ -18,6 +18,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
 import type { PackageWithRelations } from "@/lib/data/packages";
 import { getImageUrl } from "@/lib/image-urls";
+import Image from "next/image";
 interface PackageCardProps {
   package: PackageWithRelations;
   currency: "USD" | "MVR";
@@ -50,19 +51,20 @@ export function PackageCard({ package: pkg, currency }: PackageCardProps) {
         {/* Image Container */}
         <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
           {/* Placeholder gradient or actual image */}
-          <div
-            className="absolute inset-0 bg-gradient-to-br from-teal-400 via-cyan-500 to-blue-500 transition-transform duration-700 group-hover:scale-110"
-            style={
-              pkg.coverImage
-                ? {
-                    backgroundImage: `url(${getImageUrl("packages", pkg.coverImage)})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }
-                : undefined
-            }
-          />
-
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-110">
+              <Image
+                src={getImageUrl(
+                  "packages",
+                  pkg.coverImage || "placeholder.jpg"
+                )}
+                alt={pkg.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </div>
+          </div>
           {/* Overlay gradient on hover */}
           <div
             className={cn(
