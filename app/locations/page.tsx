@@ -215,15 +215,20 @@ export default async function LocationsPage({ searchParams }: PageProps) {
                     className={`group relative rounded-2xl md:rounded-3xl overflow-hidden ${colSpan} ${height}`}
                   >
                     <div className="absolute inset-0">
-                      <Image
-                        src={getImageUrl(
-                          "locations",
-                          location.coverImage || "placeholder.jpg"
-                        )}
-                        alt={location.name}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
+                      <div className="absolute inset-0 overflow-hidden">
+                        <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-110">
+                          <Image
+                            src={getImageUrl(
+                              "locations",
+                              location.coverImage || "placeholder.jpg"
+                            )}
+                            alt={location.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        </div>
+                      </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     </div>
 
