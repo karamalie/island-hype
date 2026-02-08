@@ -9,7 +9,7 @@ import type {
   Experience,
   Activity,
   Offer,
-  PricingMarket,
+  Market,
   AccommodationType,
   ActivityCategory,
   TransferType,
@@ -18,7 +18,7 @@ import type {
 
 // Re-export Prisma enums for convenience
 export type {
-  PricingMarket,
+  Market,
   AccommodationType,
   ActivityCategory,
   TransferType,
@@ -201,7 +201,7 @@ export interface ImageData {
 
 export interface PriceDisplayProps {
   pricing: PackagePricing[];
-  market: PricingMarket;
+  market: Market;
   showPerNight?: boolean;
 }
 
