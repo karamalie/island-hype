@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface AccommodationFiltersProps {
   atolls: string[];
@@ -14,6 +15,8 @@ export function AccommodationFilters({
   currentType,
   currentLocation,
 }: AccommodationFiltersProps) {
+  const router = useRouter();
+
   return (
     <div className="flex flex-wrap items-center gap-4">
       {/* Type Filters */}
@@ -63,7 +66,8 @@ export function AccommodationFilters({
             if (e.target.value) {
               params.set("location", e.target.value);
             }
-            window.location.href = `/accommodations?${params.toString()}`;
+            const query = params.toString();
+            router.push(query ? `/accommodations?${query}` : "/accommodations");
           }}
           className="px-4 py-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none pr-10"
         >

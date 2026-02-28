@@ -5,7 +5,7 @@ import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { getImageUrl } from "@/lib/image-urls";
-import { Navbar } from "@/components/layout/nav-bar";
+import { PageHero } from "@/components/layout/page-hero";
 import { Footer } from "@/components/layout/footer";
 import {
   MapPin,
@@ -50,86 +50,61 @@ export default async function LocationsPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative min-h-[75vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 parallax-bg">
-            <Image
-              src={getImageUrl("images", "hero/maldives-aerial.jpg")}
-              alt="Maldives Locations"
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
-        </div>
-
-        <Navbar variant="overlay" showLogo={true} />
-
-        <Container className="relative z-10 pt-32 pb-16">
-          <div className="max-w-4xl">
-            <Badge
-              variant="glass"
-              size="lg"
-              className="text-white border-white/20 mb-6 gap-2"
-            >
-              <Compass className="w-4 h-4" />
-              Explore the Maldives
-            </Badge>
-
-            <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-white mb-6">
-              <span className="font-light">Discover</span>
-              <br />
-              <span className="font-display italic">Paradise Islands</span>
-            </h1>
-
-            <p className="text-xl md:text-2xl text-white/90 leading-relaxed max-w-2xl">
-              From vibrant local islands to secluded resort paradises. Each
-              atoll offers unique experiences, dive sites, and unforgettable
-              moments in crystal-clear waters.
-            </p>
-
-            <div className="flex flex-wrap gap-6 mt-8">
-              <div className="flex items-center gap-2 text-white">
-                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <MapPin className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{locations.length}</div>
-                  <div className="text-sm text-white/80">Destinations</div>
-                </div>
+      <PageHero
+        backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
+        backgroundAlt="Maldives locations"
+        overlayTone="strong"
+        badge={
+          <Badge variant="glass" size="lg" className="text-white border-white/20 mb-6 gap-2">
+            <Compass className="w-4 h-4" />
+            Explore the Maldives
+          </Badge>
+        }
+        title={
+          <>
+            <span className="font-light">Discover</span>
+            <br />
+            <span className="font-display italic">Paradise Islands</span>
+          </>
+        }
+        subtitle="From vibrant local islands to secluded resort paradises. Each atoll offers unique experiences, dive sites, and unforgettable moments in crystal-clear waters."
+        stats={
+          <div className="flex flex-wrap gap-6">
+            <div className="flex items-center gap-2 text-white">
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <MapPin className="w-6 h-6" />
               </div>
-              <div className="flex items-center gap-2 text-white">
-                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <Hotel className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">
-                    {locations.reduce(
-                      (sum, loc) => sum + loc._count.accommodations,
-                      0
-                    )}
-                  </div>
-                  <div className="text-sm text-white/80">Accommodations</div>
-                </div>
+              <div>
+                <div className="text-2xl font-bold">{locations.length}</div>
+                <div className="text-sm text-white/80">Destinations</div>
               </div>
-              <div className="flex items-center gap-2 text-white">
-                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <Waves className="w-6 h-6" />
+            </div>
+            <div className="flex items-center gap-2 text-white">
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <Hotel className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">
+                  {locations.reduce((sum, loc) => sum + loc._count.accommodations, 0)}
                 </div>
-                <div>
-                  <div className="text-2xl font-bold">26</div>
-                  <div className="text-sm text-white/80">Atolls</div>
-                </div>
+                <div className="text-sm text-white/80">Accommodations</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-white">
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                <Waves className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">26</div>
+                <div className="text-sm text-white/80">Atolls</div>
               </div>
             </div>
           </div>
-        </Container>
-      </section>
+        }
+      />
 
       {/* Filter Section */}
-      <Section className="py-12 bg-gray-50 border-b border-gray-200">
+      <Section spacing="sm" surface="plain" className="border-b border-gray-200">
         <Container>
           <LocationFilters
             atolls={filterOptions.atolls}
@@ -141,7 +116,7 @@ export default async function LocationsPage({ searchParams }: PageProps) {
       </Section>
 
       {/* Bento Box Grid */}
-      <Section className="py-16 bg-white">
+      <Section spacing="md" surface="plain">
         <Container>
           <div className="mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
@@ -322,7 +297,7 @@ export default async function LocationsPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full surface-maldives-empty mb-6">
                 <MapPin className="w-10 h-10 text-gray-400" />
               </div>
               <h3 className="text-2xl font-bold mb-2 text-gray-900">
@@ -337,13 +312,20 @@ export default async function LocationsPage({ searchParams }: PageProps) {
       </Section>
 
       {/* CTA Section */}
-      <Section className="bg-gradient-to-br from-teal-600 to-cyan-600 py-20 text-white">
+      <Section
+        spacing="lg"
+        surface="soft"
+        className="text-gray-900"
+      >
         <Container>
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <Badge variant="primary" size="lg" className="mb-6">
+              Signature Island Discovery
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
               Ready to Explore Paradise?
             </h2>
-            <p className="text-xl text-white/90 mb-8 leading-relaxed">
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
               Let us help you discover the perfect Maldivian island for your
               dream vacation. Each location offers unique experiences waiting to
               be explored.
