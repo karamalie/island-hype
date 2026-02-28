@@ -11,7 +11,7 @@ export const adminUsers: AdminUser[] = [
     id: "1",
     username: "karam",
     passwordHash:
-      "$2b$10$.b/J2a4vE7Ca1512Nv4R1uVKjDi8mU/tIGQUbK.Oo9/js8GbK.bf.",
+      "$2b$10$j2EWwFx4D.BlhWCE1a6By.ZaPnGBgVPCrGhskszNWutmcnpi8/s8q",
     name: "Karam",
     email: "karam@islandhype.com",
   },
@@ -19,7 +19,7 @@ export const adminUsers: AdminUser[] = [
     id: "2",
     username: "hordor",
     passwordHash:
-      "$2b$10$FPBqH6KHJEqkkQMejEgruOs7VZ4IO84Ea7pnb7xNMwBc5W7snUw5W",
+      "$2b$10$9G.txsyk5tadkXMDkh4W0OhCyPDJ1xNqcyIVGFUZC1GAChf2.iN72",
     name: "Hordor",
     email: "hordor@islandhype.com",
   },
@@ -27,7 +27,7 @@ export const adminUsers: AdminUser[] = [
     id: "3",
     username: "faizan",
     passwordHash:
-      "$2b$10$Z9sKuT2GovJggch1mhuwreMr2B9GT.e6vbYPHpJag4AFwJ3s13Tve",
+      "$2b$10$Tr5xiUbQ9eNLHOfZ1DiAD.IDoLw6zP3.JVFZiYju0KZdJbYkaAhFW",
     name: "Faizan",
     email: "faizan@islandhype.com",
   },
@@ -35,7 +35,7 @@ export const adminUsers: AdminUser[] = [
     id: "4",
     username: "shinko",
     passwordHash:
-      "$2b$10$2ZJ9XPISB2vrzBC.96FDPOiWgV4YQQAN71Q6HZAvdj8VVu9Z5j0c2",
+      "$2b$10$HEMbWi.nAc5yk3gqJi/H2.PoNUGKV7jemWI2JAx2Ht8MdWtgQbyN.",
     name: "Shinko",
     email: "shinko@islandhype.com",
   },
