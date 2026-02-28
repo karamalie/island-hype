@@ -29,10 +29,10 @@ export default function GuidePage() {
       <Navbar />
 
       {/* Hero Section - Grid Layout */}
-      <section className="border-b-2 border-gray-200">
+      <section className="border-b-2 border-black">
         <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[600px]">
           {/* Left Content */}
-          <div className="border-r-2 border-gray-200 p-12 lg:p-16 flex flex-col justify-center">
+          <div className="border-r-2 border-black p-12 lg:p-16 flex flex-col justify-center">
             <h1 className="text-6xl lg:text-7xl font-bold text-gray-900 mb-8 leading-[1.1]">
               Maldives for
               <br />
@@ -43,9 +43,11 @@ export default function GuidePage() {
               balance, and provides the gift of lifetime memories.
             </p>
             <div>
-              <Button size="lg" className="rounded-full px-8">
-                Explore Packages
-              </Button>
+              <Link href="/packages">
+                <Button size="lg" className="rounded-full px-8">
+                  Explore Packages
+                </Button>
+              </Link>
             </div>
 
             {/* Small Image Grid */}
@@ -75,7 +77,7 @@ export default function GuidePage() {
           {/* Right Image */}
           <div className="relative min-h-[400px] lg:min-h-full">
             <Image
-              src={getImageUrl("images", "guide/hero-overwater-walkway.jpg")}
+              src={getImageUrl("images", "guide/hero-aerial.jpg")}
               alt="Maldives overwater walkway"
               fill
               className="object-cover"
@@ -86,7 +88,7 @@ export default function GuidePage() {
       </section>
 
       {/* Coordinates Section */}
-      <section className="border-b-2 border-gray-200 py-8">
+      <section className="border-b-2 border-black py-8">
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex items-center gap-3 text-gray-900">
             <MapPin className="w-6 h-6 text-teal-600" />
@@ -96,7 +98,7 @@ export default function GuidePage() {
       </section>
 
       {/* Introduction Section */}
-      <section className="border-b-2 border-gray-200">
+      <section className="border-b-2 border-black">
         <div className="max-w-7xl mx-auto px-8 py-16 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             {/* Left Side - Introduction */}
@@ -147,11 +149,11 @@ export default function GuidePage() {
       </section>
 
       {/* Large Image Grid Section */}
-      <section className="border-b-2 border-gray-200">
+      <section className="border-b-2 border-black">
         <div className="grid grid-cols-1 lg:grid-cols-3 min-h-[500px]">
-          <div className="relative border-r-2 border-gray-200">
+          <div className="relative border-r-2 border-black">
             <Image
-              src={getImageUrl("images", "guide/overwater-jetty-aerial.jpg")}
+              src={getImageUrl("images", "guide/island-resort-wide.jpg")}
               alt="Overwater jetty"
               fill
               className="object-cover"
@@ -159,7 +161,7 @@ export default function GuidePage() {
           </div>
           <div className="relative lg:col-span-2">
             <Image
-              src={getImageUrl("images", "guide/island-resort-wide.jpg")}
+              src={getImageUrl("images", "guide/overwater-jetty-aerial.jpg")}
               alt="Island resort"
               fill
               className="object-cover"
@@ -169,7 +171,7 @@ export default function GuidePage() {
       </section>
 
       {/* Geography Section */}
-      <section className="border-b-2 border-gray-200 py-16 lg:py-24 bg-gray-50">
+      <section className="border-b-2 border-black py-16 lg:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             {/* Content */}
@@ -258,7 +260,7 @@ export default function GuidePage() {
       </section>
 
       {/* Climate & Best Time Section */}
-      <section className="border-b-2 border-gray-200 py-16 lg:py-24">
+      <section className="border-b-2 border-black py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex items-center gap-3 mb-12">
             <Sun className="w-8 h-8 text-teal-600" />
@@ -291,9 +293,9 @@ export default function GuidePage() {
           </div>
 
           {/* Seasons Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 lg:divide-x lg:divide-black/35">
             {/* Dry Season */}
-            <div className="border-2 border-gray-200 rounded-2xl p-8 bg-white">
+            <div className="border-2 border-gray-200 rounded-2xl p-8 bg-white lg:mr-6">
               <div className="flex items-center justify-between mb-6">
                 <Badge className="bg-teal-600 text-white text-sm px-4 py-1">
                   BEST TIME
@@ -349,7 +351,7 @@ export default function GuidePage() {
             </div>
 
             {/* Wet Season */}
-            <div className="border-2 border-gray-200 rounded-2xl p-8 bg-white">
+            <div className="border-2 border-gray-200 rounded-2xl p-8 bg-white lg:ml-6">
               <div className="flex items-center justify-between mb-6">
                 <Badge variant="outline" className="text-sm px-4 py-1">
                   BUDGET FRIENDLY
@@ -421,11 +423,11 @@ export default function GuidePage() {
       </section>
 
       {/* People & Culture Section */}
-      <section className="border-b-2 border-gray-200 py-16 lg:py-24 bg-gray-50">
+      <section className="border-b-2 border-black py-16 lg:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-0 lg:divide-x lg:divide-black/35">
             {/* Image First */}
-            <div className="space-y-6">
+            <div className="space-y-6 lg:pr-8">
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border-2 border-gray-200">
                 <Image
                   src={getImageUrl("images", "guide/male-mosque.jpg")}
@@ -442,10 +444,27 @@ export default function GuidePage() {
                   className="object-cover"
                 />
               </div>
+              <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                  Image Notes
+                </h4>
+                <p className="text-sm text-gray-600 leading-relaxed mb-2">
+                  The Grand Friday Mosque area in Malé is one of the capital&apos;s
+                  main landmarks. The Islamic Centre opened in 1984, and the
+                  mosque is known as the country&apos;s largest, with capacity for
+                  around 5,000 worshippers.
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Bodu Beru literally means &quot;big drum.&quot; Traditional
+                  drums are made from coconut wood with goatskin drum heads, and
+                  performances typically build from a steady opening rhythm to a
+                  fast, high-energy crescendo.
+                </p>
+              </div>
             </div>
 
             {/* Content */}
-            <div>
+            <div className="lg:pl-8">
               <div className="flex items-center gap-3 mb-6">
                 <Users className="w-8 h-8 text-teal-600" />
                 <h2 className="text-4xl font-bold text-gray-900">
@@ -552,7 +571,7 @@ export default function GuidePage() {
       </section>
 
       {/* Transport Section */}
-      <section className="border-b-2 border-gray-200 py-16 lg:py-24">
+      <section className="border-b-2 border-black py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex items-center gap-3 mb-12">
             <Plane className="w-8 h-8 text-teal-600" />
@@ -567,8 +586,7 @@ export default function GuidePage() {
               <strong>Islands are separated by water</strong> — you cannot drive
               between them. The atolls spread across 823km, creating significant
               distances between destinations. Every transfer must be arranged by
-              your resort or guesthouse, and costs can be substantial
-              (especially seaplanes: $300-500+ per person).
+              your resort or guesthouse for a cost.
             </p>
           </div>
 
@@ -661,7 +679,7 @@ export default function GuidePage() {
       </section>
 
       {/* Things to Do Section */}
-      <section className="border-b-2 border-gray-200 py-16 lg:py-24 bg-gray-50">
+      <section className="border-b-2 border-black py-16 lg:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex items-center gap-3 mb-12">
             <Compass className="w-8 h-8 text-teal-600" />
@@ -827,19 +845,23 @@ export default function GuidePage() {
             Explore our curated packages and find your perfect Maldivian escape.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-white text-teal-600 hover:bg-gray-100 rounded-full px-8"
-            >
-              View All Packages
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-2 border-white text-white hover:bg-white/10 rounded-full px-8"
-            >
-              Explore Locations
-            </Button>
+            <Link href="/packages">
+              <Button
+                size="lg"
+                className="bg-white text-teal-600 hover:bg-gray-100 rounded-full px-8"
+              >
+                View All Packages
+              </Button>
+            </Link>
+            <Link href="/locations">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white/10 rounded-full px-8"
+              >
+                Explore Locations
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

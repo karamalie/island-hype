@@ -1,5 +1,4 @@
 // app/accommodations/page.tsx
-import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getImageUrl } from "@/lib/image-urls";
-import { Navbar } from "@/components/layout/nav-bar";
+import { PageHero } from "@/components/layout/page-hero";
 import { Footer } from "@/components/layout/footer";
 import { MapPin, Star, Users, Waves, Sparkles } from "lucide-react";
 import {
@@ -46,55 +45,27 @@ export default async function AccommodationsPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
-        {/* Background Image with Parallax Effect */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 parallax-bg">
-            <Image
-              src={getImageUrl("images", "hero/maldives-aerial.jpg")}
-              alt="Maldives Accommodations"
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
-        </div>
-
-        {/* Navbar */}
-        <Navbar variant="overlay" showLogo={true} />
-
-        {/* Hero Content */}
-        <Container className="relative z-10 pt-32 pb-16">
-          <div className="max-w-3xl">
-            {/* Badge */}
-            <Badge
-              variant="glass"
-              size="lg"
-              className="text-white border-white/20 mb-6"
-            >
-              Where You&apos;ll Stay
-            </Badge>
-
-            {/* Headline */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl leading-tight text-white mb-6">
-              <span className="font-light">Find Your</span>
-              <br />
-              <span className="font-display italic">Perfect Stay</span>
-            </h1>
-
-            <p className="text-xl text-white/90 leading-relaxed max-w-2xl">
-              From luxury overwater villas to authentic island guesthouses.
-              Discover accommodations that match your style and budget across
-              the Maldives.
-            </p>
-          </div>
-        </Container>
-      </section>
+      <PageHero
+        backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
+        backgroundAlt="Maldives accommodations"
+        overlayTone="medium"
+        badge={
+          <Badge variant="glass" size="lg" className="text-white border-white/20 mb-6">
+            Where You&apos;ll Stay
+          </Badge>
+        }
+        title={
+          <>
+            <span className="font-light">Find Your</span>
+            <br />
+            <span className="font-display italic">Perfect Stay</span>
+          </>
+        }
+        subtitle="From luxury overwater villas to authentic island guesthouses. Discover accommodations that match your style and budget across the Maldives."
+      />
 
       {/* Filter Section */}
-      <Section className="py-12 bg-gray-50 border-b border-gray-200">
+      <Section spacing="sm" surface="plain" className="border-b border-gray-200">
         <Container>
           <AccommodationFilters
             atolls={filterOptions.atolls}
@@ -105,7 +76,7 @@ export default async function AccommodationsPage({ searchParams }: PageProps) {
       </Section>
 
       {/* Results Section */}
-      <Section className="py-16 bg-white">
+      <Section spacing="md" surface="plain">
         <Container>
           {/* Results Header */}
           <div className="mb-12">
@@ -219,7 +190,7 @@ export default async function AccommodationsPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full surface-maldives-empty mb-6">
                 <Waves className="w-10 h-10 text-gray-400" />
               </div>
               <h3 className="text-2xl font-bold mb-2 text-gray-900">
@@ -228,18 +199,19 @@ export default async function AccommodationsPage({ searchParams }: PageProps) {
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
                 Try adjusting your filters to see more results.
               </p>
-              <Button
-                onClick={() => (window.location.href = "/accommodations")}
-              >
-                Clear Filters
-              </Button>
+              <Link href="/accommodations">
+                <Button>Clear Filters</Button>
+              </Link>
             </div>
           )}
         </Container>
       </Section>
 
       {/* CTA Section - Inspired by Image 2 */}
-      <Section className="bg-gradient-to-br from-teal-50 to-cyan-50 py-20">
+      <Section
+        spacing="lg"
+        surface="soft"
+      >
         <Container>
           <div className="max-w-4xl mx-auto text-center">
             <Badge variant="primary" size="lg" className="mb-6">
@@ -278,8 +250,8 @@ export default async function AccommodationsPage({ searchParams }: PageProps) {
                 },
               ].map((feature, index) => (
                 <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-100 mb-4">
-                    <feature.icon className="w-8 h-8 text-teal-600" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full surface-maldives-icon mb-4">
+                    <feature.icon className="w-8 h-8 text-[var(--maldives-ocean-700)]" />
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">
                     {feature.title}

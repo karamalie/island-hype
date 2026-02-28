@@ -1,7 +1,7 @@
 // app/packages/page.tsx
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import Image from "next/image";
+import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, MessageCircle, Phone } from "lucide-react";
 import { SortDropdown } from "@/components/packages/sort-dropdown";
 import { getImageUrl } from "@/lib/image-urls";
-import { Navbar } from "@/components/layout/nav-bar";
+import { PageHero } from "@/components/layout/page-hero";
+import { Badge } from "@/components/ui/badge";
 
 interface PageProps {
   searchParams: Promise<{
@@ -69,45 +70,22 @@ export default async function PackagesPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero Header with Parallax Background */}
-      <section className="relative min-h-[60vh] flex items-center overflow-hidden">
-        {/* Parallax Background Image */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 parallax-bg">
-            <Image
-              src={getImageUrl("images", "hero/maldives-aerial.jpg")}
-              alt="Maldives"
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/20" />
-        </div>
-
-        {/* Navbar */}
-        <Navbar variant="overlay" showLogo={true} />
-
-        {/* Hero Content */}
-        <Container className="relative z-10 pt-32 pb-16">
-          <div className="max-w-3xl">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight text-white">
-              Explore Our
-              <br />
-              <span className="font-display italic">Travel Packages</span>
-            </h1>
-            <p className="text-xl text-white/90 leading-relaxed">
-              Discover handpicked Maldives experiences, from budget-friendly
-              local islands to luxury resort escapes. Every package includes
-              accommodation, activities, and unforgettable moments.
-            </p>
-          </div>
-        </Container>
-      </section>
+      <PageHero
+        backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
+        backgroundAlt="Maldives aerial"
+        overlayTone="medium"
+        title={
+          <>
+            Explore Our
+            <br />
+            <span className="font-display italic">Travel Packages</span>
+          </>
+        }
+        subtitle="Discover handpicked Maldives experiences, from budget-friendly local islands to luxury resort escapes. Every package includes accommodation, activities, and unforgettable moments."
+      />
 
       {/* Filters Section */}
-      <Section className="bg-gray-50 py-12">
+      <Section spacing="sm" surface="plain" className="border-b border-gray-200">
         <Container>
           <Suspense fallback={<FiltersSkeleton />}>
             <PackageFilters filterOptions={filterOptions} />
@@ -116,7 +94,7 @@ export default async function PackagesPage({ searchParams }: PageProps) {
       </Section>
 
       {/* Results Section */}
-      <Section className="py-16 bg-gray-50">
+      <Section spacing="md" surface="plain">
         <Container>
           {/* Results Header */}
           <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
@@ -146,7 +124,7 @@ export default async function PackagesPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full surface-maldives-empty mb-6">
                 <Search className="w-10 h-10 text-gray-400" />
               </div>
               <h3 className="text-2xl font-bold mb-2 text-gray-900">
@@ -156,32 +134,32 @@ export default async function PackagesPage({ searchParams }: PageProps) {
                 Try adjusting your filters to see more results, or clear all
                 filters to view our complete collection.
               </p>
-              <Button
-                onClick={() => (window.location.href = "/packages")}
-                size="lg"
-              >
-                Clear All Filters
-              </Button>
+              <Link href="/packages">
+                <Button size="lg">Clear All Filters</Button>
+              </Link>
             </div>
           )}
         </Container>
       </Section>
 
       {/* CTA Section */}
-      <Section className="bg-gray-900 text-white py-20">
+      <Section spacing="lg" surface="soft">
         <Container>
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-display mb-6">
+            <Badge variant="primary" size="lg" className="mb-6">
+              Tailored Island Journeys
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-display mb-6 text-gray-900">
               Can&apos;t Find What You&apos;re Looking For?
             </h2>
-            <p className="text-xl text-white/80 mb-8 leading-relaxed">
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
               Let us create a custom package tailored to your dreams. Contact
               our travel experts today for personalized recommendations.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button
                 size="lg"
-                className="bg-white text-black hover:bg-white/90 gap-2 shadow-xl"
+                className="bg-[var(--maldives-ink-900)] text-white hover:bg-[#09101d] gap-2 shadow-xl btn-interactive btn-shimmer"
               >
                 <MessageCircle className="w-5 h-5" />
                 Contact Us
@@ -189,7 +167,7 @@ export default async function PackagesPage({ searchParams }: PageProps) {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white/10 gap-2"
+                className="border-gray-300 text-gray-800 hover:bg-white gap-2 btn-interactive"
               >
                 <Phone className="w-5 h-5" />
                 Call +960 123 4567

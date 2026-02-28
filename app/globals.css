@@ -60,6 +60,16 @@
   --color-error: #ef4444;
   --color-info: #3b82f6;
 
+  /* Maldives Brand Palette */
+  --maldives-ink-900: #0b1220;
+  --maldives-ocean-700: #0a5d73;
+  --maldives-lagoon-600: #0f8ea6;
+  --maldives-cyan-500: #22b8cf;
+  --maldives-sky-100: #eaf8fc;
+  --maldives-foam-50: #f5fcff;
+  --maldives-sand-50: #f8f6f2;
+  --surface-elevated: #ffffff;
+
   /* === BACKGROUNDS === */
   --bg-primary: var(--color-white);
   --bg-secondary: var(--color-gray-50);
@@ -200,11 +210,18 @@
   --duration-700: 700ms;
   --duration-1000: 1000ms;
 
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 320ms;
+
   --ease-linear: linear;
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
   /* === Z-INDEX === */
   --z-dropdown: 1000;
@@ -221,6 +238,14 @@
   --container-lg: 1024px;
   --container-xl: 1280px;
   --container-2xl: 1536px;
+
+  /* === LAYOUT TOKENS === */
+  --hero-min-h: clamp(34rem, 72vh, 47.5rem);
+  --hero-content-pt: clamp(6rem, 10vw, 8rem);
+  --hero-content-pb: clamp(3rem, 6vw, 5rem);
+  --section-gap-sm: clamp(2.5rem, 4vw, 3.5rem);
+  --section-gap-md: clamp(3.5rem, 5vw, 5rem);
+  --section-gap-lg: clamp(4.5rem, 6vw, 6.5rem);
 }
 
 /* Dark Mode */
@@ -1060,6 +1085,201 @@ body {
   font-family: var(--font-display);
 }
 
+/* Semantic non-image backgrounds */
+.bg-maldives-soft {
+  background: linear-gradient(
+    135deg,
+    var(--maldives-foam-50),
+    var(--maldives-sky-100),
+    #f3fbff
+  );
+}
+
+.bg-maldives-brand {
+  background: linear-gradient(
+    135deg,
+    var(--maldives-ocean-700),
+    var(--maldives-lagoon-600),
+    var(--maldives-cyan-500)
+  );
+}
+
+.bg-maldives-deep {
+  background: linear-gradient(135deg, var(--maldives-ink-900), #0f1f2e, #143247);
+}
+
+.bg-maldives-sand-lagoon {
+  background: linear-gradient(
+    135deg,
+    var(--maldives-sand-50),
+    var(--maldives-sky-100),
+    #dff6fb
+  );
+}
+
+.text-maldives-ink {
+  color: var(--maldives-ink-900);
+}
+
+.surface-maldives-icon {
+  background: linear-gradient(145deg, #d8f2f8, #bee9f3);
+  color: var(--maldives-ocean-700);
+}
+
+.surface-maldives-empty {
+  background: linear-gradient(145deg, #effaff, #dff4fb);
+}
+
+/* Motion + interactive accents */
+.btn-interactive {
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+
+.btn-interactive:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 14px 28px -12px rgba(10, 93, 115, 0.35);
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.42) 50%,
+    transparent 65%
+  );
+  transform: translateX(-160%);
+  animation: maldives-shimmer 4s var(--ease-standard) infinite;
+  pointer-events: none;
+}
+
+@keyframes maldives-shimmer {
+  0%,
+  70% {
+    transform: translateX(-160%);
+  }
+  100% {
+    transform: translateX(160%);
+  }
+}
+
+.beam-border {
+  position: relative;
+  overflow: hidden;
+}
+
+.beam-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    transparent 0deg,
+    rgba(34, 184, 207, 0.75) 90deg,
+    transparent 180deg,
+    rgba(15, 142, 166, 0.85) 270deg,
+    transparent 360deg
+  );
+  animation: maldives-beam 4.2s linear infinite;
+  pointer-events: none;
+}
+
+.beam-border::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: inherit;
+  z-index: 0;
+}
+
+.beam-border > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes maldives-beam {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Shared layout helpers */
+.page-hero {
+  position: relative;
+  min-height: var(--hero-min-h);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.page-hero__content {
+  position: relative;
+  z-index: 10;
+  padding-top: var(--hero-content-pt);
+  padding-bottom: var(--hero-content-pb);
+}
+
+.page-hero__overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.page-hero__overlay--soft {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.25) 45%,
+    rgba(0, 0, 0, 0.15) 100%
+  );
+}
+
+.page-hero__overlay--medium {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0.38) 45%,
+    rgba(0, 0, 0, 0.24) 100%
+  );
+}
+
+.page-hero__overlay--strong {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.5) 48%,
+    rgba(0, 0, 0, 0.32) 100%
+  );
+}
+
+.content-section {
+  padding-top: var(--section-gap-md);
+  padding-bottom: var(--section-gap-md);
+}
+
+.content-section--sm {
+  padding-top: var(--section-gap-sm);
+  padding-bottom: var(--section-gap-sm);
+}
+
+.content-section--lg {
+  padding-top: var(--section-gap-lg);
+  padding-bottom: var(--section-gap-lg);
+}
+
 /* Image Loading */
 img {
   opacity: 1;
@@ -1221,5 +1441,34 @@ img[data-loading="true"] {
 @supports not (animation-timeline: scroll()) {
   .parallax-bg {
     animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .parallax-bg {
+    animation: none !important;
+  }
+
+  .btn-shimmer::after,
+  .beam-border::before {
+    animation: none !important;
+  }
+
+  .btn-interactive:hover {
+    transform: none;
+    box-shadow: none;
   }
 }

@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Heart,
   ArrowUpRight,
@@ -14,7 +15,6 @@ import {
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
 import type { PackageWithRelations } from "@/lib/data/packages";
 import { getImageUrl } from "@/lib/image-urls";
@@ -27,6 +27,14 @@ interface PackageCardProps {
 export function PackageCard({ package: pkg, currency }: PackageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const router = useRouter();
+
+  const hoverDuration = isHovered ? "var(--motion-fast)" : "120ms";
+  const hoverTiming = isHovered ? "var(--ease-emphasized)" : "var(--ease-exit)";
+  const overlayDuration = isHovered ? "var(--motion-base)" : "180ms";
+  const overlayDelay = isHovered ? "40ms" : "0ms";
+  const panelDuration = isHovered ? "var(--motion-slow)" : "220ms";
+  const panelDelay = isHovered ? "90ms" : "0ms";
 
   const price = pkg.pricing[0]?.couplePrice || 0;
   const activeOffer = pkg.offers[0];
@@ -44,15 +52,37 @@ export function PackageCard({ package: pkg, currency }: PackageCardProps) {
   return (
     <Link href={`/packages/${pkg.slug}`}>
       <Card
-        className="group relative overflow-hidden border-0 bg-white shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer h-full"
+        className={cn(
+          "group relative overflow-hidden border-0 bg-white shadow-sm cursor-pointer h-full",
+          pkg.isFeatured && "beam-border"
+        )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        style={{
+          transitionProperty: "transform, box-shadow",
+          transitionDuration: hoverDuration,
+          transitionTimingFunction: hoverTiming,
+          transform: isHovered ? "translateY(-2px)" : "translateY(0px)",
+          boxShadow: isHovered
+            ? "var(--shadow-soft-xl)"
+            : "var(--shadow-soft)",
+        }}
       >
         {/* Image Container */}
         <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
           {/* Placeholder gradient or actual image */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-110">
+            <div
+              className="w-full h-full"
+              style={{
+                transitionProperty: "transform",
+                transitionDuration: isHovered ? "var(--motion-slow)" : "190ms",
+                transitionTimingFunction: isHovered
+                  ? "var(--ease-standard)"
+                  : "var(--ease-exit)",
+                transform: isHovered ? "scale(1.06)" : "scale(1)",
+              }}
+            >
               <Image
                 src={getImageUrl(
                   "packages",
@@ -68,9 +98,17 @@ export function PackageCard({ package: pkg, currency }: PackageCardProps) {
           {/* Overlay gradient on hover */}
           <div
             className={cn(
-              "absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-opacity duration-300",
+              "absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent",
               isHovered ? "opacity-100" : "opacity-0"
             )}
+            style={{
+              transitionProperty: "opacity",
+              transitionDuration: overlayDuration,
+              transitionTimingFunction: isHovered
+                ? "var(--ease-standard)"
+                : "var(--ease-exit)",
+              transitionDelay: overlayDelay,
+            }}
           />
 
           {/* Featured Badge */}
@@ -116,16 +154,29 @@ export function PackageCard({ package: pkg, currency }: PackageCardProps) {
           {/* Glassmorphic Hover Overlay */}
           <div
             className={cn(
-              "absolute inset-0 transition-opacity duration-300 flex flex-col justify-end p-6",
+              "absolute inset-0 flex flex-col justify-end p-6",
               isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
             )}
+            style={{
+              transitionProperty: "opacity",
+              transitionDuration: panelDuration,
+              transitionTimingFunction: isHovered
+                ? "var(--ease-standard)"
+                : "var(--ease-exit)",
+              transitionDelay: panelDelay,
+            }}
           >
             {/* Glass Card */}
             <div
               className="glass-dark rounded-2xl p-4 backdrop-blur-xl space-y-3 transform transition-transform duration-300"
               style={{
-                transform: isHovered ? "translateY(0)" : "translateY(20px)",
-                transitionDelay: "50ms",
+                transform: isHovered ? "translateY(0)" : "translateY(12px)",
+                transitionProperty: "transform",
+                transitionDuration: panelDuration,
+                transitionTimingFunction: isHovered
+                  ? "var(--ease-standard)"
+                  : "var(--ease-exit)",
+                transitionDelay: panelDelay,
               }}
             >
               {/* Experiences */}
@@ -175,7 +226,7 @@ export function PackageCard({ package: pkg, currency }: PackageCardProps) {
                 className="w-full gap-2 bg-white text-black hover:bg-white/90 font-medium shadow-lg"
                 onClick={(e) => {
                   e.preventDefault();
-                  window.location.href = `/packages/${pkg.slug}`;
+                  router.push(`/packages/${pkg.slug}`);
                 }}
               >
                 View Details

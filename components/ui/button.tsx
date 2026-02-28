@@ -30,7 +30,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 ease-out focus-ring disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
+      "inline-flex items-center justify-center gap-2 font-medium transition-all focus-ring disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
 
     const variants = {
       // Default dark button
@@ -69,6 +69,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
+        style={{
+          transitionDuration: "var(--motion-base)",
+          transitionTimingFunction: "var(--ease-standard)",
+        }}
         disabled={disabled || isLoading}
         {...props}
       >

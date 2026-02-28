@@ -163,29 +163,6 @@ export function HeroCarousel({ packages }: HeroCarouselProps) {
                   {currentPackage ? getNightsDisplay(currentPackage) : ""}
                 </p>
 
-                {/* Avatar Group */}
-                <div className="flex items-center gap-3 mt-4">
-                  <AvatarGroup>
-                    <Avatar
-                      size="sm"
-                      fallback="JD"
-                      className="bg-teal-500 text-white border-2 border-white"
-                    />
-                    <Avatar
-                      size="sm"
-                      fallback="AS"
-                      className="bg-blue-500 text-white border-2 border-white"
-                    />
-                    <Avatar
-                      size="sm"
-                      fallback="MK"
-                      className="bg-purple-500 text-white border-2 border-white"
-                    />
-                  </AvatarGroup>
-                  <span className="text-white/70 text-sm">
-                    +32 People Joined
-                  </span>
-                </div>
 
                 <p className="text-white/60 text-sm mt-4 leading-relaxed line-clamp-2">
                   {currentPackage?.shortDesc || "Loading..."}

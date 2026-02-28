@@ -27,12 +27,12 @@ export function ContactForm() {
 
   if (submitted) {
     return (
-      <div className="text-center py-12 px-6 bg-green-50 rounded-2xl border border-green-200">
-        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-gray-900 mb-2">
+      <div className="text-center py-12 px-6 bg-maldives-soft rounded-2xl border border-cyan-200">
+        <CheckCircle className="w-12 h-12 text-[var(--maldives-lagoon-600)] mx-auto mb-4" />
+        <h3 className="text-xl font-bold text-maldives-ink mb-2">
           Message Sent!
         </h3>
-        <p className="text-gray-600">
+        <p className="text-gray-700">
           Thank you for reaching out. We&apos;ll get back to you within 24
           hours.
         </p>
@@ -41,7 +41,7 @@ export function ContactForm() {
   }
 
   const inputClass =
-    "w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition-colors";
+    "w-full px-4 py-3 rounded-xl border border-cyan-100 bg-white text-sm text-[var(--maldives-ink-900)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--maldives-lagoon-600)]/20 focus:border-[var(--maldives-lagoon-600)] transition-colors";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -107,7 +107,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[var(--maldives-ink-900)] text-white text-sm font-medium hover:bg-[#09101d] disabled:opacity-50 disabled:cursor-not-allowed btn-interactive btn-shimmer"
       >
         {loading ? "Sending..." : "Send Message"}
       </button>

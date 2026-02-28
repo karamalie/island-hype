@@ -1,7 +1,7 @@
 // components/home/footer.tsx
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { IconButton } from "@/components/ui/icon-button";
 import { Icons } from "@/components/ui/icons";
 
 export function Footer() {
@@ -39,12 +39,12 @@ export function Footer() {
               Discover the awe-inspiring beauty of the Maldives with our
               exclusive tour packages. Experience paradise like never before.
             </p>
-            <a
-              href="#"
+            <Link
+              href="/guide"
               className="inline-flex items-center gap-2 text-sm mt-4 text-white hover:text-gray-300 transition-colors"
             >
               More About us <Icons.arrowUpRight className="w-4 h-4" />
-            </a>
+            </Link>
           </div>
 
           {/* Navigation */}
@@ -52,36 +52,33 @@ export function Footer() {
             <h4 className="font-semibold mb-4 text-white">Navigation</h4>
             <ul className="space-y-3">
               <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
+                <Link href="/" className="text-gray-400 hover:text-white transition-colors">
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/packages"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Packages
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/accommodations"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Accommodations
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/locations"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Locations
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -115,36 +112,33 @@ export function Footer() {
             <h4 className="font-semibold mb-4 text-white">Company & Legal</h4>
             <ul className="space-y-3">
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/guide"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  FAQ
-                </a>
+                <Link href="/guide" className="text-gray-400 hover:text-white transition-colors">
+                  FAQ & Travel Guide
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/contact"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Terms of Service
-                </a>
+                  Terms of Service (Request)
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/contact"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Privacy Policy
-                </a>
+                  Privacy Policy (Request)
+                </Link>
               </li>
             </ul>
           </div>
@@ -153,41 +147,51 @@ export function Footer() {
         {/* Bottom */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-white/10">
           <div className="flex gap-3">
-            <IconButton
-              variant="outline"
-              size="sm"
-              className="border-white/20 text-white hover:bg-white/10"
+            <a
+              href="https://www.facebook.com/islandhype"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Island Hype on Facebook"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors"
             >
               <Icons.facebook className="w-4 h-4" />
-            </IconButton>
-            <IconButton
-              variant="outline"
-              size="sm"
-              className="border-white/20 text-white hover:bg-white/10"
+            </a>
+            <a
+              href="https://www.instagram.com/islandhype"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Island Hype on Instagram"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors"
             >
               <Icons.instagram className="w-4 h-4" />
-            </IconButton>
-            <IconButton
-              variant="outline"
-              size="sm"
-              className="border-white/20 text-white hover:bg-white/10"
+            </a>
+            <a
+              href="https://x.com/islandhype"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Island Hype on X"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors"
             >
               <Icons.twitter className="w-4 h-4" />
-            </IconButton>
-            <IconButton
-              variant="outline"
-              size="sm"
-              className="border-white/20 text-white hover:bg-white/10"
+            </a>
+            <a
+              href="https://www.linkedin.com/company/islandhype"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Island Hype on LinkedIn"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors"
             >
               <Icons.linkedin className="w-4 h-4" />
-            </IconButton>
-            <IconButton
-              variant="outline"
-              size="sm"
-              className="border-white/20 text-white hover:bg-white/10"
+            </a>
+            <a
+              href="https://www.youtube.com/@islandhype"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Island Hype on YouTube"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors"
             >
               <Icons.youtube className="w-4 h-4" />
-            </IconButton>
+            </a>
           </div>
           <p className="text-gray-500 text-sm">
             © 2026 Island Hype Maldives. All Rights Reserved
