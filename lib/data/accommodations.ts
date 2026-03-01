@@ -1,5 +1,6 @@
 // lib/data/accommodations.ts
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import type {
   Accommodation,
@@ -78,7 +79,7 @@ export interface AccommodationFilterOptions {
 /**
  * Fetch accommodations with filters and sorting
  */
-export async function getAccommodations(
+async function getAccommodationsQuery(
   filters: AccommodationFilters = {},
   sort: AccommodationSortOption = "featured"
 ): Promise<AccommodationWithRelations[]> {
@@ -184,10 +185,24 @@ export async function getAccommodations(
   return accommodations as AccommodationWithRelations[];
 }
 
+const getAccommodationsCached = unstable_cache(
+  async (filters: AccommodationFilters, sort: AccommodationSortOption) =>
+    getAccommodationsQuery(filters, sort),
+  ["accommodations:list"],
+  { revalidate: 30 }
+);
+
+export async function getAccommodations(
+  filters: AccommodationFilters = {},
+  sort: AccommodationSortOption = "featured"
+): Promise<AccommodationWithRelations[]> {
+  return getAccommodationsCached(filters, sort);
+}
+
 /**
  * Get unique filter options
  */
-export async function getAccommodationFilterOptions(): Promise<AccommodationFilterOptions> {
+async function getAccommodationFilterOptionsQuery(): Promise<AccommodationFilterOptions> {
   const [types, atolls, locations] = await Promise.all([
     // Get all unique accommodation types that have active accommodations
     prisma.accommodation.findMany({
@@ -249,6 +264,16 @@ export async function getAccommodationFilterOptions(): Promise<AccommodationFilt
     atolls: atolls.map((a) => a.atoll),
     locations,
   };
+}
+
+const getAccommodationFilterOptionsCached = unstable_cache(
+  async () => getAccommodationFilterOptionsQuery(),
+  ["accommodations:filter-options"],
+  { revalidate: 300 }
+);
+
+export async function getAccommodationFilterOptions(): Promise<AccommodationFilterOptions> {
+  return getAccommodationFilterOptionsCached();
 }
 
 /**

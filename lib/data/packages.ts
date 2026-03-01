@@ -1,5 +1,6 @@
 // lib/db/packages.ts
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import type {
   Package,
@@ -116,7 +117,7 @@ export interface FilterOptions {
 /**
  * Fetch packages with filters and sorting
  */
-export async function getPackages(
+async function getPackagesQuery(
   filters: PackageFilters = {},
   sort: SortOption = "featured",
   market: Market = "INTERNATIONAL"
@@ -305,10 +306,25 @@ export async function getPackages(
   return packages as PackageWithRelations[];
 }
 
+const getPackagesCached = unstable_cache(
+  async (filters: PackageFilters, sort: SortOption, market: Market) =>
+    getPackagesQuery(filters, sort, market),
+  ["packages:list"],
+  { revalidate: 30 }
+);
+
+export async function getPackages(
+  filters: PackageFilters = {},
+  sort: SortOption = "featured",
+  market: Market = "INTERNATIONAL"
+): Promise<PackageWithRelations[]> {
+  return getPackagesCached(filters, sort, market);
+}
+
 /**
  * Get unique filter options
  */
-export async function getFilterOptions(): Promise<FilterOptions> {
+async function getFilterOptionsQuery(): Promise<FilterOptions> {
   const [experiences, locations, accommodationTypes] = await Promise.all([
     prisma.experience.findMany({
       where: {
@@ -378,6 +394,16 @@ export async function getFilterOptions(): Promise<FilterOptions> {
     locations,
     accommodationTypes: accommodationTypes.map((a) => a.type),
   };
+}
+
+const getFilterOptionsCached = unstable_cache(
+  async () => getFilterOptionsQuery(),
+  ["packages:filter-options"],
+  { revalidate: 300 }
+);
+
+export async function getFilterOptions(): Promise<FilterOptions> {
+  return getFilterOptionsCached();
 }
 
 /**

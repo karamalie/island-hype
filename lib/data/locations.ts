@@ -1,5 +1,6 @@
 // lib/data/locations.ts
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 import type { Prisma, TransferType } from "@prisma/client";
 import type {
   Location,
@@ -90,7 +91,7 @@ export interface LocationFilterOptions {
 /**
  * Fetch locations with filters and sorting
  */
-export async function getLocations(
+async function getLocationsQuery(
   filters: LocationFilters = {},
   sort: LocationSortOption = "featured"
 ): Promise<LocationWithRelations[]> {
@@ -190,10 +191,24 @@ export async function getLocations(
   return locations as LocationWithRelations[];
 }
 
+const getLocationsCached = unstable_cache(
+  async (filters: LocationFilters, sort: LocationSortOption) =>
+    getLocationsQuery(filters, sort),
+  ["locations:list"],
+  { revalidate: 30 }
+);
+
+export async function getLocations(
+  filters: LocationFilters = {},
+  sort: LocationSortOption = "featured"
+): Promise<LocationWithRelations[]> {
+  return getLocationsCached(filters, sort);
+}
+
 /**
  * Get unique filter options
  */
-export async function getLocationFilterOptions(): Promise<LocationFilterOptions> {
+async function getLocationFilterOptionsQuery(): Promise<LocationFilterOptions> {
   const [atolls, transferTypes] = await Promise.all([
     // Get all unique atolls
     prisma.location.findMany({
@@ -230,6 +245,16 @@ export async function getLocationFilterOptions(): Promise<LocationFilterOptions>
       .map((t) => t.transferType)
       .filter((t): t is TransferType => t !== null),
   };
+}
+
+const getLocationFilterOptionsCached = unstable_cache(
+  async () => getLocationFilterOptionsQuery(),
+  ["locations:filter-options"],
+  { revalidate: 300 }
+);
+
+export async function getLocationFilterOptions(): Promise<LocationFilterOptions> {
+  return getLocationFilterOptionsCached();
 }
 
 /**

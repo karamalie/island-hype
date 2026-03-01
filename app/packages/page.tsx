@@ -37,6 +37,7 @@ async function getMarket(): Promise<Market> {
 export default async function PackagesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const market = await getMarket();
+  const filterOptionsPromise = getFilterOptions();
 
   // Parse duration filter
   let minNights: number | undefined;
@@ -47,23 +48,22 @@ export default async function PackagesPage({ searchParams }: PageProps) {
     maxNights = max ? parseInt(max) : undefined;
   }
 
-  // Fetch packages with filters
-  const packages = await getPackages(
-    {
-      location: params.location,
-      accommodationType: params.accommodationType,
-      minPrice: params.minPrice ? parseFloat(params.minPrice) : undefined,
-      maxPrice: params.maxPrice ? parseFloat(params.maxPrice) : undefined,
-      minNights,
-      maxNights,
-      search: params.search,
-    },
-    (params.sort as SortOption) || "featured",
-    market
-  );
-
-  // Fetch filter options
-  const filterOptions = await getFilterOptions();
+  const [packages, filterOptions] = await Promise.all([
+    getPackages(
+      {
+        location: params.location,
+        accommodationType: params.accommodationType,
+        minPrice: params.minPrice ? parseFloat(params.minPrice) : undefined,
+        maxPrice: params.maxPrice ? parseFloat(params.maxPrice) : undefined,
+        minNights,
+        maxNights,
+        search: params.search,
+      },
+      (params.sort as SortOption) || "featured",
+      market
+    ),
+    filterOptionsPromise,
+  ]);
 
   // Currency
   const currency = market === "LOCAL" ? "MVR" : "USD";
