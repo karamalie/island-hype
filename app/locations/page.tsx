@@ -69,39 +69,6 @@ export default async function LocationsPage({ searchParams }: PageProps) {
           </>
         }
         subtitle="From vibrant local islands to secluded resort paradises. Each atoll offers unique experiences, dive sites, and unforgettable moments in crystal-clear waters."
-        stats={
-          <div className="flex flex-wrap gap-6">
-            <div className="flex items-center gap-2 text-white">
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{locations.length}</div>
-                <div className="text-sm text-white/80">Destinations</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-white">
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Hotel className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">
-                  {locations.reduce((sum, loc) => sum + loc._count.accommodations, 0)}
-                </div>
-                <div className="text-sm text-white/80">Accommodations</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-white">
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Waves className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">26</div>
-                <div className="text-sm text-white/80">Atolls</div>
-              </div>
-            </div>
-          </div>
-        }
       />
 
       {/* Filter Section */}
@@ -133,46 +100,46 @@ export default async function LocationsPage({ searchParams }: PageProps) {
           </div>
 
           {locations.length > 0 ? (
-            <div className="grid grid-cols-12 gap-4 md:gap-6">
+            <div className="grid grid-cols-12 gap-4 md:gap-5">
               {locations.map((location, index) => {
                 // Bento box pattern - repeating every 8 items
                 const pattern = index % 8;
 
                 let colSpan = "col-span-12 md:col-span-4";
-                let height = "h-[300px]";
+                let height = "h-[220px] md:h-[240px]";
 
                 switch (pattern) {
                   case 0: // Large hero
                     colSpan = "col-span-12 md:col-span-8";
-                    height = "h-[300px] md:h-[624px]";
+                    height = "h-[260px] md:h-[460px]";
                     break;
                   case 1: // Tall right
                     colSpan = "col-span-12 md:col-span-4";
-                    height = "h-[300px] md:h-[624px]";
+                    height = "h-[260px] md:h-[460px]";
                     break;
                   case 2: // Medium left
                     colSpan = "col-span-12 md:col-span-5";
-                    height = "h-[300px]";
+                    height = "h-[220px] md:h-[240px]";
                     break;
                   case 3: // Medium right
                     colSpan = "col-span-12 md:col-span-7";
-                    height = "h-[300px]";
+                    height = "h-[220px] md:h-[240px]";
                     break;
                   case 4: // Small left
                     colSpan = "col-span-6 md:col-span-3";
-                    height = "h-[280px]";
+                    height = "h-[200px] md:h-[210px]";
                     break;
                   case 5: // Small center-left
                     colSpan = "col-span-6 md:col-span-3";
-                    height = "h-[280px]";
+                    height = "h-[200px] md:h-[210px]";
                     break;
                   case 6: // Medium center-right
                     colSpan = "col-span-12 md:col-span-6";
-                    height = "h-[280px]";
+                    height = "h-[210px] md:h-[220px]";
                     break;
                   case 7: // Wide bottom
                     colSpan = "col-span-12";
-                    height = "h-[280px]";
+                    height = "h-[210px] md:h-[220px]";
                     break;
                 }
 
