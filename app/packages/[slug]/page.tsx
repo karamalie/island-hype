@@ -6,23 +6,18 @@ import { cookies } from "next/headers";
 import {
   MapPin,
   Star,
-  Share2,
   Calendar,
   Users,
   CheckCircle2,
-  ChevronDown,
   Clock,
-  Plane,
 } from "lucide-react";
 import { getImageUrl } from "@/lib/image-urls";
 import { getPackageBySlug } from "@/lib/data/packages";
 import type { Market } from "@prisma/client";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookingCard } from "@/components/packages/booking-card";
 import { PackageGallery } from "@/components/packages/package-gallery";
 import { ItineraryDay } from "@/components/packages/itinerary-day";
-import { Navbar } from "@/components/layout/nav-bar";
 import { Footer } from "@/components/layout/footer";
 
 interface PageProps {
@@ -56,20 +51,7 @@ export default async function PackageDetailsPage({ params }: PageProps) {
   // Calculate rating (placeholder - you can add real ratings later)
   const rating = 4.5;
 
-  // Group inclusions by category
-  const inclusionsByCategory = pkg.inclusions.reduce(
-    (acc, inclusion) => {
-      if (!acc[inclusion.category]) {
-        acc[inclusion.category] = [];
-      }
-      acc[inclusion.category].push(inclusion);
-      return acc;
-    },
-    {} as Record<string, typeof pkg.inclusions>
-  );
-
   // Separate included and optional activities
-  const includedActivities = pkg.activities.filter((a) => a.isIncluded);
   const optionalActivities = pkg.activities.filter((a) => !a.isIncluded);
 
   return (
@@ -94,61 +76,31 @@ export default async function PackageDetailsPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Hero Section */}
-      <section className="relative h-[60vh] min-h-[500px] overflow-hidden">
-        <Image
-          src={getImageUrl("packages", pkg.coverImage || "placeholder.jpg")}
-          alt={pkg.name}
-          fill
-          className="object-cover"
-          priority
-        />
+      {/* Header */}
+      <section className="border-b border-gray-200 bg-maldives-sand-lagoon">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+          <div className="flex items-center gap-2 text-gray-700 mb-3">
+            <MapPin className="w-4 h-4" />
+            <span className="text-sm">
+              {pkg.location.name}, {pkg.location.atoll}
+            </span>
+          </div>
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-5">
+            {pkg.name}
+          </h1>
 
-        {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between gap-8">
-              <div className="flex-1">
-                {/* Location */}
-                <div className="flex items-center gap-2 text-white/90 mb-3">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm">
-                    {pkg.location.name}, {pkg.location.atoll}
-                  </span>
-                </div>
-
-                {/* Title */}
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                  {pkg.name}
-                </h1>
-
-                {/* Rating & Share */}
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-4 py-2">
-                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-white font-semibold">{rating}</span>
-                  </div>
-
-                  {pkg.isFeatured && (
-                    <Badge className="bg-teal-500 text-white border-0">
-                      Featured Package
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* Share Button */}
-              <Button
-                variant="outline"
-                className="bg-white/20 backdrop-blur-md border-white/30 text-white hover:bg-white/30"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
+          <div className="flex items-center flex-wrap gap-3">
+            <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border border-gray-200">
+              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+              <span className="text-gray-900 font-semibold">{rating}</span>
             </div>
+
+            {pkg.isFeatured && (
+              <Badge className="bg-teal-600 text-white border-0">
+                Featured Package
+              </Badge>
+            )}
           </div>
         </div>
       </section>
@@ -163,9 +115,23 @@ export default async function PackageDetailsPage({ params }: PageProps) {
               <h2 className="text-3xl font-bold text-gray-900 mb-6">
                 Overview
               </h2>
-              <p className="text-gray-600 leading-relaxed text-lg">
-                {pkg.description}
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-gray-200">
+                  <Image
+                    src={getImageUrl(
+                      "packages",
+                      pkg.coverImage || "placeholder.jpg"
+                    )}
+                    alt={pkg.name}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+                <p className="text-gray-600 leading-relaxed text-lg">
+                  {pkg.description}
+                </p>
+              </div>
 
               {/* Quick Info */}
               {pkg.location.transferTime && (

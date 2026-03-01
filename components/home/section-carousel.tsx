@@ -3,6 +3,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { IconButton } from "@/components/ui/icon-button";
 import { Icons } from "@/components/ui/icons";
@@ -77,6 +78,13 @@ export function SectionCarousel({
 
   const items = getCurrentItems();
 
+  const getItemHref = (item: CarouselItem): string => {
+    if (isLocation(item)) return `/locations/${item.slug}`;
+    if (isAccommodation(item)) return `/accommodations/${item.slug}`;
+    if (isPackage(item)) return `/packages/${item.slug}`;
+    return "#";
+  };
+
   // Get subtitle based on item type
   const getSubtitle = (item: CarouselItem): string => {
     if (isLocation(item)) {
@@ -109,57 +117,56 @@ export function SectionCarousel({
 
     if (isCircularCard) {
       return (
-        <Card
-          key={item.id}
-          variant="clean-elevated"
-          className="flex-shrink-0 w-64"
-        >
-          <div className="p-6">
-            {/* Circular image */}
-            <div className="w-full aspect-square rounded-full overflow-hidden relative mb-4 bg-gradient-to-br from-cyan-100 to-blue-200">
-              <Image
-                src={getItemImageUrl(item)}
-                alt={item.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-            {/* Info */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 truncate">
-                  {item.name}
-                </h4>
-                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                  {item.shortDesc}
-                </p>
+        <Link key={item.id} href={getItemHref(item)} className="block">
+          <Card variant="clean-elevated" className="flex-shrink-0 w-64">
+            <div className="p-6">
+              {/* Circular image */}
+              <div className="w-full aspect-square rounded-full overflow-hidden relative mb-4 bg-gradient-to-br from-cyan-100 to-blue-200">
+                <Image
+                  src={getItemImageUrl(item)}
+                  alt={item.name}
+                  fill
+                  className="object-cover"
+                />
               </div>
-              <IconButton variant="outline" size="sm" className="flex-shrink-0">
-                <Icons.arrowUpRight className="w-4 h-4" />
-              </IconButton>
+              {/* Info */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-gray-900 truncate">
+                    {item.name}
+                  </h4>
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                    {item.shortDesc}
+                  </p>
+                </div>
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-700">
+                  <Icons.arrowUpRight className="w-4 h-4" />
+                </span>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
       );
     }
 
     return (
-      <div
-        key={item.id}
-        className={`flex-shrink-0 w-64 ${height} rounded-3xl overflow-hidden relative group cursor-pointer`}
-      >
-        <Image
-          src={getItemImageUrl(item)}
-          alt={item.name}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute bottom-4 left-4 right-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <h4 className="font-semibold">{item.name}</h4>
-          <p className="text-sm text-white/80 mt-1">{getSubtitle(item)}</p>
+      <Link key={item.id} href={getItemHref(item)} className="block">
+        <div
+          className={`flex-shrink-0 w-64 ${height} rounded-3xl overflow-hidden relative group cursor-pointer`}
+        >
+          <Image
+            src={getItemImageUrl(item)}
+            alt={item.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute bottom-4 left-4 right-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <h4 className="font-semibold">{item.name}</h4>
+            <p className="text-sm text-white/80 mt-1">{getSubtitle(item)}</p>
+          </div>
         </div>
-      </div>
+      </Link>
     );
   };
 

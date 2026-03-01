@@ -54,6 +54,7 @@ export default async function LocationsPage({ searchParams }: PageProps) {
         backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
         backgroundAlt="Maldives locations"
         overlayTone="strong"
+        minHeightClassName="min-h-[clamp(24rem,52vh,36rem)]"
         badge={
           <Badge variant="glass" size="lg" className="text-white border-white/20 mb-6 gap-2">
             <Compass className="w-4 h-4" />

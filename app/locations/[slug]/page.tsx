@@ -9,7 +9,6 @@ import {
   Clock,
   Hotel,
   Compass,
-  Waves,
   Star,
   Calendar,
   Users,
@@ -20,7 +19,6 @@ import { getLocationBySlug } from "@/lib/data/locations";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/layout/nav-bar";
 import { Footer } from "@/components/layout/footer";
 
 // Transfer type icons
@@ -80,114 +78,71 @@ export default async function LocationDetailsPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Hero Section - Magazine Style */}
-      <section className="relative h-[80vh] min-h-[600px] overflow-hidden">
-        <Image
-          src={getImageUrl(
-            "locations",
-            location.coverImage || "placeholder.jpg"
-          )}
-          alt={location.name}
-          fill
-          className="object-cover"
-          priority
-        />
-
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-        {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 z-10">
-          <div className="max-w-7xl mx-auto">
-            {/* Badges */}
-            <div className="flex items-center gap-3 mb-6">
-              <Badge
-                variant="glass"
-                size="lg"
-                className="text-white border-white/20"
-              >
-                {location.atoll}
+      {/* Header */}
+      <section className="border-b border-gray-200 bg-maldives-sand-lagoon">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+          <div className="flex items-center flex-wrap gap-3 mb-5">
+            <Badge variant="outline" size="lg" className="border-gray-300 text-gray-800">
+              {location.atoll}
+            </Badge>
+            {location.island && (
+              <Badge variant="outline" size="lg" className="border-gray-300 text-gray-800">
+                <MapPin className="w-4 h-4" />
+                {location.island}
               </Badge>
-              {location.island && (
-                <Badge
-                  variant="glass"
-                  size="lg"
-                  className="text-white border-white/20"
-                >
-                  <MapPin className="w-4 h-4" />
-                  {location.island}
-                </Badge>
-              )}
-              {location.transferType && (
-                <Badge
-                  variant="glass"
-                  size="lg"
-                  className="text-white border-white/20 gap-1.5"
-                >
-                  <TransferIcon className="w-4 h-4" />
-                  {location.transferType.toLowerCase().replace("_", " ")}
-                </Badge>
-              )}
-            </div>
-
-            {/* Title */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 max-w-4xl">
-              {location.name}
-            </h1>
-
-            {/* Short Description */}
-            {location.shortDesc && (
-              <p className="text-xl md:text-2xl text-white/90 leading-relaxed max-w-3xl mb-8">
-                {location.shortDesc}
-              </p>
             )}
+            {location.transferType && (
+              <Badge variant="outline" size="lg" className="border-gray-300 text-gray-800 gap-1.5">
+                <TransferIcon className="w-4 h-4" />
+                {location.transferType.toLowerCase().replace("_", " ")}
+              </Badge>
+            )}
+          </div>
 
-            {/* Quick Info Cards */}
-            <div className="flex flex-wrap gap-4">
-              {location.transferTime && (
-                <div className="glass px-6 py-4 rounded-2xl">
-                  <div className="flex items-center gap-3 text-white">
-                    <Clock className="w-6 h-6" />
-                    <div>
-                      <div className="text-sm text-white/70">
-                        From Malé Airport
-                      </div>
-                      <div className="text-lg font-semibold">
-                        {location.transferTime} minutes
-                      </div>
-                    </div>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 max-w-4xl">
+            {location.name}
+          </h1>
+
+          {location.shortDesc && (
+            <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-3xl mb-6">
+              {location.shortDesc}
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-4">
+            {location.transferTime && (
+              <div className="bg-white px-5 py-3 rounded-2xl border border-gray-200">
+                <div className="flex items-center gap-3 text-gray-900">
+                  <Clock className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <div className="text-xs text-gray-500">From Malé Airport</div>
+                    <div className="text-base font-semibold">{location.transferTime} minutes</div>
                   </div>
                 </div>
-              )}
-              {location.accommodations.length > 0 && (
-                <div className="glass px-6 py-4 rounded-2xl">
-                  <div className="flex items-center gap-3 text-white">
-                    <Hotel className="w-6 h-6" />
-                    <div>
-                      <div className="text-sm text-white/70">
-                        Accommodations
-                      </div>
-                      <div className="text-lg font-semibold">
-                        {location.accommodations.length} properties
-                      </div>
-                    </div>
+              </div>
+            )}
+            {location.accommodations.length > 0 && (
+              <div className="bg-white px-5 py-3 rounded-2xl border border-gray-200">
+                <div className="flex items-center gap-3 text-gray-900">
+                  <Hotel className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <div className="text-xs text-gray-500">Accommodations</div>
+                    <div className="text-base font-semibold">{location.accommodations.length} properties</div>
                   </div>
                 </div>
-              )}
-              {location.packages.length > 0 && (
-                <div className="glass px-6 py-4 rounded-2xl">
-                  <div className="flex items-center gap-3 text-white">
-                    <Compass className="w-6 h-6" />
-                    <div>
-                      <div className="text-sm text-white/70">Packages</div>
-                      <div className="text-lg font-semibold">
-                        {location.packages.length}+ available
-                      </div>
-                    </div>
+              </div>
+            )}
+            {location.packages.length > 0 && (
+              <div className="bg-white px-5 py-3 rounded-2xl border border-gray-200">
+                <div className="flex items-center gap-3 text-gray-900">
+                  <Compass className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <div className="text-xs text-gray-500">Packages</div>
+                    <div className="text-base font-semibold">{location.packages.length}+ available</div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -196,14 +151,28 @@ export default async function LocationDetailsPage({ params }: PageProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* About Section */}
         <section className="mb-20">
-          <div className="max-w-4xl">
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              About {location.name}
-            </h2>
-            <div className="prose prose-lg max-w-none">
-              <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
-                {location.description}
-              </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                About {location.name}
+              </h2>
+              <div className="prose prose-lg max-w-none">
+                <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
+                  {location.description}
+                </p>
+              </div>
+            </div>
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-gray-200">
+              <Image
+                src={getImageUrl(
+                  "locations",
+                  location.coverImage || "placeholder.jpg"
+                )}
+                alt={location.name}
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
           </div>
 

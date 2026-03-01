@@ -1,5 +1,6 @@
 // components/home/featured-packages.tsx
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,10 +32,12 @@ export function FeaturedPackages({ packages }: FeaturedPackagesProps) {
               Popular Packages
             </h2>
           </div>
-          <Button variant="outline" className="gap-2 text-gray-900">
-            View All Packages
-            <Icons.arrowRight className="w-4 h-4" />
-          </Button>
+          <Link href="/packages">
+            <Button variant="outline" className="gap-2 text-gray-900">
+              View All Packages
+              <Icons.arrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
         </div>
 
         {/* Packages Grid */}
@@ -43,53 +46,54 @@ export function FeaturedPackages({ packages }: FeaturedPackagesProps) {
             const isFeatured = index === 1; // Middle card is featured
 
             return (
-              <Card
-                key={pkg.id}
-                variant="clean-elevated"
-                hover
-                className={isFeatured ? "ring-2 ring-teal-500" : ""}
-              >
-                <div className="relative h-56">
-                  <Image
-                    src={getImageUrl(
-                      "packages",
-                      pkg.coverImage || "placeholder.jpg"
+              <Link key={pkg.id} href={`/packages/${pkg.slug}`} className="block">
+                <Card
+                  variant="clean-elevated"
+                  hover
+                  className={isFeatured ? "ring-2 ring-teal-500" : ""}
+                >
+                  <div className="relative h-56">
+                    <Image
+                      src={getImageUrl(
+                        "packages",
+                        pkg.coverImage || "placeholder.jpg"
+                      )}
+                      alt={pkg.name}
+                      fill
+                      className="object-cover"
+                    />
+                    {isFeatured && (
+                      <Badge variant="primary" className="absolute top-4 left-4">
+                        Most Popular
+                      </Badge>
                     )}
-                    alt={pkg.name}
-                    fill
-                    className="object-cover"
-                  />
-                  {isFeatured && (
-                    <Badge variant="primary" className="absolute top-4 left-4">
-                      Most Popular
-                    </Badge>
-                  )}
-                </div>
-                <CardContent className="p-6">
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <Icons.mapPin className="w-4 h-4" />
-                    {pkg.location?.atoll || "Maldives"}
-                  </p>
-                  <h3 className="text-xl font-semibold mt-2 text-gray-900">
-                    {pkg.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                    {pkg.shortDesc}
-                  </p>
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Icons.clock className="w-4 h-4" />
-                      {pkg.minNights} Nights
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-500">From </span>
-                      <span className="text-xl font-bold text-gray-900">
-                        {getPrice(pkg)}
-                      </span>
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <CardContent className="p-6">
+                    <p className="text-sm text-gray-500 flex items-center gap-1">
+                      <Icons.mapPin className="w-4 h-4" />
+                      {pkg.location?.atoll || "Maldives"}
+                    </p>
+                    <h3 className="text-xl font-semibold mt-2 text-gray-900">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                      {pkg.shortDesc}
+                    </p>
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Icons.clock className="w-4 h-4" />
+                        {pkg.minNights} Nights
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">From </span>
+                        <span className="text-xl font-bold text-gray-900">
+                          {getPrice(pkg)}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>

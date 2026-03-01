@@ -74,6 +74,7 @@ export default async function PackagesPage({ searchParams }: PageProps) {
         backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
         backgroundAlt="Maldives aerial"
         overlayTone="medium"
+        minHeightClassName="min-h-[clamp(24rem,52vh,36rem)]"
         title={
           <>
             Explore Our

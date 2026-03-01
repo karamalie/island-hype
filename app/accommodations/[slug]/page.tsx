@@ -21,7 +21,6 @@ import { getAccommodationBySlug } from "@/lib/data/accommodations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Navbar } from "@/components/layout/nav-bar";
 import { Footer } from "@/components/layout/footer";
 import { AccommodationGallery } from "@/components/accommodations/accommodation-gallery";
 
@@ -83,75 +82,53 @@ export default async function AccommodationDetailsPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Hero Section - Full Width Single Image */}
-      <section className="relative h-[70vh] min-h-[500px] overflow-hidden">
-        <Image
-          src={getImageUrl(
-            "accommodations",
-            accommodation.coverImage || "placeholder.jpg"
-          )}
-          alt={accommodation.name}
-          fill
-          className="object-cover"
-          priority
-        />
-
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
-        {/* Star Rating Badge */}
-        {accommodation.starRating && (
-          <div className="absolute top-6 right-6 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg z-10">
-            <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold text-gray-900">
-              {accommodation.starRating}
-            </span>
-          </div>
-        )}
-
-        {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-          <div className="max-w-7xl mx-auto">
-            {/* Badges */}
-            <div className="flex items-center gap-3 mb-4">
+      {/* Header */}
+      <section className="border-b border-gray-200 bg-maldives-sand-lagoon">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+          <div className="flex items-center flex-wrap gap-3 mb-4">
+            <Badge
+              variant="outline"
+              size="lg"
+              className="border-gray-300 text-gray-800 capitalize"
+            >
+              {accommodation.type.toLowerCase()}
+            </Badge>
+            {accommodation.location.atoll && (
               <Badge
-                variant="glass"
+                variant="outline"
                 size="lg"
-                className="text-white border-white/20 capitalize"
+                className="border-gray-300 text-gray-800"
               >
-                {accommodation.type.toLowerCase()}
+                {accommodation.location.atoll}
               </Badge>
-              {accommodation.location.atoll && (
-                <Badge
-                  variant="glass"
-                  size="lg"
-                  className="text-white border-white/20"
-                >
-                  {accommodation.location.atoll}
-                </Badge>
-              )}
-            </div>
-
-            {/* Title */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
-              {accommodation.name}
-            </h1>
-
-            {/* Location Info */}
-            <div className="flex items-center gap-6 text-white/90">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                <span className="text-lg">{accommodation.location.name}</span>
+            )}
+            {accommodation.starRating && (
+              <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border border-gray-200">
+                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                <span className="font-semibold text-gray-900">
+                  {accommodation.starRating}
+                </span>
               </div>
-              {accommodation.location.transferTime && (
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  <span className="text-lg">
-                    {accommodation.location.transferTime} min from Malé
-                  </span>
-                </div>
-              )}
+            )}
+          </div>
+
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4">
+            {accommodation.name}
+          </h1>
+
+          <div className="flex items-center flex-wrap gap-6 text-gray-700">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-teal-600" />
+              <span className="text-lg">{accommodation.location.name}</span>
             </div>
+            {accommodation.location.transferTime && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-teal-600" />
+                <span className="text-lg">
+                  {accommodation.location.transferTime} min from Malé
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -166,9 +143,23 @@ export default async function AccommodationDetailsPage({ params }: PageProps) {
               <h2 className="text-3xl font-bold text-gray-900 mb-6">
                 About This Property
               </h2>
-              <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
-                {accommodation.description}
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-gray-200">
+                  <Image
+                    src={getImageUrl(
+                      "accommodations",
+                      accommodation.coverImage || "placeholder.jpg"
+                    )}
+                    alt={accommodation.name}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+                <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
+                  {accommodation.description}
+                </p>
+              </div>
             </section>
 
             {/* Gallery Carousel */}

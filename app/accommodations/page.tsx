@@ -49,6 +49,7 @@ export default async function AccommodationsPage({ searchParams }: PageProps) {
         backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
         backgroundAlt="Maldives accommodations"
         overlayTone="medium"
+        minHeightClassName="min-h-[clamp(24rem,52vh,36rem)]"
         badge={
           <Badge variant="glass" size="lg" className="text-white border-white/20 mb-6">
             Where You&apos;ll Stay

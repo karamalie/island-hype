@@ -3,6 +3,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { IconButton } from "@/components/ui/icon-button";
@@ -20,8 +22,12 @@ interface HeroCarouselProps {
 export function HeroCarousel({ packages }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const router = useRouter();
 
   const currentPackage = packages[currentIndex];
+  const currentPackageHref = currentPackage
+    ? `/packages/${currentPackage.slug}`
+    : "/packages";
 
   // Auto-advance carousel
   useEffect(() => {
@@ -169,12 +175,16 @@ export function HeroCarousel({ packages }: HeroCarouselProps) {
                 </p>
 
                 <div className="flex items-center gap-3 mt-6">
-                  <Button variant="white" className="gap-2">
-                    Book Now
-                  </Button>
-                  <IconButton variant="white" size="sm">
-                    <Icons.arrowUpRight className="w-5 h-5" />
-                  </IconButton>
+                  <Link href={currentPackageHref}>
+                    <Button variant="white" className="gap-2">
+                      Book Now
+                    </Button>
+                  </Link>
+                  <Link href={currentPackageHref}>
+                    <IconButton variant="white" size="sm">
+                      <Icons.arrowUpRight className="w-5 h-5" />
+                    </IconButton>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -193,7 +203,13 @@ export function HeroCarousel({ packages }: HeroCarouselProps) {
                 return (
                   <div
                     key={pkg.id}
-                    onClick={() => goToSlide(index)}
+                    onClick={() => {
+                      if (isActive) {
+                        router.push(`/packages/${pkg.slug}`);
+                        return;
+                      }
+                      goToSlide(index);
+                    }}
                     className={`
                       relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-500
                       ${isActive ? "w-56 h-80 opacity-100" : ""}
