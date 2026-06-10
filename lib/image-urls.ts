@@ -20,12 +20,13 @@ export function getImageUrl(bucket: StorageBucket, path: string): string {
   // If already a full URL, return as-is
   if (path.startsWith("http")) return path;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // Media base. Empty/unset => same-origin relative path (served by nginx on this host).
+  const base = process.env.NEXT_PUBLIC_MEDIA_URL ?? "";
 
   // Remove leading slash if present
   const cleanPath = path.startsWith("/") ? path.slice(1) : path;
 
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${cleanPath}`;
+  return `${base}/storage/v1/object/public/${bucket}/${cleanPath}`;
 }
 
 /**

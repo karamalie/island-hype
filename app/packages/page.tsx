@@ -34,6 +34,9 @@ async function getMarket(): Promise<Market> {
   return (marketCookie?.value as Market) || "INTERNATIONAL";
 }
 
+// Rendered at request time on the server (DB is local; not built off-server).
+export const dynamic = "force-dynamic";
+
 export default async function PackagesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const market = await getMarket();

@@ -27,7 +27,9 @@ export type {
 
 // ============ Package Types ============
 
-export type PackageWithRelations = Package & {
+// `highlights` is a JSON column (MySQL); expose it as string[] to consumers.
+export type PackageWithRelations = Omit<Package, "highlights"> & {
+  highlights: string[];
   location: Location;
   accommodation: Accommodation;
   pricing: PackagePricing[];
@@ -125,7 +127,13 @@ export type ExperienceCardData = Pick<
 
 // ============ Accommodation Types ============
 
-export type AccommodationWithRelations = Accommodation & {
+// `roomTypes`/`amenities` are JSON columns (MySQL); expose them as string[].
+export type AccommodationWithRelations = Omit<
+  Accommodation,
+  "roomTypes" | "amenities"
+> & {
+  roomTypes: string[];
+  amenities: string[];
   location: Location;
   packages: Package[];
   images: {

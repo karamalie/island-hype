@@ -31,7 +31,9 @@ export type PackageWithRelations = Package & {
 };
 
 // Type for full package details page
-export type PackageDetails = Package & {
+// `highlights` is a JSON column (MySQL); expose it as string[].
+export type PackageDetails = Omit<Package, "highlights"> & {
+  highlights: string[];
   location: Location;
   accommodation: Accommodation;
   pricing: PackagePricing[];
@@ -202,9 +204,9 @@ async function getPackagesQuery(
   // Search in name, shortDesc, location name
   if (search) {
     where.OR = [
-      { name: { contains: search, mode: "insensitive" } },
-      { shortDesc: { contains: search, mode: "insensitive" } },
-      { location: { name: { contains: search, mode: "insensitive" } } },
+      { name: { contains: search } },
+      { shortDesc: { contains: search } },
+      { location: { name: { contains: search } } },
     ];
   }
 

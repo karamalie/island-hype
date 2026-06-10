@@ -1,5 +1,7 @@
 // lib/storage.ts
-import { createAdminClient } from "./supabase/server";
+// Server-side local-filesystem image storage (self-hosted; no external object store).
+import { promises as fs } from "fs";
+import path from "path";
 
 export type StorageBucket =
   | "locations"
@@ -22,11 +24,22 @@ interface UploadResult {
 }
 
 /**
- * Get the public URL for a stored image
+ * Filesystem root where uploaded images are stored.
+ * Dev default: `public/storage/v1/object/public` so files are served by Next's
+ * static handler at the same URL path. Production: set MEDIA_ROOT to the
+ * nginx-served media dir (e.g. /var/www/island-hype-media).
  */
-export function getImageUrl(bucket: StorageBucket, path: string): string {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+const MEDIA_ROOT =
+  process.env.MEDIA_ROOT ||
+  path.join(process.cwd(), "public", "storage", "v1", "object", "public");
+
+/**
+ * Get the public URL for a stored image.
+ * Empty NEXT_PUBLIC_MEDIA_URL => same-origin relative path (served by nginx/Next).
+ */
+export function getImageUrl(bucket: StorageBucket, objectPath: string): string {
+  const base = process.env.NEXT_PUBLIC_MEDIA_URL ?? "";
+  return `${base}/storage/v1/object/public/${bucket}/${objectPath}`;
 }
 
 /**
@@ -66,66 +79,64 @@ export function getOptimizedImageUrl(
 }
 
 /**
- * Upload an image to Supabase Storage
+ * Save an uploaded image to the local media filesystem.
  * Server-side only!
  */
 export async function uploadImage(
   file: File,
   options: UploadOptions
 ): Promise<UploadResult> {
-  const supabase = createAdminClient();
   const { bucket, folder, fileName } = options;
 
-  // Generate unique filename
+  // Generate a safe, unique object path
   const timestamp = Date.now();
-  const extension = file.name.split(".").pop() || "jpg";
+  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const safeName = fileName
     ? `${fileName}.${extension}`
     : `${timestamp}-${Math.random().toString(36).substring(7)}.${extension}`;
 
-  const path = folder ? `${folder}/${safeName}` : safeName;
+  const objectPath = folder ? `${folder}/${safeName}` : safeName;
+  const destPath = path.join(MEDIA_ROOT, bucket, objectPath);
 
-  // Upload to Supabase
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (error) {
+  try {
+    await fs.mkdir(path.dirname(destPath), { recursive: true });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await fs.writeFile(destPath, buffer);
+  } catch (err) {
     return {
       url: "",
       path: "",
-      error: error.message,
+      error: err instanceof Error ? err.message : "Failed to save file",
     };
   }
 
-  const url = getImageUrl(bucket, data.path);
-
   return {
-    url,
-    path: data.path,
+    url: getImageUrl(bucket, objectPath),
+    path: objectPath,
   };
 }
 
 /**
- * Delete an image from Supabase Storage
- * Server-side only!
+ * Delete an image from the local media filesystem.
+ * Server-side only! Accepts a bucket-relative object path.
  */
 export async function deleteImage(
   bucket: StorageBucket,
-  path: string
+  objectPath: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createAdminClient();
-
-  const { error } = await supabase.storage.from(bucket).remove([path]);
-
-  if (error) {
-    return { success: false, error: error.message };
+  try {
+    await fs.unlink(path.join(MEDIA_ROOT, bucket, objectPath));
+    return { success: true };
+  } catch (err) {
+    // Already gone is not a hard failure
+    if ((err as NodeJS.ErrnoException)?.code === "ENOENT") {
+      return { success: true };
+    }
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to delete file",
+    };
   }
-
-  return { success: true };
 }
 
 /**

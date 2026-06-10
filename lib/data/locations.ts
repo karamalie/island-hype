@@ -134,11 +134,11 @@ async function getLocationsQuery(
   // Search in name, description, atoll, island
   if (search) {
     where.OR = [
-      { name: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-      { shortDesc: { contains: search, mode: "insensitive" } },
-      { atoll: { contains: search, mode: "insensitive" } },
-      { island: { contains: search, mode: "insensitive" } },
+      { name: { contains: search } },
+      { description: { contains: search } },
+      { shortDesc: { contains: search } },
+      { atoll: { contains: search } },
+      { island: { contains: search } },
     ];
   }
 
@@ -443,11 +443,11 @@ export async function searchLocations(
     where: {
       isActive: true,
       OR: [
-        { name: { contains: query, mode: "insensitive" } },
-        { description: { contains: query, mode: "insensitive" } },
-        { shortDesc: { contains: query, mode: "insensitive" } },
-        { atoll: { contains: query, mode: "insensitive" } },
-        { island: { contains: query, mode: "insensitive" } },
+        { name: { contains: query } },
+        { description: { contains: query } },
+        { shortDesc: { contains: query } },
+        { atoll: { contains: query } },
+        { island: { contains: query } },
       ],
     },
     orderBy: [{ isFeatured: "desc" }, { sortOrder: "asc" }],

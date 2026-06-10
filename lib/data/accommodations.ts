@@ -11,8 +11,14 @@ import type {
   PackagePricing,
 } from "@prisma/client";
 
+// `roomTypes`/`amenities` are JSON columns (MySQL); expose them as string[].
+type AccommodationBase = Omit<Accommodation, "roomTypes" | "amenities"> & {
+  roomTypes: string[];
+  amenities: string[];
+};
+
 // Type for accommodation with relations (list view)
-export type AccommodationWithRelations = Accommodation & {
+export type AccommodationWithRelations = AccommodationBase & {
   location: Pick<Location, "id" | "name" | "atoll" | "slug">;
   images: Pick<AccommodationImage, "id" | "url" | "alt" | "sortOrder">[];
   _count: {
@@ -21,7 +27,7 @@ export type AccommodationWithRelations = Accommodation & {
 };
 
 // Type for full accommodation details page
-export type AccommodationDetails = Accommodation & {
+export type AccommodationDetails = AccommodationBase & {
   location: Location & {
     images: Array<{
       id: string;
@@ -120,10 +126,10 @@ async function getAccommodationsQuery(
   // Search in name, description, location name
   if (search) {
     where.OR = [
-      { name: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-      { shortDesc: { contains: search, mode: "insensitive" } },
-      { location: { name: { contains: search, mode: "insensitive" } } },
+      { name: { contains: search } },
+      { description: { contains: search } },
+      { shortDesc: { contains: search } },
+      { location: { name: { contains: search } } },
     ];
   }
 
@@ -524,11 +530,11 @@ export async function searchAccommodations(
     where: {
       isActive: true,
       OR: [
-        { name: { contains: query, mode: "insensitive" } },
-        { description: { contains: query, mode: "insensitive" } },
-        { shortDesc: { contains: query, mode: "insensitive" } },
-        { location: { name: { contains: query, mode: "insensitive" } } },
-        { location: { atoll: { contains: query, mode: "insensitive" } } },
+        { name: { contains: query } },
+        { description: { contains: query } },
+        { shortDesc: { contains: query } },
+        { location: { name: { contains: query } } },
+        { location: { atoll: { contains: query } } },
       ],
     },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],

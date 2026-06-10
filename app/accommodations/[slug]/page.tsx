@@ -38,6 +38,9 @@ interface PageProps {
   }>;
 }
 
+// Rendered at request time on the server (DB is local; not built off-server).
+export const dynamic = "force-dynamic";
+
 export default async function AccommodationDetailsPage({ params }: PageProps) {
   const { slug } = await params;
   const accommodation = await getAccommodationBySlug(slug);

@@ -36,6 +36,9 @@ interface PageProps {
   }>;
 }
 
+// Rendered at request time on the server (DB is local; not built off-server).
+export const dynamic = "force-dynamic";
+
 export default async function LocationsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const [locations, filterOptions] = await Promise.all([

@@ -21,6 +21,13 @@ export default async function EditAccommodationPage({
   // Resolve coverImage to full URL (seeded data stores bare filenames)
   const resolvedAccommodation = {
     ...accommodation,
+    // JSON columns -> string[] for the form
+    roomTypes: Array.isArray(accommodation.roomTypes)
+      ? (accommodation.roomTypes as string[])
+      : [],
+    amenities: Array.isArray(accommodation.amenities)
+      ? (accommodation.amenities as string[])
+      : [],
     coverImage: accommodation.coverImage
       ? getImageUrl("accommodations", accommodation.coverImage)
       : null,

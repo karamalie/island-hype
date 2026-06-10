@@ -1,13 +1,13 @@
 // prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 // ============ CORE ENTITIES ============
@@ -76,8 +76,9 @@ model Accommodation {
   description String            @db.Text
 
   starRating Int?     @db.SmallInt
-  roomTypes  String[]
-  amenities  String[]
+  // Stored as JSON arrays of strings (MySQL has no scalar-list type).
+  roomTypes  Json     @default("[]")
+  amenities  Json     @default("[]")
 
   images     AccommodationImage[]
   coverImage String?
@@ -224,7 +225,8 @@ model Package {
   slug        String   @unique
   shortDesc   String?  @db.VarChar(300)
   description String   @db.Text
-  highlights  String[]
+  // Stored as a JSON array of strings (MySQL has no scalar-list type).
+  highlights  Json     @default("[]")
 
   minNights Int  @default(1)
   maxNights Int?

@@ -214,7 +214,7 @@ export async function duplicatePackage(id: string) {
         slug: `${pkg.slug}-copy-${Date.now()}`,
         shortDesc: pkg.shortDesc,
         description: pkg.description,
-        highlights: pkg.highlights,
+        highlights: (pkg.highlights ?? []) as string[],
         locationId: pkg.locationId,
         accommodationId: pkg.accommodationId,
         minNights: pkg.minNights,

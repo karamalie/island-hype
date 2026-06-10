@@ -1,0 +1,60 @@
+name: Deploy island-hype
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-islandhype
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build (Next standalone)
+        env:
+          # Dummy URL: pages are force-dynamic, so the build does not hit the DB.
+          DATABASE_URL: "mysql://build:build@127.0.0.1:3306/build"
+          NEXT_PUBLIC_MEDIA_URL: ""
+          NEXT_PUBLIC_SITE_URL: "https://islandhype.68-183-39-8.nip.io"
+        run: npm run build
+
+      - name: Assemble deploy bundle
+        run: |
+          rm -rf deploy && mkdir -p deploy/.next
+          cp -r .next/standalone/. deploy/
+          cp -r .next/static deploy/.next/static
+          cp -r public deploy/public
+          rm -rf deploy/_migration deploy/docs deploy/.git
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Rsync build to server
+        run: |
+          rsync -az --delete \
+            --exclude='ecosystem.config.cjs' --exclude='_import' \
+            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no" \
+            deploy/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/island-hype/"
+
+      - name: Reload app (reads env from ecosystem on server)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "cd /var/www/island-hype && pm2 startOrReload ecosystem.config.cjs && pm2 save"

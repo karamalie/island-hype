@@ -12,6 +12,9 @@ import {
 } from "@/components/home";
 import { Footer } from "@/components/layout/footer";
 
+// Rendered at request time on the server (DB is local; not built off-server).
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   // Fetch all data in parallel
   const [packages, locations, accommodations] = await Promise.all([

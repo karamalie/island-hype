@@ -29,6 +29,10 @@ export default async function EditPackagePage({
   // Resolve paths to full URLs (DB stores relative paths only)
   const resolvedPkg = {
     ...pkg,
+    // JSON column -> string[] for the form
+    highlights: Array.isArray(pkg.highlights)
+      ? (pkg.highlights as string[])
+      : [],
     coverImage: pkg.coverImage
       ? getImageUrl("packages", pkg.coverImage)
       : null,
