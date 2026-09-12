@@ -19,6 +19,7 @@ import {
   updateAccommodationFacilities,
 } from "@/lib/actions/accommodations";
 import { generateSlug } from "@/lib/utils";
+import { FaqEditor } from "@/components/admin/editors";
 import { X, Plus } from "lucide-react";
 
 const inputClass =
@@ -71,6 +72,7 @@ interface AccommodationFormProps {
   locations: { id: string; name: string }[];
   rooms?: RoomRow[];
   facilities?: FacilityRow[];
+  faqs?: { question: string; answer: string }[];
 }
 
 export function AccommodationForm({
@@ -79,6 +81,7 @@ export function AccommodationForm({
   locations,
   rooms: initialRooms = [],
   facilities: initialFacilities = [],
+  faqs = [],
 }: AccommodationFormProps) {
   const router = useRouter();
   const isEdit = !!accommodation;
@@ -425,12 +428,20 @@ export function AccommodationForm({
           </div>
         </form>
 
-        {isEdit && (
-          <ImageGallery
-            images={images}
-            onUpload={handleImageUpload}
-            onDelete={handleImageDelete}
-          />
+        {isEdit && accommodation && (
+          <>
+            <ImageGallery
+              images={images}
+              onUpload={handleImageUpload}
+              onDelete={handleImageDelete}
+            />
+
+            <FaqEditor
+              owner={{ accommodationId: accommodation.id }}
+              initial={faqs}
+              what="stay"
+            />
+          </>
         )}
       </div>
     </div>

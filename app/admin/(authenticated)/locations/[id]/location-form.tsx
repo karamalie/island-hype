@@ -7,6 +7,16 @@ import { BackButton } from "@/components/admin/ui/back-button";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { ImageGallery } from "@/components/admin/shared/image-gallery";
+import {
+  FaqEditor,
+  LocationCharacterEditor,
+  SeasonEditor,
+  StayTypesEditor,
+  type LocationCharacterFields,
+  type StayTypeOption,
+  type StayTypeSelection,
+} from "@/components/admin/editors";
+import type { SeasonState } from "@prisma/client";
 import { CoverImageUpload } from "@/components/admin/shared/cover-image-upload";
 import {
   createLocation,
@@ -43,11 +53,24 @@ interface LocationFormProps {
     sortOrder: number;
   };
   images?: { id: string; url: string; alt: string | null }[];
+  /** Each of these blocks saves on its own, below the main details form. */
+  character?: LocationCharacterFields;
+  season?: Record<number, SeasonState>;
+  seasonLabel?: string;
+  allStayTypes?: StayTypeOption[];
+  stayTypes?: StayTypeSelection[];
+  faqs?: { question: string; answer: string }[];
 }
 
 export function LocationForm({
   location,
   images = [],
+  character,
+  season = {},
+  seasonLabel = "",
+  allStayTypes = [],
+  stayTypes = [],
+  faqs = [],
 }: LocationFormProps) {
   const router = useRouter();
   const isEdit = !!location;
@@ -244,7 +267,7 @@ export function LocationForm({
           </div>
         </form>
 
-        {isEdit && (
+        {isEdit && location && (
           <>
             <ImageGallery
               images={images}
@@ -252,6 +275,37 @@ export function LocationForm({
               onDelete={handleImageDelete}
             />
 
+            {/* Each block below saves independently. They are separate from the
+                details form above because they are the parts that actually
+                differentiate one island from another, and they are edited far
+                more often than a slug or a latitude. */}
+            {character && (
+              <LocationCharacterEditor
+                locationId={location.id}
+                locationName={location.name}
+                initial={character}
+              />
+            )}
+
+            <SeasonEditor
+              locationId={location.id}
+              locationName={location.name}
+              initialMonths={season}
+              initialLabel={seasonLabel}
+            />
+
+            <StayTypesEditor
+              locationId={location.id}
+              locationName={location.name}
+              allStayTypes={allStayTypes}
+              initial={stayTypes}
+            />
+
+            <FaqEditor
+              owner={{ locationId: location.id }}
+              initial={faqs}
+              what="island"
+            />
           </>
         )}
       </div>

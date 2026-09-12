@@ -13,10 +13,11 @@ export default async function EditAccommodationPage({
   const accommodation = await getAccommodation(id);
   if (!accommodation) notFound();
 
-  const [locations, roomRows, facilityRows] = await Promise.all([
+  const [locations, roomRows, facilityRows, faqRows] = await Promise.all([
     prisma.location.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.roomType.findMany({ where: { accommodationId: id }, orderBy: { sortOrder: "asc" } }),
     prisma.facility.findMany({ where: { accommodationId: id }, orderBy: { sortOrder: "asc" } }),
+    prisma.faqItem.findMany({ where: { accommodationId: id }, orderBy: { sortOrder: "asc" } }),
   ]);
 
   // The form edits strings; nulls become empty inputs and blanks become nulls again.
@@ -51,6 +52,7 @@ export default async function EditAccommodationPage({
       locations={locations}
       rooms={rooms}
       facilities={facilities}
+      faqs={faqRows.map((f) => ({ question: f.question, answer: f.answer }))}
     />
   );
 }

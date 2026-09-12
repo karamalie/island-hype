@@ -13,7 +13,16 @@ export default async function EditPackagePage({
   const pkg = await getPackage(id);
   if (!pkg) notFound();
 
-  const [locations, accommodations, allActivities] = await Promise.all([
+  const [
+    locations,
+    accommodations,
+    allActivities,
+    allTags,
+    tagRows,
+    faqRows,
+    blackoutRows,
+    livePackageCount,
+  ] = await Promise.all([
     prisma.location.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.accommodation.findMany({
       select: { id: true, name: true, locationId: true },
@@ -23,7 +32,15 @@ export default async function EditPackagePage({
       select: { id: true, name: true, locationId: true },
       orderBy: { name: "asc" },
     }),
+    prisma.tag.findMany({ select: { id: true, name: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.packageTag.findMany({ where: { packageId: id }, select: { tagId: true } }),
+    prisma.faqItem.findMany({ where: { packageId: id }, orderBy: { sortOrder: "asc" } }),
+    prisma.blackoutRange.findMany({ where: { packageId: id }, orderBy: { startDate: "asc" } }),
+    prisma.package.count({ where: { isActive: true } }),
   ]);
+
+  /** yyyy-mm-dd for a date input; empty string for null. */
+  const dateInput = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 
   // Resolve paths to full URLs (DB stores relative paths only)
   const resolvedPkg = {
@@ -47,6 +64,22 @@ export default async function EditPackagePage({
       locations={locations}
       accommodations={accommodations}
       allActivities={allActivities}
+      display={{
+        mealPlan: pkg.mealPlan ?? "",
+        boardBasis: pkg.boardBasis ?? "",
+        badge: pkg.badge ?? "",
+        bestMonths: pkg.bestMonths ?? "",
+        longBlurb: pkg.longBlurb ?? "",
+      }}
+      blackouts={blackoutRows.map((b) => ({
+        startDate: dateInput(b.startDate),
+        endDate: dateInput(b.endDate),
+        reason: b.reason ?? "",
+      }))}
+      allTags={allTags}
+      tagIds={tagRows.map((t) => t.tagId)}
+      faqs={faqRows.map((f) => ({ question: f.question, answer: f.answer }))}
+      livePackageCount={livePackageCount}
     />
   );
 }

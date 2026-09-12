@@ -8,6 +8,14 @@ import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { Tabs } from "@/components/admin/ui/tabs";
 import {
+  AvailabilityEditor,
+  FaqEditor,
+  PackageDisplayEditor,
+  TagPicker,
+  type BlackoutRow,
+  type PackageDisplayFields,
+} from "@/components/admin/editors";
+import {
   createPackage,
   updatePackage,
   deletePackage,
@@ -108,6 +116,14 @@ interface PackageFormProps {
   locations: { id: string; name: string }[];
   accommodations: { id: string; name: string; locationId: string }[];
   allActivities?: { id: string; name: string; locationId: string }[];
+  /** Card copy, dates, categories and questions — each saved on its own tab. */
+  display?: PackageDisplayFields;
+  blackouts?: BlackoutRow[];
+  allTags?: { id: string; name: string }[];
+  tagIds?: string[];
+  faqs?: { question: string; answer: string }[];
+  /** Drives the note explaining whether filters are visible on the site yet. */
+  livePackageCount?: number;
 }
 
 function dateStr(d: Date | string | null): string {
@@ -148,6 +164,12 @@ export function PackageForm({
   locations,
   accommodations,
   allActivities = [],
+  display,
+  blackouts = [],
+  allTags = [],
+  tagIds = [],
+  faqs = [],
+  livePackageCount = 0,
 }: PackageFormProps) {
   const router = useRouter();
   const isEdit = !!pkg;
@@ -212,14 +234,18 @@ export function PackageForm({
 
   const tabs = isEdit
     ? [
-        { id: "basic", label: "Basic Info" },
+        { id: "basic", label: "Basic info" },
+        { id: "card", label: "What the card says" },
         { id: "pricing", label: "Pricing" },
+        { id: "dates", label: "Dates & availability" },
         { id: "inclusions", label: "Inclusions" },
         { id: "expact", label: "Activities" },
+        { id: "faqs", label: "Questions" },
+        { id: "categories", label: "Categories" },
         { id: "images", label: "Images" },
         { id: "terms", label: "Terms" },
       ]
-    : [{ id: "basic", label: "Basic Info" }];
+    : [{ id: "basic", label: "Basic info" }];
 
   // Filtered accommodations by selected location
   const filteredAccommodations = locationId
@@ -662,6 +688,36 @@ export function PackageForm({
         )}
 
         {/* IMAGES TAB */}
+        {activeTab === "card" && isEdit && display && (
+          <PackageDisplayEditor packageId={pkg!.id} initial={display} />
+        )}
+
+        {activeTab === "dates" && isEdit && (
+          <AvailabilityEditor
+            packageId={pkg!.id}
+            initialWindows={{
+              travelStart: dateStr(pkg!.travelWindowStart),
+              travelEnd: dateStr(pkg!.travelWindowEnd),
+              bookingStart: dateStr(pkg!.bookingWindowStart),
+              bookingEnd: dateStr(pkg!.bookingWindowEnd),
+            }}
+            initialBlackouts={blackouts}
+          />
+        )}
+
+        {activeTab === "faqs" && isEdit && (
+          <FaqEditor owner={{ packageId: pkg!.id }} initial={faqs} what="package" />
+        )}
+
+        {activeTab === "categories" && isEdit && (
+          <TagPicker
+            packageId={pkg!.id}
+            allTags={allTags}
+            initialTagIds={tagIds}
+            livePackageCount={livePackageCount}
+          />
+        )}
+
         {activeTab === "images" && isEdit && (
           <ImageGallery
             images={currentImages}

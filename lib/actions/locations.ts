@@ -253,3 +253,50 @@ export async function uploadLocationCoverImage(locationId: string, formData: For
   }
 }
 
+/**
+ * The label for the middle band of the season strip — "Mantas" for Baa, "Whale
+ * sharks" for Dhigurah. It saves with the calendar rather than with the general
+ * details form, because on its own it means nothing.
+ */
+export async function updateLocationSeasonLabel(locationId: string, label: string) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.location.update({
+      where: { id: locationId },
+      data: { seasonHighlightLabel: label.trim() || null },
+    });
+    revalidatePath(`/admin/locations/${locationId}`);
+    revalidatePath("/locations");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to save the season label" };
+  }
+}
+
+/** The display fields on an island: region, what it is known for, best months. */
+export async function updateLocationCharacter(
+  locationId: string,
+  data: { region: string; knownFor: string; bestMonths: string }
+) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.location.update({
+      where: { id: locationId },
+      data: {
+        region: data.region.trim() || null,
+        knownFor: data.knownFor.trim() || null,
+        bestMonths: data.bestMonths.trim() || null,
+      },
+    });
+    revalidatePath(`/admin/locations/${locationId}`);
+    revalidatePath("/locations");
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to save those details" };
+  }
+}

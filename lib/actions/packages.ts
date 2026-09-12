@@ -477,3 +477,123 @@ export async function setPackageCoverImage(packageId: string, imageUrl: string) 
     return { success: false, error: "Failed to set cover image" };
   }
 }
+
+/**
+ * The four date windows, saved on their own rather than with the Basic Info form.
+ *
+ * They live on their own screen because they are the only fields that can make a
+ * package vanish from the site, and that deserves its own deliberate save rather
+ * than riding along with a description edit.
+ *
+ * An empty string means "no constraint", which is stored as null.
+ */
+export async function updatePackageWindows(
+  packageId: string,
+  windows: {
+    travelStart: string;
+    travelEnd: string;
+    bookingStart: string;
+    bookingEnd: string;
+  }
+) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  const parse = (v: string): Date | null => {
+    if (!v) return null;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  const travelStart = parse(windows.travelStart);
+  const travelEnd = parse(windows.travelEnd);
+  const bookingStart = parse(windows.bookingStart);
+  const bookingEnd = parse(windows.bookingEnd);
+
+  // Catch the inverted pair here as well as in the UI: a window that ends before
+  // it begins matches no date at all and would silently hide the package.
+  if (travelStart && travelEnd && travelEnd < travelStart) {
+    return {
+      success: false,
+      error: "The travel window ends before it starts. Swap the two dates round.",
+    };
+  }
+  if (bookingStart && bookingEnd && bookingEnd < bookingStart) {
+    return {
+      success: false,
+      error: "The selling window ends before it starts. Swap the two dates round.",
+    };
+  }
+
+  try {
+    await prisma.package.update({
+      where: { id: packageId },
+      data: {
+        travelWindowStart: travelStart,
+        travelWindowEnd: travelEnd,
+        bookingWindowStart: bookingStart,
+        bookingWindowEnd: bookingEnd,
+      },
+    });
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath("/packages");
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to save the dates" };
+  }
+}
+
+/**
+ * The fields that decide what a package card actually says: the meal plan, the
+ * badge, the best months and the long description.
+ *
+ * Saved separately from Basic Info because they are the copy someone edits while
+ * looking at the live card, whereas Basic Info is the structural stuff — slug,
+ * location, which stay — that changes rarely.
+ */
+export async function updatePackageDisplay(
+  packageId: string,
+  data: {
+    mealPlan: string;
+    boardBasis: string;
+    badge: string;
+    bestMonths: string;
+    longBlurb: string;
+  }
+) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  const BOARD = [
+    "ROOM_ONLY",
+    "BED_AND_BREAKFAST",
+    "HALF_BOARD",
+    "FULL_BOARD",
+    "ALL_INCLUSIVE",
+  ] as const;
+  type Board = (typeof BOARD)[number];
+
+  const boardBasis = BOARD.includes(data.boardBasis as Board)
+    ? (data.boardBasis as Board)
+    : null;
+
+  try {
+    await prisma.package.update({
+      where: { id: packageId },
+      data: {
+        mealPlan: data.mealPlan.trim() || null,
+        boardBasis,
+        badge: data.badge.trim() || null,
+        bestMonths: data.bestMonths.trim() || null,
+        longBlurb: data.longBlurb.trim() || null,
+      },
+    });
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath("/packages");
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to save those details" };
+  }
+}
