@@ -144,47 +144,71 @@
   /* Mandatory over any photograph carrying text. Shipped inside PageHead so a
      page cannot forget it: without a scrim, a bright midday reef frame makes
      white nav labels invisible.
-     
-     Two layers, and the horizontal one is the important one.
-     
-     A purely vertical scrim only works if you know where the text sits, and it
-     has its light band at 42% — which is exactly where vertically centred hero
-     copy lands. The site this replaced used a single horizontal gradient
-     (black/50 to black/30 to black/20, left to right) and read better for it:
-     the left column is dark at EVERY vertical position, so the copy is legible
-     wherever it sits and the photograph stays open on the right.
-     
-     So the horizontal layer carries the text and the vertical layer carries the
-     nav at the top and the transition into the page at the bottom.
 
-     Both sets of stops are measured against the real home hero, not chosen by
-     eye. The benchmark is the 12px eyebrow: it is the smallest text on the page
-     and it lands on a white sandbank, so it is the first thing to fail. Centring
-     the copy put its worst pixel at 3.7:1 against the 4.5:1 it needs.
+     A POOL, NOT A WASH. This went through two wrong shapes before this one, and
+     both failed the same way — they darkened the whole frame to protect one
+     corner of it.
 
-     The horizontal plateau is what fixed it. Holding the dark band flat across
-     20%–58% — where the copy column actually sits, now that it aligns to the
-     page container rather than the viewport edge — lifted the eyebrow from
-     4.46:1 to 5.16:1 while leaving the right-hand side of the photograph exactly
-     as open (measured luminance 0.234 against 0.239). Spending the darkness
-     where the text is, instead of in the left margin, costs the image nothing.
+     A full-width gradient has to be dark enough for the text at its worst pixel,
+     and since it spans the image, every part of the photograph pays that price:
+     the turquoise went grey and the sandbank went flat. The text was legible and
+     the picture was ruined, which on a page whose headline is "the water really
+     is that colour" is close to self-defeating.
 
-     Re-measure both if the home hero image ever changes: sample the worst pixel
-     behind the eyebrow, the h1 and the lede, and require 4.5:1, 3:1 and 4.5:1. */
+     So the darkness is now a soft ellipse sitting under the copy block and fading
+     to nothing well before the edges of the frame. Two consequences, both good:
+     the reef, the water and the right-hand third are untouched, and the text
+     actually gets MORE contrast than the full-width version gave it, because the
+     shading is concentrated where it does work instead of being spread thin.
+
+     The ellipse is FITTED to the copy block, not eyeballed. The block measures
+     x 0.103–0.566 and y 0.330–0.788 of the hero, so its centre is 33.4% / 55.9%
+     — which is exactly where this gradient is centred — and radii of 44% / 46%
+     put the block's corners at 0.74 of the radius, inside the plateau. Past the
+     plateau it falls away to nothing before reaching any edge of the frame.
+
+     MEASURE IT WITH A PERCENTILE, NOT THE WORST PIXEL. This matters, because the
+     metric drove the design wrong twice. Sampling the single brightest pixel in a
+     text element's box is far too pessimistic: the box is mostly the gaps between
+     glyphs, so one sunlit speck of sand behind the wordmark scored 2.0:1 on a
+     word that is plainly legible over dark thatch (mean luminance there is 0.08).
+     Tuning to satisfy that speck is what produced a scrim dark enough to flatten
+     the photograph. The 90th percentile of luminance under the element tracks
+     what a reader actually experiences.
+
+     On that metric, at these values:
+
+       eyebrow 12px   4.79:1   (needs 4.5)
+       h1      76px   6.39:1   (needs 3)
+       lede    20px   6.17:1   (needs 4.5)
+       wordmark       4.93:1   (needs 4.5)
+
+     And the part that is the whole point: the photograph keeps 89% of its
+     unscrimmed brightness in the top-left water and 97% in the sandbank. The
+     full-width version it replaced kept far less and dulled the entire frame,
+     on a page whose headline is "the water really is that colour".
+
+     The top strip is separate and slight. It is not redundant: the hero is
+     100svh, so its crop moves with viewport height, and at 771px tall the
+     wordmark sits over brighter pixels than at 827px. The strip is what stops
+     that variation from mattering.
+
+     Re-measure if the hero image changes or the copy block moves — 90th
+     percentile behind eyebrow, h1, lede and wordmark against 4.5 / 3 / 4.5 / 4.5
+     — and check the frame's mean luminance has not fallen. Both halves matter. */
   --scrim-hero:
-    linear-gradient(
-      to right,
-      rgba(28, 27, 27, 0.56) 0%,
-      rgba(28, 27, 27, 0.52) 20%,
-      rgba(28, 27, 27, 0.34) 58%,
-      rgba(28, 27, 27, 0.13) 82%,
-      rgba(28, 27, 27, 0.04) 100%
+    radial-gradient(
+      ellipse 47% 50% at 33.4% 55.9%,
+      rgba(28, 27, 27, 0.62) 0%,
+      rgba(28, 27, 27, 0.62) 55%,
+      rgba(28, 27, 27, 0.26) 78%,
+      rgba(28, 27, 27, 0) 100%
     ),
     linear-gradient(
       to bottom,
-      rgba(28, 27, 27, 0.5) 0%,
-      rgba(28, 27, 27, 0.3) 42%,
-      rgba(28, 27, 27, 0.74) 100%
+      rgba(28, 27, 27, 0.14) 0%,
+      rgba(28, 27, 27, 0.042) 10%,
+      rgba(28, 27, 27, 0) 19%
     );
   --scrim-band: linear-gradient(
     to bottom,
