@@ -22,6 +22,7 @@ import { Footer } from "@/components/layout/footer";
 import { NavBar } from "@/components/layout/nav-bar";
 import { ClosingCta, PhotoFrame } from "@/components/patterns";
 import { ContentsRail } from "@/components/guide/contents-rail";
+import { SITE_IMAGES } from "@/lib/design/site-images";
 import {
   Callout,
   CompareCards,
@@ -122,9 +123,9 @@ export default function GuidePage() {
 
       <Container className="pt-10">
         <PhotoFrame
-          src="guide/hero-aerial.jpg"
+          src={SITE_IMAGES.guideHero}
           bucket="images"
-          alt="A Maldivian atoll from the air, reef shelving into deep water"
+          alt="A seaplane on the water beside a jetty"
           ratio="21 / 9"
           radius="xl"
           className="min-h-[280px]"

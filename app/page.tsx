@@ -101,7 +101,7 @@ export default async function HomePage() {
             image="left"
             src={SITE_IMAGES.homeWhyHere}
             bucket="images"
-            alt="An atoll rim from above, reef shelving into deep water"
+            alt="An atoll and its reef from the air"
             eyebrow="Why here"
             title="A country made almost entirely of water."
             body="You don't really travel to the Maldives. You pick one small piece of it and settle in — a single island, a reef off the end of the jetty, and very little reason to leave until the boat comes back."
@@ -149,7 +149,7 @@ export default async function HomePage() {
             image="right"
             src={SITE_IMAGES.homeIncluded}
             bucket="images"
-            alt="A seaplane on the water beside a jetty"
+            alt="A traditional dhoni on the water at sunset"
             eyebrow="What's included"
             title="Your flight lands. Everything after that is ours."
             body="Getting between islands is the part that catches people out — seaplanes fly to their own schedule, and a missed speedboat can cost you a night. So we book it, time it, and put it in the price."

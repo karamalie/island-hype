@@ -24,19 +24,39 @@ export const SITE_IMAGES = {
    * white type actually needs.
    */
   homeHeroMobile: "guide/overwater-jetty-aerial.jpg",
-  /** 4:5 portrait, "why here". */
-  homeWhyHere: "guide/atoll-formation.jpg",
-  /** 4:5 portrait, "what's included" — a seaplane, since transfers are the point. */
-  homeIncluded: "guide/seaplane-water.jpg",
-  /** 1:1, the locations frame when tiles are not warranted. */
-  homeAtolls: "guide/island-beach-aerial.jpg",
   /**
-   * 21:9 page heads. Each is used once, and each is dark enough through the
-   * middle to carry the white h1 and lede that sit on it.
+   * 4:5 portrait, "why here". No text over it, so brightness does not matter —
+   * only that it reads as an atoll rim.
    */
-  packagesHead: "guide/island-resort-wide.jpg",
-  locationsHead: "guide/island-aerial-heart.jpg",
-  staysHead: "guide/overwater-villas-aerial.jpg",
+  homeWhyHere: "guide/island-aerial-heart.jpg",
+  /** 4:5 portrait, "what's included" — a dhoni, since transfers are the point. */
+  homeIncluded: "guide/dhoni-sunset.jpg",
+  /** 1:1, the locations frame in the rows fallback. No text over it. */
+  homeAtolls: "guide/island-beach-aerial.jpg",
+
+  /**
+   * The full-bleed page heads. These are the constrained slots: a 380px band
+   * spanning a 1440px viewport wants roughly 2000px of source before it starts
+   * looking soft on a retina screen, and the library has only five files that
+   * clear that. Every assignment below is the best available fit for a band that
+   * has to carry a white h1 and lede:
+   *
+   *   overwater-villas-aerial  2560px, band 120
+   *   hero-aerial              3992px, band 107
+   *   atoll-formation          1920px, band  96  (the one compromise on width)
+   *
+   * Not usable here, for the record, so nobody reaches for them: island-resort-wide
+   * is 800px, local-island-life 670px and male-mosque 800px — all far too small
+   * full-bleed. island-beach-aerial is large enough but reads 179/255 in the copy
+   * band, so white text fails on it.
+   */
+  packagesHead: "guide/overwater-villas-aerial.jpg",
+  locationsHead: "guide/hero-aerial.jpg",
+  staysHead: "guide/atoll-formation.jpg",
+
+  /** The guide's own opener, and the largest file in the library at 5800px. */
+  guideHero: "guide/seaplane-water.jpg",
+
   /** The atoll map, on the locations page and in "getting there". */
   map: "guide/maldives-map.jpg",
   /** 4:5 portrait, "we have stayed in every one of these". */

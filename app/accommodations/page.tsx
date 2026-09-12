@@ -40,7 +40,7 @@ export default async function AccommodationsPage() {
     <main>
       <PageHead
         image={getImageUrl("images", SITE_IMAGES.staysHead)}
-        imageAlt="A resort island at dusk"
+        imageAlt="An island beach and its reef, above and below the waterline"
         eyebrow="Stays"
         title="Where you sleep changes the whole trip."
         lede="A villa on stilts and a room above a family kitchen are both good weeks. They are very different weeks, and the gap in price is enormous."

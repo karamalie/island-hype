@@ -1,11 +1,18 @@
 // app/locations/page.tsx
 //
-// Choosing an atoll. The page is built on one insight: people choose on
-// photographs, but the thing that actually shapes the trip is the transfer — how
-// long you travel after you land, and what it costs.
+// Choosing an atoll.
 //
-// So the comparison table comes first, before any imagery. It is text-only, which
-// also means it fills the page at any inventory level.
+// The brief put the transfer comparison table first, before any imagery, on the
+// argument that distance is the thing that really shapes a trip. The client
+// overruled that on review, and the reasoning holds: leading with a table of
+// journey times makes six genuinely different islands look like six rows of
+// travel admin, and the page's actual job is to show that they are not
+// interchangeable.
+//
+// So the islands lead, each carrying what distinguishes it — region, what it is
+// known for, when to come, what we run there — and the comparison table follows
+// as supporting detail. Distance is still on the page, still comparable side by
+// side, and still on every island row. It is just no longer the headline.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -59,7 +66,7 @@ export default async function LocationsPage() {
     <main>
       <PageHead
         image={getImageUrl("images", SITE_IMAGES.locationsHead)}
-        imageAlt="A Maldivian island and its reef from the air"
+        imageAlt="A Maldivian atoll from the air, reef shelving into deep water"
         eyebrow="Locations"
         title="Twenty-six atolls. They are not interchangeable."
         lede="Where you go decides what you see, how long you travel to get there, and roughly what it costs. Here is where we work, and why."
@@ -68,25 +75,14 @@ export default async function LocationsPage() {
 
       <Section flush className="pt-20">
         <Container>
-          <div className="mb-8 max-w-[620px]">
-            <Label className="mb-4">Start with the journey</Label>
-            <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
-              How far you travel after you land.
-            </h2>
-            <p className="m-0 text-body-l text-ink-700">
-              The transfer is the hidden cost of a Maldives trip — in money and in
-              hours. It is the first thing worth comparing.
-            </p>
-          </div>
-          <TransferTable locations={locations} fromPrices={fromPrices} />
-        </Container>
-      </Section>
+          <SectionHeading
+            eyebrow="Where we work"
+            title="Six islands, and no two of them the same."
+            lede="One is a jungle island inside a biosphere reserve. One has whale sharks all year. One sits beside two of the best waves in the country. What you pick decides what the week is."
+          />
 
-      <Section flush className="pt-20">
-        <Container>
           {layout === "tiles" ? (
             <>
-              <SectionHeading eyebrow="Where we work" title="Every atoll we sell." />
               <div className="flex flex-wrap gap-6">
                 {locations.map((l) => (
                   <Link
@@ -110,11 +106,18 @@ export default async function LocationsPage() {
                           {l.blurb}
                         </p>
                       )}
-                      <div className="mt-auto flex items-baseline justify-between gap-3 border-t border-ink-200 pt-4">
-                        <span className="text-caption text-meta">{l.transfer ?? "—"}</span>
-                        <span className="text-caption font-medium text-teal-deep">
-                          {l.meta} →
-                        </span>
+                      <div className="mt-auto border-t border-ink-200 pt-4">
+                        {l.knownFor && (
+                          <div className="mb-2 font-mono text-label-sm uppercase text-teal-deep">
+                            {l.knownFor}
+                          </div>
+                        )}
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-caption text-meta">{l.transfer ?? "—"}</span>
+                          <span className="text-caption font-medium text-teal-deep">
+                            {l.meta} →
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -186,7 +189,7 @@ export default async function LocationsPage() {
       </Section>
 
       {/* No inventory needed — the questions that matter more than photographs */}
-      <Section tone="muted" bordered="top" className="mt-[var(--section-y)]">
+      <Section className="mt-[var(--section-y)] border-t border-ink-200">
         <Container>
           <div className="mb-10 max-w-[620px]">
             <Label className="mb-4">If you&rsquo;re undecided</Label>
@@ -228,6 +231,23 @@ export default async function LocationsPage() {
               </div>
             ))}
           </div>
+        </Container>
+      </Section>
+
+      <Section tone="muted" bordered="top">
+        <Container>
+          <div className="mb-8 max-w-[620px]">
+            <Label className="mb-4">The journey, side by side</Label>
+            <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+              And how far you&rsquo;d travel.
+            </h2>
+            <p className="m-0 text-body-l text-ink-700">
+              Not the reason to choose an island, but worth knowing before you do:
+              the transfer is a real cost in money and in hours, and on a short
+              trip a ninety-minute crossing each way takes most of a day.
+            </p>
+          </div>
+          <TransferTable locations={locations} fromPrices={fromPrices} />
         </Container>
       </Section>
 
