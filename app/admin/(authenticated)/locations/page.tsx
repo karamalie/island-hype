@@ -1,5 +1,6 @@
 import { getLocations } from "@/lib/actions/locations";
 import { PageHeader } from "@/components/admin/ui/page-header";
+import { TableEmptyRow } from "@/components/admin/ui/table-empty";
 import { StatusBadge } from "@/components/admin/ui/status-badge";
 import Link from "next/link";
 
@@ -51,11 +52,12 @@ export default async function LocationsPage() {
               </tr>
             ))}
             {locations.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                  No locations found. Create your first one.
-                </td>
-              </tr>
+              <TableEmptyRow
+                colSpan={7}
+                title="No islands yet."
+                body="Every package has to sit on an island, so this is the thing to set up first. Islands also get their own page on the site, with a season calendar and transfer times."
+                action={{ label: "New location", href: "/admin/locations/new" }}
+              />
             )}
           </tbody>
         </table>

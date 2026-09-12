@@ -21,6 +21,7 @@ import Link from "next/link";
 import type { PackageCard as PackageCardData } from "@/lib/data/packages";
 import { Badge, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { distinctOfferBadge } from "@/lib/design/offers";
 import { PhotoFrame } from "./photo-frame";
 import { SpecSheet } from "./spec-sheet";
 import { PriceBlock } from "./price-block";
@@ -54,6 +55,7 @@ function LifecycleMark({ pkg }: { pkg: PackageCardData }) {
 export function PackageCard({ pkg, form = "grid" }: PackageCardProps) {
   const href = `/packages/${pkg.slug}`;
   const ended = pkg.lifecycle === "ended";
+  const offerBadge = distinctOfferBadge(pkg.badge, pkg.offers[0]);
 
   if (form === "compact") {
     return (
@@ -105,10 +107,15 @@ export function PackageCard({ pkg, form = "grid" }: PackageCardProps) {
             sizes="(max-width: 768px) 100vw, 320px"
             zoom
           >
-            {pkg.badge && (
-              <Badge tone="on-photo" className="absolute left-4 top-4">
-                {pkg.badge}
-              </Badge>
+            {/* Stacked, because the package's own badge and an offer badge can
+                both be set and they would otherwise sit on top of each other.
+                distinctOfferBadge drops the offer chip when it repeats the
+                package's — staff use the same words for both. */}
+            {(pkg.badge || offerBadge) && (
+              <div className="absolute left-4 top-4 flex flex-col items-start gap-2">
+                {pkg.badge && <Badge tone="on-photo">{pkg.badge}</Badge>}
+                {offerBadge && <Badge tone="offer">{offerBadge}</Badge>}
+              </div>
             )}
           </PhotoFrame>
         )}
@@ -119,6 +126,9 @@ export function PackageCard({ pkg, form = "grid" }: PackageCardProps) {
             <div className="flex shrink-0 items-center gap-2">
               <LifecycleMark pkg={pkg} />
               {!pkg.photoRich && pkg.badge && <Badge tone="tint">{pkg.badge}</Badge>}
+              {!pkg.photoRich && offerBadge && (
+                <Badge tone="offer">{offerBadge}</Badge>
+              )}
             </div>
           </div>
           <div className="mb-4 text-heading-m">{pkg.name}</div>
@@ -164,10 +174,12 @@ export function PackageCard({ pkg, form = "grid" }: PackageCardProps) {
           ratio="4 / 3"
           zoom
         >
-          {pkg.badge && (
-            <Badge tone="on-photo" className="absolute left-4 top-4">
-              {pkg.badge}
-            </Badge>
+          {/* Stacked: a package badge and an offer badge can both be set. */}
+          {(pkg.badge || offerBadge) && (
+            <div className="absolute left-4 top-4 flex flex-col items-start gap-2">
+              {pkg.badge && <Badge tone="on-photo">{pkg.badge}</Badge>}
+              {offerBadge && <Badge tone="offer">{offerBadge}</Badge>}
+            </div>
           )}
         </PhotoFrame>
       )}
@@ -179,6 +191,9 @@ export function PackageCard({ pkg, form = "grid" }: PackageCardProps) {
           <div className="flex shrink-0 items-center gap-2">
             <LifecycleMark pkg={pkg} />
             {!pkg.photoRich && pkg.badge && <Badge tone="tint">{pkg.badge}</Badge>}
+              {!pkg.photoRich && offerBadge && (
+                <Badge tone="offer">{offerBadge}</Badge>
+              )}
           </div>
         </div>
 

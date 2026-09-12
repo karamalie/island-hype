@@ -6,11 +6,21 @@
 // holding one package still fills its width. A dashed border says "deliberately
 // not a card" where an absence would just look like a loading failure.
 //
-// NoResults is the centred panel for a filter that matched nothing. The active
-// filter chips stay visible above it, so the cause is legible.
+// EmptyState is the centred panel for a band that has nothing to show. It takes
+// its copy rather than owning it, because the reason a band is empty changes what
+// the visitor should be told, and getting that wrong is worse than saying nothing:
+// this component used to hardcode "No packages match those filters. Try widening
+// the price or dropping a filter", which is confidently wrong advice when the
+// truth is that the catalogue itself is empty and the visitor never set a filter.
+//
+// So the rule for every caller: say what is actually true, and offer the visitor
+// something they can do next. Never blame a filter that was not applied, and
+// never leave a band with no explanation at all — an unexplained gap reads as a
+// broken page.
 
 import Link from "next/link";
 import { Label } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 export function SiblingPanel({
   eyebrow,
@@ -38,37 +48,71 @@ export function SiblingPanel({
   );
 }
 
-export function NoResults({
+export interface EmptyStateAction {
+  label: string;
+  href: string;
+}
+
+export function EmptyState({
+  eyebrow,
+  title,
+  body,
   primary,
   secondary,
+  /** "band" is the full-width centred panel; "inset" is a quieter in-section box. */
+  size = "band",
+  className,
 }: {
-  primary: { label: string; href: string };
-  secondary: { label: string; href: string };
+  eyebrow: string;
+  title: string;
+  body: string;
+  primary?: EmptyStateAction;
+  secondary?: EmptyStateAction;
+  size?: "band" | "inset";
+  className?: string;
 }) {
+  const band = size === "band";
   return (
-    <div className="rounded-xl border border-ink-200 px-12 py-16 text-center">
-      <Label className="mb-5">No matches</Label>
-      <h2 className="mx-auto m-0 mb-4 max-w-[22em] text-[clamp(26px,3vw,36px)] font-medium leading-[1.16] tracking-[-0.02em]">
-        No packages match those filters.
+    <div
+      className={cn(
+        "rounded-xl border border-ink-200 text-center",
+        band ? "px-6 py-16 sm:px-12" : "px-6 py-10",
+        className
+      )}
+    >
+      <Label className="mb-5">{eyebrow}</Label>
+      <h2
+        className={cn(
+          "mx-auto m-0 mb-4 max-w-[22em] font-medium tracking-[-0.02em]",
+          band
+            ? "text-[clamp(24px,3vw,36px)] leading-[1.16]"
+            : "text-[clamp(20px,2.2vw,26px)] leading-[1.2]"
+        )}
+      >
+        {title}
       </h2>
-      <p className="mx-auto m-0 mb-8 max-w-[32em] text-[17px] leading-[27px] text-ink-700">
-        Try widening the price or dropping a filter — or have a look at everything
-        we run and work back from there.
-      </p>
-      <div className="flex flex-wrap justify-center gap-3">
-        <Link
-          href={primary.href}
-          className="inline-flex h-[52px] items-center rounded-full bg-ink-900 px-7 text-body-m font-medium text-white hover:bg-ink-800"
-        >
-          {primary.label}
-        </Link>
-        <Link
-          href={secondary.href}
-          className="inline-flex h-[52px] items-center rounded-full border border-ink-200 bg-white px-7 text-body-m font-medium text-ink-900 hover:bg-ink-50"
-        >
-          {secondary.label}
-        </Link>
-      </div>
+      <p className="mx-auto m-0 max-w-[32em] text-body-l text-ink-700">{body}</p>
+
+      {(primary || secondary) && (
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          {primary && (
+            <Link
+              href={primary.href}
+              className="inline-flex h-[52px] items-center rounded-full bg-ink-900 px-7 text-body-m font-medium text-white hover:bg-ink-800"
+            >
+              {primary.label}
+            </Link>
+          )}
+          {secondary && (
+            <Link
+              href={secondary.href}
+              className="inline-flex h-[52px] items-center rounded-full border border-ink-200 bg-white px-7 text-body-m font-medium text-ink-900 hover:bg-ink-50"
+            >
+              {secondary.label}
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }

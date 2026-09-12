@@ -9,7 +9,7 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export type BadgeTone = "on-photo" | "tint" | "quiet";
+export type BadgeTone = "on-photo" | "tint" | "quiet" | "offer";
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   tone?: BadgeTone;
@@ -19,6 +19,10 @@ const tones: Record<BadgeTone, string> = {
   "on-photo": "bg-white text-teal-deep",
   tint: "bg-teal-tint text-teal-deep",
   quiet: "bg-ink-50 border border-ink-200 text-meta",
+  // An offer has to out-rank the package's own badge, which sits next to it on
+  // the same photograph, so it takes the solid fill. teal-deep is the only teal
+  // in the palette permitted to carry white text.
+  offer: "bg-teal-deep text-white",
 };
 
 export function Badge({ className, tone = "tint", ...props }: BadgeProps) {

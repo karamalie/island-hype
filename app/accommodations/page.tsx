@@ -11,7 +11,11 @@ import type { Metadata } from "next";
 import { getStayCards } from "@/lib/data/accommodations";
 import { getStayTypes } from "@/lib/data/stay-types";
 import { stayListDensity } from "@/lib/design/density";
-import { staysHeading, staysLede } from "@/lib/design/inventory";
+import {
+  staysEmptyCopy,
+  staysHeading,
+  staysLede,
+} from "@/lib/design/inventory";
 import { SITE_IMAGES } from "@/lib/design/site-images";
 import { getImageUrl } from "@/lib/image-urls";
 import { Container, Label, Section } from "@/components/ui";
@@ -20,6 +24,7 @@ import { PageHead } from "@/components/layout/page-head";
 import {
   ClosingCta,
   EditorialSplit,
+  EmptyState,
   StayCard,
   StayTypeCard,
 } from "@/components/patterns";
@@ -82,21 +87,28 @@ export default async function AccommodationsPage() {
             </div>
           </div>
 
-          <div
-            className={
-              density.layout === "rows"
-                ? "mt-8 flex flex-col gap-6"
-                : "mt-8 flex flex-wrap gap-6"
-            }
-          >
-            {stays.map((stay) => (
-              <StayCard
-                key={stay.id}
-                stay={stay}
-                form={density.layout === "rows" ? "row" : "grid"}
-              />
-            ))}
-          </div>
+          {stays.length === 0 ? (
+            /* The five stay types above are static editorial, so this band is the
+               only part that can be empty — and it should say so rather than
+               leave a heading with nothing under it. */
+            <EmptyState className="mt-8" {...staysEmptyCopy()} />
+          ) : (
+            <div
+              className={
+                density.layout === "rows"
+                  ? "mt-8 flex flex-col gap-6"
+                  : "mt-8 flex flex-wrap gap-6"
+              }
+            >
+              {stays.map((stay) => (
+                <StayCard
+                  key={stay.id}
+                  stay={stay}
+                  form={density.layout === "rows" ? "row" : "grid"}
+                />
+              ))}
+            </div>
+          )}
         </Container>
       </Section>
 

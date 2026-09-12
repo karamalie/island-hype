@@ -1,5 +1,6 @@
 import { getAccommodations } from "@/lib/actions/accommodations";
 import { PageHeader } from "@/components/admin/ui/page-header";
+import { TableEmptyRow } from "@/components/admin/ui/table-empty";
 import { StatusBadge } from "@/components/admin/ui/status-badge";
 import Link from "next/link";
 
@@ -49,11 +50,12 @@ export default async function AccommodationsPage() {
               </tr>
             ))}
             {accommodations.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                  No accommodations found. Create your first one.
-                </td>
-              </tr>
+              <TableEmptyRow
+                colSpan={6}
+                title="No stays yet."
+                body="A stay is the resort, hotel or guesthouse a package puts guests in. Each package needs one, and each stay gets its own page listing its rooms and facilities."
+                action={{ label: "New stay", href: "/admin/accommodations/new" }}
+              />
             )}
           </tbody>
         </table>

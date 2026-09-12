@@ -19,6 +19,11 @@ import Link from "next/link";
 import { getLocationCards, locationsArePhotoRich } from "@/lib/data/locations";
 import { getPackageCards } from "@/lib/data/packages";
 import { locationsLayout } from "@/lib/design/density";
+import {
+  locationsEmptyCopy,
+  locationsHeading,
+  locationsLede,
+} from "@/lib/design/inventory";
 import { SITE_IMAGES } from "@/lib/design/site-images";
 import { getImageUrl } from "@/lib/image-urls";
 import { Container, Label, Section } from "@/components/ui";
@@ -26,6 +31,7 @@ import { Footer } from "@/components/layout/footer";
 import { PageHead } from "@/components/layout/page-head";
 import {
   ClosingCta,
+  EmptyState,
   PhotoFrame,
   SectionHeading,
   SpecSheet,
@@ -75,13 +81,26 @@ export default async function LocationsPage() {
 
       <Section flush className="pt-20">
         <Container>
-          <SectionHeading
-            eyebrow="Where we work"
-            title="Six islands, and no two of them the same."
-            lede="One is a jungle island inside a biosphere reserve. One has whale sharks all year. One sits beside two of the best waves in the country. What you pick decides what the week is."
-          />
+          {/* The heading is derived, not written. It said "Six islands" as a
+              literal, which would have started lying the moment staff added a
+              seventh or deactivated one — inventory.ts exists precisely so that
+              no count on the site is hardcoded.
 
-          {layout === "tiles" ? (
+              With nothing to list, the heading is dropped rather than stacked on
+              top of the empty panel: the panel already carries an eyebrow, the
+              same sentence and the actions, so keeping both said "More islands
+              are on the way." twice in a row. */}
+          {locations.length > 0 && (
+            <SectionHeading
+              eyebrow="Where we work"
+              title={locationsHeading(locations.length)}
+              lede={locationsLede(locations.length)}
+            />
+          )}
+
+          {locations.length === 0 ? (
+            <EmptyState {...locationsEmptyCopy()} />
+          ) : layout === "tiles" ? (
             <>
               <div className="flex flex-wrap gap-6">
                 {locations.map((l) => (

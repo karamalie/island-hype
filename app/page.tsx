@@ -13,7 +13,10 @@ import { getPackageCards, openCount } from "@/lib/data/packages";
 import { getLocationCards, locationsArePhotoRich } from "@/lib/data/locations";
 import { getStayTypes } from "@/lib/data/stay-types";
 import { locationsLayout } from "@/lib/design/density";
-import { packageCountLine } from "@/lib/design/inventory";
+import {
+  homePackagesEmptyCopy,
+  packageCountLine,
+} from "@/lib/design/inventory";
 import { SITE_IMAGES } from "@/lib/design/site-images";
 import { getImageUrl } from "@/lib/image-urls";
 import { Container, Label, Section } from "@/components/ui";
@@ -22,6 +25,7 @@ import { PageHead } from "@/components/layout/page-head";
 import {
   ClosingCta,
   EditorialSplit,
+  EmptyState,
   NumberedSteps,
   PackageCard,
   PhotoFrame,
@@ -123,22 +127,34 @@ export default async function HomePage() {
             title="Whole trips, not just rooms."
             lede="One location, one stay, and the boat or plane that gets you there. Priced per person and in full, so you know both numbers before you ask."
           />
-          <div className="flex flex-wrap gap-6">
-            {featured.map((pkg) => (
-              <PackageCard key={pkg.id} pkg={pkg} form="grid" />
-            ))}
-          </div>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link
-              href="/packages"
-              className="inline-flex h-12 items-center rounded-full border border-ink-200 bg-white px-[26px] text-body-s font-medium text-ink-900 hover:bg-ink-50"
-            >
-              See all packages →
-            </Link>
-            <span className="text-body-xs text-meta">
-              {packageCountLine({ packages: n, locations: locations.length })}
-            </span>
-          </div>
+          {featured.length === 0 ? (
+            /* Home is the page most likely to be seen between seasons, so this
+               band explains the gap rather than showing a heading above nothing
+               and a "See all packages" button leading to another empty page. */
+            <EmptyState {...homePackagesEmptyCopy()} />
+          ) : (
+            <div className="flex flex-wrap gap-6">
+              {featured.map((pkg) => (
+                <PackageCard key={pkg.id} pkg={pkg} form="grid" />
+              ))}
+            </div>
+          )}
+          {/* The "See all packages" row is suppressed when the band is empty: it
+              would send someone to a second empty page, and the count line beside
+              it would read as a claim about nothing. */}
+          {featured.length > 0 && (
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Link
+                href="/packages"
+                className="inline-flex h-12 items-center rounded-full border border-ink-200 bg-white px-[26px] text-body-s font-medium text-ink-900 hover:bg-ink-50"
+              >
+                See all packages →
+              </Link>
+              <span className="text-body-xs text-meta">
+                {packageCountLine({ packages: n, locations: locations.length })}
+              </span>
+            </div>
+          )}
         </Container>
       </Section>
 

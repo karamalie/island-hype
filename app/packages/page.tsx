@@ -11,13 +11,17 @@
 import type { Metadata } from "next";
 import { getPackageCards, getPackageFilterOptions, openCount } from "@/lib/data/packages";
 import { packageListDensity } from "@/lib/design/density";
-import { resultCount, resultHint } from "@/lib/design/inventory";
+import {
+  packagesEmptyCopy,
+  resultCount,
+  resultHint,
+} from "@/lib/design/inventory";
 import { SITE_IMAGES } from "@/lib/design/site-images";
 import { getImageUrl } from "@/lib/image-urls";
 import { Container, Label, Section } from "@/components/ui";
 import { Footer } from "@/components/layout/footer";
 import { PageHead } from "@/components/layout/page-head";
-import { NoResults, PackageCard, Toolbar } from "@/components/patterns";
+import { EmptyState, PackageCard, Toolbar } from "@/components/patterns";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -41,9 +45,17 @@ export default async function PackagesPage({
 
   const n = openCount(packages);
   const empty = packages.length === 0;
-  // The full bar is forced on in the empty state so the chips that caused it stay.
+  // Empty because a filter excluded everything, or empty because there is
+  // nothing to show? The copy and the buttons differ, and conflating the two
+  // told visitors to clear a filter they had never set.
+  const filtered = Boolean(tag);
+  // The filter bar is forced on when a filter emptied the list, so the chip that
+  // caused it stays visible and the visitor can see why. With an empty catalogue
+  // there is no chip to keep — and no tags to render either, since a tag only
+  // appears once a live package uses it — so a bar would be an empty strip above
+  // an explanation that already covers it.
   const density = empty
-    ? { layout: "grid" as const, quickPills: false, filterBar: true }
+    ? { layout: "grid" as const, quickPills: false, filterBar: filtered }
     : packageListDensity(n);
 
   return (
@@ -59,7 +71,7 @@ export default async function PackagesPage({
 
       <Toolbar
         count={resultCount(n, empty)}
-        hint={resultHint({ count: n, empty, sorted: n >= 6 })}
+        hint={resultHint({ count: n, empty, filtered, sorted: n >= 6 })}
         density={density}
         tags={filters.tags}
         activeTag={tag ?? null}
@@ -69,10 +81,7 @@ export default async function PackagesPage({
       <Section flush className="pt-10">
         <Container>
           {empty ? (
-            <NoResults
-              primary={{ label: "Clear all filters", href: "/packages" }}
-              secondary={{ label: "Ask about dates", href: "/contact" }}
-            />
+            <EmptyState {...packagesEmptyCopy(filtered)} />
           ) : density.layout === "rows" ? (
             <div className="flex flex-col gap-6">
               {packages.map((pkg) => (

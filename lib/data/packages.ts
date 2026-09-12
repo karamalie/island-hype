@@ -25,6 +25,11 @@ import {
 } from "@/lib/design/availability";
 import { isPhotoRich } from "@/lib/design/density";
 import {
+  resolveOffers,
+  type OfferInput,
+  type ResolvedOffer,
+} from "@/lib/design/offers";
+import {
   accommodationTypeLabel,
   packageEyebrow,
   transferSummary,
@@ -463,6 +468,8 @@ export interface PackageCard {
   /** "From March 2027", for an upcoming package. */
   opens: string | null;
   tags: string[];
+  /** Live offers only, soonest to end first. Empty when there are none. */
+  offers: ResolvedOffer[];
 }
 
 const cardSelect = {
@@ -487,6 +494,10 @@ const cardSelect = {
   pricing: true,
   images: { select: { url: true }, take: 1 },
   tags: { select: { tag: { select: { name: true, slug: true } } } },
+  // Offers are filtered and shaped by lib/design/offers.ts, not here: validity is
+  // derived from the dates at render time, so the query takes the active rows and
+  // lets resolveOffers decide which are actually live today.
+  offers: { where: { isActive: true } },
 } as const;
 
 type CardRow = {
@@ -515,6 +526,7 @@ type CardRow = {
   pricing: PackagePricing[];
   images: { url: string }[];
   tags: { tag: { name: string; slug: string } }[];
+  offers: OfferInput[];
 };
 
 function toCard(row: CardRow, market: Market): PackageCard {
@@ -542,6 +554,7 @@ function toCard(row: CardRow, market: Market): PackageCard {
     lifecycle: lifecycleOf({ travel, booking }),
     opens: opensLabel(travel, booking),
     tags: row.tags.map((t) => t.tag.slug),
+    offers: resolveOffers(row.offers, { market }),
   };
 }
 
@@ -646,6 +659,12 @@ export async function getPackageDetail(
       faqs: { orderBy: { sortOrder: "asc" } },
       blackouts: { orderBy: { startDate: "asc" } },
       tags: { select: { tag: { select: { name: true, slug: true } } } },
+      // Active rows only; resolveOffers decides which are live today. Note this
+      // is NOT filtered on validUntil in SQL, deliberately: `validUntil >= now()`
+      // compares an exact timestamp against a date stored at midnight, so an
+      // offer valid "until 30 June" vanished at 00:00 on the 30th — a day early.
+      // offers.ts compares whole days at both ends instead.
+      offers: { where: { isActive: true } },
     },
   });
   if (!row || !row.isActive) return null;
@@ -662,6 +681,7 @@ export async function getPackageDetail(
       },
       accommodation: { name: row.accommodation.name, type: row.accommodation.type },
       images: row.images.map((i) => ({ url: i.url })),
+      offers: row.offers,
     } as unknown as CardRow,
     market
   );

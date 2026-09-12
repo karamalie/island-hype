@@ -1,5 +1,6 @@
 import { getInquiries } from "@/lib/actions/inquiries";
 import { StatusBadge } from "@/components/admin/ui/status-badge";
+import { TableEmptyRow } from "@/components/admin/ui/table-empty";
 import { InquiryFilters } from "./inquiry-filters";
 import Link from "next/link";
 import type { InquiryStatus, Market } from "@prisma/client";
@@ -72,11 +73,11 @@ export default async function InquiriesPage({
               </tr>
             ))}
             {inquiries.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                  No inquiries found.
-                </td>
-              </tr>
+              <TableEmptyRow
+                colSpan={7}
+                title="No enquiries yet."
+                body="Enquiries from the contact page and from the booking panel on each package arrive here, with the dates and party size the guest entered. Nothing to do until one comes in."
+              />
             )}
           </tbody>
         </table>

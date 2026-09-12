@@ -7,6 +7,7 @@ export * from "./empty-panel";
 export * from "./faq-rows";
 export * from "./gallery";
 export * from "./numbered-steps";
+export * from "./offer-panel";
 export * from "./package-card";
 export * from "./photo-frame";
 export * from "./price-block";

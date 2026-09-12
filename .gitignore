@@ -45,3 +45,6 @@ next-env.d.ts
 
 # local dev media (pulled from prod, not committed)
 /public/storage
+
+# Database dumps. Never in git: they contain real enquiry data.
+/backups

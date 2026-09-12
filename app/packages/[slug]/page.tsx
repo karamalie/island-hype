@@ -16,6 +16,7 @@ import Link from "next/link";
 import { getPackageCards, getPackageDetail } from "@/lib/data/packages";
 import { showRelated } from "@/lib/design/density";
 import { SITE_IMAGES } from "@/lib/design/site-images";
+import { distinctOfferBadge } from "@/lib/design/offers";
 import { Badge, Container, Label, Mark, Section } from "@/components/ui";
 import { Footer } from "@/components/layout/footer";
 import { NavBar } from "@/components/layout/nav-bar";
@@ -27,6 +28,7 @@ import {
   Gallery,
   PackageCard,
   PhotoFrame,
+  OfferPanel,
   PriceBlock,
   StepRows,
 } from "@/components/patterns";
@@ -84,6 +86,14 @@ export default async function PackageDetailPage({
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <Label>{pkg.eyebrow}</Label>
               {pkg.badge && <Badge tone="tint">{pkg.badge}</Badge>}
+              {/* Same badge the card showed, so arriving from the listing is
+                  continuous. The conditions are in the panel further down, and
+                  the chip is dropped when it would only repeat pkg.badge. */}
+              {distinctOfferBadge(pkg.badge, pkg.offers[0]) && (
+                <Badge tone="offer">
+                  {distinctOfferBadge(pkg.badge, pkg.offers[0])}
+                </Badge>
+              )}
               {pkg.lifecycle === "ended" && <Badge tone="quiet">Ended</Badge>}
               {pkg.lifecycle === "upcoming" && pkg.opens && (
                 <Badge tone="quiet">{pkg.opens}</Badge>
@@ -125,6 +135,12 @@ export default async function PackageDetailPage({
                 { label: "Best months", value: pkg.bestMonths },
               ]}
             />
+
+            {/* Placed in the main column rather than above the booking rail on
+                purpose: the rail is sticky, and stacking a tall panel on top of
+                it can push the enquiry button off the bottom of a short screen —
+                the one element that must always be reachable. */}
+            <OfferPanel offers={pkg.offers} className="mb-12" />
 
             {(pkg.longBlurb || pkg.description) && (
               <div className="mb-12">

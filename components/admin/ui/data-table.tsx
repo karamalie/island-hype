@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import Link from "next/link";
+import {
+  Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  Plus,
+  SearchX,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Column<T> {
@@ -19,6 +27,20 @@ interface DataTableProps<T> {
   searchKeys?: string[];
   onRowClick?: (row: T) => void;
   actions?: (row: T) => React.ReactNode;
+  /**
+   * What to show when there is nothing in the table at all. Two nothings are
+   * possible here and they need different answers: a search that matched
+   * nothing is handled automatically (it offers to clear the search), while an
+   * empty table needs to tell the person what this screen is for and give them
+   * the button that starts it. The old default was the string "No data found",
+   * which reads like an error and tells a non-technical person nothing.
+   */
+  empty?: {
+    title: string;
+    body: string;
+    action?: { label: string; href: string };
+  };
+  /** @deprecated Pass `empty` instead — a bare sentence has nowhere to go next. */
   emptyMessage?: string;
   pageSize?: number;
 }
@@ -32,7 +54,8 @@ export function DataTable<T extends Record<string, unknown>>({
   searchKeys = [],
   onRowClick,
   actions,
-  emptyMessage = "No data found",
+  empty,
+  emptyMessage,
   pageSize = 20,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
@@ -147,9 +170,34 @@ export function DataTable<T extends Record<string, unknown>>({
                 <tr>
                   <td
                     colSpan={columns.length + (actions ? 1 : 0)}
-                    className="px-4 py-8 text-center text-slate-400"
+                    className="px-6 py-14"
                   >
-                    {emptyMessage}
+                    {data.length > 0 ? (
+                      /* There ARE rows; the search excluded them. Say so, and
+                         give back the way out — otherwise a typo in the search
+                         box looks like the records have gone. */
+                      <TableEmpty
+                        icon={<SearchX className="h-5 w-5 text-slate-400" />}
+                        title={`Nothing matches “${search}”.`}
+                        body={`All ${data.length} ${
+                          data.length === 1 ? "row is" : "rows are"
+                        } still here — clear the search to see them.`}
+                        onClear={() => {
+                          setSearch("");
+                          setPage(0);
+                        }}
+                      />
+                    ) : (
+                      <TableEmpty
+                        icon={<Plus className="h-5 w-5 text-slate-400" />}
+                        title={empty?.title ?? emptyMessage ?? "Nothing here yet."}
+                        body={
+                          empty?.body ??
+                          "Anything you add will appear in this list."
+                        }
+                        action={empty?.action}
+                      />
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -209,6 +257,55 @@ export function DataTable<T extends Record<string, unknown>>({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The empty block inside the table. Deliberately generous with space: a thin
+ * grey line of text in a bordered table reads as a rendering glitch, whereas a
+ * centred block with a next action reads as a state someone designed.
+ */
+function TableEmpty({
+  icon,
+  title,
+  body,
+  action,
+  onClear,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+  action?: { label: string; href: string };
+  onClear?: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-md text-center">
+      <span className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+        {icon}
+      </span>
+      <p className="m-0 text-sm font-medium text-slate-900">{title}</p>
+      <p className="mx-auto mt-1.5 max-w-[46ch] text-sm leading-6 text-slate-500">
+        {body}
+      </p>
+      {action && (
+        <Link
+          href={action.href}
+          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+        >
+          <Plus className="h-4 w-4" />
+          {action.label}
+        </Link>
+      )}
+      {onClear && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="mt-5 inline-flex items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400"
+        >
+          Clear the search
+        </button>
+      )}
     </div>
   );
 }
