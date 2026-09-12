@@ -28,7 +28,9 @@ jobs:
           # Dummy URL: pages are force-dynamic, so the build does not hit the DB.
           DATABASE_URL: "mysql://build:build@127.0.0.1:3306/build"
           NEXT_PUBLIC_MEDIA_URL: ""
-          NEXT_PUBLIC_SITE_URL: "https://islandhype.68-183-39-8.nip.io"
+          # The real domain. This was the nip.io hostname, which getBaseUrl()
+          # feeds into canonical URLs and any absolute link built from it.
+          NEXT_PUBLIC_SITE_URL: "https://www.islandhypemaldives.com"
         run: npm run build
 
       - name: Assemble deploy bundle

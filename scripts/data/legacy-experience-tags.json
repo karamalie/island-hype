@@ -1,0 +1,100 @@
+{
+  "tags": [
+    {
+      "name": "Sunset Cruise",
+      "slug": "sunset-cruise",
+      "sortOrder": 0
+    },
+    {
+      "name": "Honeymoon",
+      "slug": "honeymoon",
+      "sortOrder": 0
+    },
+    {
+      "name": "Water Sports",
+      "slug": "water-sports",
+      "sortOrder": 0
+    },
+    {
+      "name": "Diving",
+      "slug": "diving",
+      "sortOrder": 0
+    },
+    {
+      "name": "Snorkeling",
+      "slug": "snorkeling",
+      "sortOrder": 0
+    },
+    {
+      "name": "Wellness & Spa",
+      "slug": "wellness-spa",
+      "sortOrder": 0
+    },
+    {
+      "name": "Family",
+      "slug": "family",
+      "sortOrder": 0
+    },
+    {
+      "name": "Local Culture",
+      "slug": "local-culture",
+      "sortOrder": 0
+    }
+  ],
+  "links": [
+    {
+      "tagSlug": "honeymoon",
+      "packageSlug": "baros-romantic-escape"
+    },
+    {
+      "tagSlug": "diving",
+      "packageSlug": "baros-romantic-escape"
+    },
+    {
+      "tagSlug": "wellness-spa",
+      "packageSlug": "baros-romantic-escape"
+    },
+    {
+      "tagSlug": "snorkeling",
+      "packageSlug": "fulidhoo-shark-safari"
+    },
+    {
+      "tagSlug": "local-culture",
+      "packageSlug": "fulidhoo-shark-safari"
+    },
+    {
+      "tagSlug": "sunset-cruise",
+      "packageSlug": "maafushi-beach-getaway"
+    },
+    {
+      "tagSlug": "water-sports",
+      "packageSlug": "maafushi-beach-getaway"
+    },
+    {
+      "tagSlug": "snorkeling",
+      "packageSlug": "maafushi-beach-getaway"
+    },
+    {
+      "tagSlug": "snorkeling",
+      "packageSlug": "soneva-fushi-family-paradise"
+    },
+    {
+      "tagSlug": "wellness-spa",
+      "packageSlug": "soneva-fushi-family-paradise"
+    },
+    {
+      "tagSlug": "family",
+      "packageSlug": "soneva-fushi-family-paradise"
+    },
+    {
+      "tagSlug": "diving",
+      "packageSlug": "whale-shark-explorer"
+    },
+    {
+      "tagSlug": "snorkeling",
+      "packageSlug": "whale-shark-explorer"
+    }
+  ],
+  "exportedAt": "2026-09-12 19:20:30.000000",
+  "exportedFrom": "production"
+}

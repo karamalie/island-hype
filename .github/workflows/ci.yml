@@ -1,0 +1,59 @@
+name: CI
+
+# Runs on pull requests, and on pushes to main so a direct commit is not exempt.
+#
+# The point of this file: until it existed, `deploy.yml` was the only thing that
+# ever compiled the project, so the first sign of a type error was a failed
+# production deploy. The checks below are the same three that have to pass
+# locally before a commit, in the same order — cheapest and most specific first,
+# so a type error reports as a type error rather than as a build failure.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# A new push supersedes the previous run on the same ref: nobody needs the
+# results for a commit that has already been replaced.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      # `npm run build` does this too, but on its own it means a Prisma client
+      # exists before the typecheck, which otherwise fails on every generated
+      # type rather than on the actual mistake.
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        env:
+          # The same dummy connection string deploy.yml uses. It works only
+          # because every page is force-dynamic, so the build never queries the
+          # database. If a statically-generated page ever reads the DB, this step
+          # is where it will fail — which is the point of running it here rather
+          # than discovering it during a deploy.
+          DATABASE_URL: "mysql://build:build@127.0.0.1:3306/build"
+          NEXT_PUBLIC_MEDIA_URL: ""
+          NEXT_PUBLIC_SITE_URL: "https://www.islandhypemaldives.com"
+        run: npm run build
