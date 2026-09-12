@@ -59,7 +59,11 @@ export interface LogoProps {
   form?: "horizontal" | "wordmark" | "lockup";
   /** What it is sitting on. Decides whether it gets a pill. */
   ground: "photo" | "ink" | "white";
-  /** Rendered width in px. Height follows the aspect ratio. */
+  /**
+   * Rendered width in px, for the "lockup" and "wordmark" forms. Ignored by
+   * "horizontal", which is sized from the nav bar's height instead — see the
+   * note in the body.
+   */
   width?: number;
   priority?: boolean;
   className?: string;
@@ -75,7 +79,7 @@ export function Logo({
   const onPhoto = ground === "photo";
 
   // Default widths per form, chosen so the name reads at a normal header size.
-  const w = width ?? (form === "lockup" ? 220 : form === "wordmark" ? 200 : 216);
+  const w = width ?? (form === "lockup" ? 220 : 200);
 
   const plain = (
     src: string,
@@ -100,25 +104,32 @@ export function Logo({
 
   let content: React.ReactNode;
   if (form === "horizontal") {
-    // Split the width between mark and words, with the gap taken out first.
-    const gap = Math.round(w * 0.055);
-    const markW = Math.round(w * 0.2);
-    const wordW = w - markW - gap;
-    // Below md the words are dropped and only the mark shows. That is the same
-    // breakpoint at which the nav collapses its links to a hamburger, so the bar
-    // sheds the wordmark and the menu together rather than at two different
-    // widths. It also buys back the room the hamburger needs: at 390px a 208px
-    // logo plus a 44px button plus the gutters is most of the screen.
+    // Sized from the BAR, not from the logo.
     //
-    // The mark is a touch larger on mobile, because on its own it is the whole
-    // logo rather than an adornment next to the words.
-    const markMobile = Math.round(markW * 1.15);
+    // The nav's CTA and its hamburger are both h-11 (44px), and the pill is
+    // pinned to the same height at every width — so the logo has 44 less the
+    // pill's 8px of padding either side to work in, i.e. 28px of content. Both
+    // parts are therefore given a height and allowed to find their own width,
+    // rather than being handed a total width and ending up whatever height that
+    // implied. Previously that produced a 62px pill sitting in a 44px bar.
+    //
+    // The wordmark is set slightly shorter than the mark (24 against 28) because
+    // it is a band of letterforms rather than a solid disc: matched to the mark's
+    // full height it optically overpowers it.
+    // Two heights because the bar has two. Below md the tallest things beside the
+    // logo are the CTA and the hamburger, both h-11 (44px). From md the links
+    // pill takes over at 50px — p-1.5 around an h-9 link — and that is what sets
+    // the bar's height on a laptop. So the pill tracks whichever is tallest, and
+    // the artwork is sized to whatever that leaves after the padding.
+    const markMobilePx = Math.round((28 * MARK.w) / MARK.h);
+    const markPx = Math.round((32 * MARK.w) / MARK.h);
+    const wordPx = Math.round((26 * WORDMARK.w) / WORDMARK.h);
     content = (
       <>
-        {plain(MARK_SRC, MARK, markMobile, "md:hidden")}
-        <span className="hidden items-center md:inline-flex" style={{ gap }}>
-          {plain(MARK_SRC, MARK, markW)}
-          {plain(WORDMARK_SRC, WORDMARK, wordW)}
+        {plain(MARK_SRC, MARK, markMobilePx, "md:hidden")}
+        <span className="hidden items-center gap-2.5 md:inline-flex">
+          {plain(MARK_SRC, MARK, markPx)}
+          {plain(WORDMARK_SRC, WORDMARK, wordPx)}
         </span>
       </>
     );
@@ -136,8 +147,14 @@ export function Logo({
         "inline-flex shrink-0 items-center",
         // The pill: the nav's own radius and a white fill, so the logo belongs to
         // the same family as the link pill beside it.
+        //
+        // The heights are not cosmetic, they are the bar's own. h-11 (44px) is the
+        // CTA and the hamburger on mobile; 50px is the desktop links pill, which
+        // is the tallest thing in the bar on a laptop. Either way the logo now
+        // sits in the bar rather than setting its height on its own — it used to
+        // be 62px in a 50px bar.
         onPhoto &&
-          "rounded-full bg-white px-5 py-2.5 shadow-[0_2px_12px_rgba(28,27,27,0.18)]",
+          "h-11 rounded-full bg-white px-4 shadow-[0_2px_12px_rgba(28,27,27,0.18)] md:h-[50px] md:px-5",
         className
       )}
     >

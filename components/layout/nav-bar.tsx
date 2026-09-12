@@ -61,12 +61,7 @@ export function NavBar({ surface, active, cta }: NavBarProps) {
     >
       {/* On a photograph the gold sits in a white pill; on the solid white nav it
           needs no ground. Either way it is the same gold asset. */}
-      <Logo
-        form="horizontal"
-        ground={onImage ? "photo" : "white"}
-        width={onImage ? 208 : 216}
-        priority
-      />
+      <Logo form="horizontal" ground={onImage ? "photo" : "white"} priority />
 
       {/* Desktop pill */}
       <nav
