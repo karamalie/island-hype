@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
+import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
+import { accommodationDeleteImpact } from "@/lib/actions/delete-impact";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { ImageGallery } from "@/components/admin/shared/image-gallery";
@@ -153,16 +155,6 @@ export function AccommodationForm({
     }
   }
 
-  async function handleDelete() {
-    if (!accommodation || !confirm("Delete this accommodation?")) return;
-    const result = await deleteAccommodation(accommodation.id);
-    if (result.success) {
-      toast.success("Accommodation deleted");
-      router.push("/admin/accommodations");
-    } else {
-      toast.error(result.error || "Failed to delete");
-    }
-  }
 
   async function handleCoverUpload(file: File) {
     if (!accommodation) return { success: false, error: "Save the accommodation first" };
@@ -423,7 +415,12 @@ export function AccommodationForm({
           <div className="flex gap-3">
             <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Accommodation"}</SubmitButton>
             {isEdit && (
-              <SubmitButton type="button" variant="danger" onClick={handleDelete}>Delete</SubmitButton>
+              <DeleteWithImpact
+                noun="place to stay"
+                getImpact={() => accommodationDeleteImpact(accommodation!.id)}
+                onDelete={() => deleteAccommodation(accommodation!.id)}
+                redirectTo="/admin/accommodations"
+              />
             )}
           </div>
         </form>

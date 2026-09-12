@@ -122,17 +122,76 @@ export async function updateLocation(id: string, formData: FormData) {
   }
 }
 
+/**
+ * Deletes an island and everything that only exists because of it.
+ *
+ * Package.locationId and Accommodation.locationId are Restrict, so a plain
+ * `location.delete` fails the moment anything is attached — which is why this
+ * used to return "Failed to delete location" and nothing else. The dependents
+ * are removed here, in one transaction, in foreign-key order.
+ *
+ * Order matters and is not arbitrary: packages first (they point at both the
+ * location and its accommodations), then activities, then the accommodations
+ * themselves, then the island. Everything else — its photos, FAQs, season
+ * calendar and stay types — is already Cascade in the schema and goes with it.
+ *
+ * The set of packages includes any that point at an accommodation on this island
+ * while being filed under a different one. Nothing in the schema stops that
+ * combination, and leaving such a package behind would fail the transaction at
+ * the accommodation step.
+ *
+ * Past enquiries are NOT deleted. Inquiry.packageId is SetNull and the enquiry
+ * carries its own packageName, so the sales record outlives the catalogue. That
+ * is deliberate in the schema and worth preserving here.
+ */
 export async function deleteLocation(id: string) {
   const session = await getSession();
   if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
 
   try {
-    await prisma.location.delete({ where: { id } });
+    const accommodations = await prisma.accommodation.findMany({
+      where: { locationId: id },
+      select: { id: true },
+    });
+    const accIds = accommodations.map((a) => a.id);
+
+    const packages = await prisma.package.findMany({
+      where: {
+        OR: [
+          { locationId: id },
+          ...(accIds.length ? [{ accommodationId: { in: accIds } }] : []),
+        ],
+      },
+      select: { id: true },
+    });
+    const pkgIds = packages.map((p) => p.id);
+
+    await prisma.$transaction(async (tx) => {
+      if (pkgIds.length) {
+        await tx.package.deleteMany({ where: { id: { in: pkgIds } } });
+      }
+      await tx.activity.deleteMany({ where: { locationId: id } });
+      if (accIds.length) {
+        await tx.accommodation.deleteMany({ where: { id: { in: accIds } } });
+      }
+      await tx.location.delete({ where: { id } });
+    });
+
     revalidatePath("/admin/locations");
     revalidatePath("/");
+    revalidatePath("/locations");
+    revalidatePath("/packages");
+    revalidatePath("/accommodations");
     return { success: true };
-  } catch {
-    return { success: false, error: "Failed to delete location" };
+  } catch (e) {
+    // Surfaced rather than swallowed: if something still references the island,
+    // the person needs to know that nothing was deleted, not just that it failed.
+    console.error("deleteLocation", e);
+    return {
+      success: false,
+      error:
+        "That didn't delete, and nothing was removed. Something still refers to this island that we did not expect — send this to a developer.",
+    };
   }
 }
 

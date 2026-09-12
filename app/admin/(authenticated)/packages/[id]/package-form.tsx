@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
+import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
+import { packageDeleteImpact } from "@/lib/actions/delete-impact";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { Tabs } from "@/components/admin/ui/tabs";
@@ -365,16 +367,6 @@ export function PackageForm({
     toast.success("Terms saved");
   }
 
-  async function handleDelete() {
-    if (!pkg || !confirm("Delete this package?")) return;
-    const result = await deletePackage(pkg.id);
-    if (result.success) {
-      toast.success("Package deleted");
-      router.push("/admin/packages");
-    } else {
-      toast.error(result.error || "Failed to delete");
-    }
-  }
 
   async function handleCoverUpload(file: File) {
     if (!pkg) return { success: false, error: "Save the package first" };
@@ -607,7 +599,12 @@ export function PackageForm({
             <div className="flex gap-3">
               <SubmitButton loading={loading}>{isEdit ? "Save Basic Info" : "Create Package"}</SubmitButton>
               {isEdit && (
-                <SubmitButton type="button" variant="danger" onClick={handleDelete}>Delete Package</SubmitButton>
+                <DeleteWithImpact
+                noun="package"
+                getImpact={() => packageDeleteImpact(pkg!.id)}
+                onDelete={() => deletePackage(pkg!.id)}
+                redirectTo="/admin/packages"
+              />
               )}
             </div>
           </form>

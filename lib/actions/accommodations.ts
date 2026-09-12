@@ -117,17 +117,35 @@ export async function updateAccommodation(id: string, formData: FormData) {
   }
 }
 
+/**
+ * Deletes a place to stay, and the packages that put guests in it.
+ *
+ * Package.accommodationId is Restrict and required — a package cannot exist
+ * without somewhere to sleep — so those packages go too. Rooms, facilities,
+ * photos and FAQs are Cascade in the schema. Past enquiries survive, keeping the
+ * package name they were made against.
+ */
 export async function deleteAccommodation(id: string) {
   const session = await getSession();
   if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
 
   try {
-    await prisma.accommodation.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.package.deleteMany({ where: { accommodationId: id } });
+      await tx.accommodation.delete({ where: { id } });
+    });
     revalidatePath("/admin/accommodations");
     revalidatePath("/");
+    revalidatePath("/accommodations");
+    revalidatePath("/packages");
     return { success: true };
-  } catch {
-    return { success: false, error: "Failed to delete accommodation" };
+  } catch (e) {
+    console.error("deleteAccommodation", e);
+    return {
+      success: false,
+      error:
+        "That didn't delete, and nothing was removed. Something still refers to this place that we did not expect — send this to a developer.",
+    };
   }
 }
 

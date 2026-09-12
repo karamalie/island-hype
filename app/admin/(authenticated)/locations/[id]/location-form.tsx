@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
+import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
+import { locationDeleteImpact } from "@/lib/actions/delete-impact";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { ImageGallery } from "@/components/admin/shared/image-gallery";
@@ -135,16 +137,6 @@ export function LocationForm({
     }
   }
 
-  async function handleDelete() {
-    if (!location || !confirm("Delete this location?")) return;
-    const result = await deleteLocation(location.id);
-    if (result.success) {
-      toast.success("Location deleted");
-      router.push("/admin/locations");
-    } else {
-      toast.error(result.error || "Failed to delete");
-    }
-  }
 
   async function handleCoverUpload(file: File) {
     if (!location) return { success: false, error: "Save the location first" };
@@ -262,7 +254,12 @@ export function LocationForm({
           <div className="flex gap-3">
             <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Location"}</SubmitButton>
             {isEdit && (
-              <SubmitButton type="button" variant="danger" onClick={handleDelete}>Delete</SubmitButton>
+              <DeleteWithImpact
+                noun="island"
+                getImpact={() => locationDeleteImpact(location!.id)}
+                onDelete={() => deleteLocation(location!.id)}
+                redirectTo="/admin/locations"
+              />
             )}
           </div>
         </form>
