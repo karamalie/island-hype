@@ -56,8 +56,8 @@ export default async function HomePage() {
   return (
     <main>
       <PageHead
-        height="hero"
-        contained={false}
+        height="full"
+        copy="center"
         image={getImageUrl("images", SITE_IMAGES.homeHero)}
         mobileImage={getImageUrl("images", SITE_IMAGES.homeHeroMobile)}
         imageAlt="A Maldivian atoll and its reef from the air"
@@ -120,7 +120,7 @@ export default async function HomePage() {
         <Container>
           <SectionHeading
             eyebrow="What we sell"
-            title="Packages, not a booking engine."
+            title="Whole trips, not just rooms."
             lede="One location, one stay, and the boat or plane that gets you there. Priced per person and in full, so you know both numbers before you ask."
           />
           <div className="flex flex-wrap gap-6">

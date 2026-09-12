@@ -7,10 +7,12 @@
 // dark, and a bright midday reef frame made the labels invisible. A page cannot
 // forget a scrim it does not apply.
 //
-// Two heights: 640px for Home, where the hero is the page's thesis, and 380px for
-// the listing heads. When there is no photograph yet, the teal-to-ink gradient
-// stands in — and the mono photo caption is suppressed, because a caption naming
-// a photograph that does not exist is a review artefact, not content.
+// Three heights: "full" for Home, where the hero is the page's thesis and fills
+// the screen as it did before the revamp; "hero" at 640px for a tall band that
+// still lets the next section peek; and "band" at 380px for the listing heads.
+// When there is no photograph yet, the teal-to-ink gradient stands in — and the
+// mono photo caption is suppressed, because a caption naming a photograph that
+// does not exist is a review artefact, not content.
 
 import { NavBar, type NavBarProps } from "./nav-bar";
 import { responsiveSource } from "@/lib/design/responsive-image";
@@ -31,10 +33,17 @@ export interface PageHeadProps {
    */
   mobileImage?: string | null;
   imageAlt?: string;
-  height?: "hero" | "band";
+  height?: "full" | "hero" | "band";
   nav: Omit<NavBarProps, "surface">;
   /** Constrain the copy block to the page container, as the listing heads do. */
   contained?: boolean;
+  /**
+   * Where the copy sits in the frame. "bottom" is the listing-head treatment.
+   * "center" is what the pre-revamp home hero did — the copy vertically centred
+   * in the left column — and it only reads because the hero scrim carries a
+   * horizontal layer; see the note on --scrim-hero.
+   */
+  copy?: "bottom" | "center";
   children?: React.ReactNode;
 }
 
@@ -48,9 +57,13 @@ export function PageHead({
   height = "band",
   nav,
   contained = true,
+  copy = "bottom",
   children,
 }: PageHeadProps) {
-  const isHero = height === "hero";
+  // "full" and "hero" are the same treatment — the deep scrim, the display-xl
+  // title, the 700px copy measure — and differ only in how tall the box is. So
+  // every decision below keys off isHero, and height alone picks the class.
+  const isHero = height !== "band";
 
   // PageHead is handed resolved URLs, so derive the object path back out to look
   // the file up in the derivative manifest. The heroes are the largest images on
@@ -60,7 +73,12 @@ export function PageHead({
 
   return (
     <div
-      className={cn("relative flex flex-col", isHero ? "min-h-[640px]" : "min-h-[380px]")}
+      className={cn(
+        "relative flex flex-col",
+        height === "full" && "hero-full",
+        height === "hero" && "min-h-[640px]",
+        height === "band" && "min-h-[380px]"
+      )}
       style={image ? undefined : { background: "var(--ground-photo)" }}
     >
       {image && (
@@ -107,7 +125,14 @@ export function PageHead({
         <NavBar {...nav} surface="glass" />
       </div>
 
-      <div className="relative mt-auto px-[var(--gutter)] pb-10 pt-10">
+      <div
+        className={cn(
+          "relative px-[var(--gutter)] py-10",
+          // mt-auto pins the block to the bottom of the flex column; my-auto
+          // centres it in whatever space the nav leaves.
+          copy === "center" ? "my-auto" : "mt-auto"
+        )}
+      >
         <div
           className={cn("mx-auto w-full", contained && "max-w-[var(--container-page)]")}
         >

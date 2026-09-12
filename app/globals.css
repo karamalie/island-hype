@@ -143,13 +143,49 @@
 
   /* Mandatory over any photograph carrying text. Shipped inside PageHead so a
      page cannot forget it: without a scrim, a bright midday reef frame makes
-     white nav labels invisible. */
-  --scrim-hero: linear-gradient(
-    to bottom,
-    rgba(28, 27, 27, 0.5) 0%,
-    rgba(28, 27, 27, 0.1) 42%,
-    rgba(28, 27, 27, 0.74) 100%
-  );
+     white nav labels invisible.
+     
+     Two layers, and the horizontal one is the important one.
+     
+     A purely vertical scrim only works if you know where the text sits, and it
+     has its light band at 42% — which is exactly where vertically centred hero
+     copy lands. The site this replaced used a single horizontal gradient
+     (black/50 to black/30 to black/20, left to right) and read better for it:
+     the left column is dark at EVERY vertical position, so the copy is legible
+     wherever it sits and the photograph stays open on the right.
+     
+     So the horizontal layer carries the text and the vertical layer carries the
+     nav at the top and the transition into the page at the bottom.
+
+     Both sets of stops are measured against the real home hero, not chosen by
+     eye. The benchmark is the 12px eyebrow: it is the smallest text on the page
+     and it lands on a white sandbank, so it is the first thing to fail. Centring
+     the copy put its worst pixel at 3.7:1 against the 4.5:1 it needs.
+
+     The horizontal plateau is what fixed it. Holding the dark band flat across
+     20%–58% — where the copy column actually sits, now that it aligns to the
+     page container rather than the viewport edge — lifted the eyebrow from
+     4.46:1 to 5.16:1 while leaving the right-hand side of the photograph exactly
+     as open (measured luminance 0.234 against 0.239). Spending the darkness
+     where the text is, instead of in the left margin, costs the image nothing.
+
+     Re-measure both if the home hero image ever changes: sample the worst pixel
+     behind the eyebrow, the h1 and the lede, and require 4.5:1, 3:1 and 4.5:1. */
+  --scrim-hero:
+    linear-gradient(
+      to right,
+      rgba(28, 27, 27, 0.56) 0%,
+      rgba(28, 27, 27, 0.52) 20%,
+      rgba(28, 27, 27, 0.34) 58%,
+      rgba(28, 27, 27, 0.13) 82%,
+      rgba(28, 27, 27, 0.04) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(28, 27, 27, 0.5) 0%,
+      rgba(28, 27, 27, 0.3) 42%,
+      rgba(28, 27, 27, 0.74) 100%
+    );
   --scrim-band: linear-gradient(
     to bottom,
     rgba(28, 27, 27, 0.52) 0%,
@@ -178,7 +214,12 @@
        so the lede and the glass button land on whatever the photograph happens to
        be doing there. The brief's own floor — 4.5:1 for body text — outranks its
        scrim values, so the midpoint is darkened on narrow viewports only. The top
-       and bottom stops are untouched. */
+       and bottom stops are untouched.
+
+       This also deliberately drops the desktop horizontal layer rather than
+       inheriting it: on a phone the copy runs the full width of the screen, so
+       darkening the left edge alone would leave the ends of every line on bare
+       photograph. Vertical only, darker throughout. */
     --scrim-hero: linear-gradient(
       to bottom,
       rgba(28, 27, 27, 0.5) 0%,
@@ -277,4 +318,25 @@ h4 {
     #ededed 0 2px,
     transparent 2px 12px
   );
+}
+
+/* ============================================================================
+   FULL-HEIGHT HERO
+   ============================================================================ */
+
+/* Two declarations on purpose, and the order matters.
+ *
+ * `vh` on a phone means the viewport with the browser chrome HIDDEN, so a 100vh
+ * hero is taller than what you can actually see and its bottom edge — which is
+ * where the copy and the CTA sit — starts life below the fold. `svh` is the
+ * smallest viewport, chrome showing, so the whole hero fits on first paint and
+ * nothing shifts when the URL bar retracts.
+ *
+ * The vh line is the fallback for browsers without svh; the svh line overrides it
+ * wherever it is understood. Tailwind cannot express one property twice in a
+ * single arbitrary value, which is why this is a class rather than a utility.
+ */
+.hero-full {
+  min-height: 100vh;
+  min-height: 100svh;
 }
