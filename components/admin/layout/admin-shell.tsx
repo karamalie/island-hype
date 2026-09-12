@@ -17,7 +17,9 @@ export function AdminShell({ user, children }: AdminShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    /* data-ui="admin" opts this tree out of the public site's display serif —
+       see the rule in globals.css. */
+    <div data-ui="admin" className="min-h-screen bg-slate-50">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div

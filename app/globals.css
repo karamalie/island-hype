@@ -45,14 +45,19 @@
   /* --- Type --------------------------------------------------------------- */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-display: var(--font-playfair), Georgia, serif; /* wordmark only */
+  /* Lora. Carries every display heading — see the h1/h2 rule in BASE,
+     which is where it is actually applied. Chosen on measured stroke weight, not
+     on looks; the reasoning is in app/layout.tsx. */
+  --font-display: var(--font-display-serif), Georgia, serif;
 
   /* 400, not the brief's 500. At 76px a medium weight reads considerably heavier
-     than the same weight at 40px — optical size works against you — and the hero
-     title came out thick enough to fight the photograph behind it. Geist is
-     loaded as a variable font, so 400 costs nothing extra.
+     than the same weight at 40px, and the title was thick enough to fight the
+     photograph behind it. Both display faces are variable, so 400 costs nothing.
      display-l drops with it: it is the h1 on every other page head, and leaving
-     it at 500 would make Home's title visibly lighter than the rest of the site. */
+     it at 500 would make Home's title visibly lighter than the rest of the site.
+
+     Worth re-measuring if the display face changes again — a high-contrast serif
+     at 400 over a bright photograph is a different proposition from a sans. */
   --text-display-xl: clamp(40px, 5.8vw, 76px);
   --text-display-xl--line-height: 1.04;
   --text-display-xl--letter-spacing: -0.03em;
@@ -282,6 +287,25 @@ body {
   font-size: var(--text-body-m);
   line-height: 24px;
   min-height: 100vh;
+}
+
+/* The display face goes on h1 and h2 rather than on the text-display-* tokens.
+   Tailwind's --text-* tokens cannot carry a font-family, and only a handful of
+   headings use those classes — 27 h1/h2 lines set their size with an arbitrary
+   text-[clamp(...)] instead. Hanging the serif off the tokens would have left
+   most of the site's headings in the sans, so it hangs off the elements. */
+h1,
+h2 {
+  font-family: var(--font-display);
+}
+
+/* The admin panel keeps the sans. It is a utilitarian tool in slate and white,
+   not part of the public site's voice, and a Didone in a data table reads as a
+   mistake. Scoped by attribute because both trees render inside <main>. */
+[data-ui="admin"] h1,
+[data-ui="admin"] h2,
+[data-ui="admin"] h3 {
+  font-family: var(--font-sans);
 }
 
 h1,

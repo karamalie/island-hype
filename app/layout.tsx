@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Playfair_Display } from "next/font/google";
+import { Lora } from "next/font/google";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 
@@ -15,10 +15,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+/**
+ * The display face. Lora — chosen by the client from the comparison page, and
+ * the sturdiest option of everything measured.
+ *
+ * The logo is an elegant serif while the headings were a neo-grotesque sans, so
+ * nothing on the page echoed the mark. Two earlier attempts failed on the same
+ * axis, and the reason is worth keeping because it is not a matter of taste: the
+ * hero sets white type over a photograph, and a high-contrast serif's hairline
+ * is the first thing to disappear there. Measured at 64px, thinnest stroke and
+ * stem-to-hairline contrast:
+ *
+ *   Bodoni Moda      0.46px   15.0x   sub-pixel — cannot render solidly
+ *   Fraunces         0.91px    7.0x   still thin, despite its reputation
+ *   Literata         1.83px    3.8x
+ *   Source Serif 4   1.83px    3.0x
+ *   Newsreader       2.29px    3.2x
+ *   Spectral         2.74px    2.7x
+ *   Lora             3.20px    2.3x   <- this one
+ *
+ * At 3.20px Lora's thinnest stroke is seven times Bodoni's, which is why it
+ * holds up white-on-photograph at weight 400 without needing the weight raised.
+ *
+ * No `axes` here, unlike the previous two: Lora ships weight and italic only and
+ * has no optical-size axis — requesting opsz is a 400 from Google Fonts and
+ * would fail the build.
+ */
+const displaySerif = Lora({
+  variable: "--font-display-serif",
   subsets: ["latin"],
   style: ["normal", "italic"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -67,10 +94,33 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
-      >
+    /**
+     * The font variable classes go on <html>, not <body>, and that is a fix
+     * rather than a preference.
+     *
+     * next/font exposes each family as a custom property on whatever element
+     * carries its className. globals.css then builds the theme tokens on top:
+     * `--font-sans: var(--font-geist-sans), ui-sans-serif, ...`, emitted by
+     * Tailwind's @theme onto `:root`.
+     *
+     * With the classes on <body> those two never met. --font-geist-sans was
+     * defined on body while --font-sans was declared on :root, so at :root the
+     * inner var() had nothing to resolve — and a custom property whose value
+     * references an undefined variable is invalid at computed-value time, which
+     * for a custom property means it computes to EMPTY. Every descendant then
+     * inherited that emptiness, `font-family: var(--font-sans)` was dropped as
+     * invalid, and the whole site rendered in the browser's default sans while
+     * still downloading Geist, Geist Mono and the display serif and using none
+     * of them.
+     *
+     * On <html> the variables and the tokens that consume them sit on the same
+     * element, so they resolve.
+     */
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${displaySerif.variable}`}
+    >
+      <body className="antialiased">
         {children}
         {/* Suspense because GoogleAnalytics reads useSearchParams, which opts
             its subtree into client-side rendering — without a boundary here
