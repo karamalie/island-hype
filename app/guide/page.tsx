@@ -64,7 +64,7 @@ const ACTIVITIES = [
     alt: "Snorkeller over a shallow coral reef",
   },
   {
-    src: "guide/manta-ray.jpg",
+    src: "guide/manta-ray.webp",
     title: "Marine encounters",
     body: "Hanifaru Bay in Baa gathers manta rays in numbers that are hard to credit — a hundred or more feeding at once. Snorkel only, strictly permitted, and worth planning a whole trip around.",
     season: "Best May – November, Baa Atoll",
@@ -318,7 +318,7 @@ export default function GuidePage() {
             />
             <figure className="m-0 mb-6 max-w-[34em]">
               <PhotoFrame
-                src="guide/bodu-beru-performance.jpg"
+                src="guide/bodu-beru-performance.webp"
                 bucket="images"
                 alt="A bodu beru drumming performance"
                 ratio="16 / 9"

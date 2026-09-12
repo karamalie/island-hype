@@ -23,12 +23,12 @@ export const SITE_IMAGES = {
    * jetty aerial reads 96 there and is mostly uniform deep teal, which is what
    * white type actually needs.
    */
-  homeHeroMobile: "guide/overwater-jetty-aerial.jpg",
+  homeHeroMobile: "guide/overwater-jetty-aerial.webp",
   /**
    * 4:5 portrait, "why here". No text over it, so brightness does not matter —
    * only that it reads as an atoll rim.
    */
-  homeWhyHere: "guide/island-aerial-heart.jpg",
+  homeWhyHere: "guide/island-aerial-heart.png",
   /** 4:5 portrait, "what's included" — a dhoni, since transfers are the point. */
   homeIncluded: "guide/dhoni-sunset.jpg",
   /** 1:1, the locations frame in the rows fallback. No text over it. */

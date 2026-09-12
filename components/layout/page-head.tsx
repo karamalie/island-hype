@@ -12,8 +12,8 @@
 // stands in — and the mono photo caption is suppressed, because a caption naming
 // a photograph that does not exist is a review artefact, not content.
 
-import Image from "next/image";
 import { NavBar, type NavBarProps } from "./nav-bar";
+import { responsiveSource } from "@/lib/design/responsive-image";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -52,38 +52,48 @@ export function PageHead({
 }: PageHeadProps) {
   const isHero = height === "hero";
 
+  // PageHead is handed resolved URLs, so derive the object path back out to look
+  // the file up in the derivative manifest. The heroes are the largest images on
+  // the site; serving a 2560px original to a phone was most of the page weight.
+  const desktopSet = image ? setFor(image) : null;
+  const mobileSet = mobileImage ? setFor(mobileImage) : null;
+
   return (
     <div
       className={cn("relative flex flex-col", isHero ? "min-h-[640px]" : "min-h-[380px]")}
       style={image ? undefined : { background: "var(--ground-photo)" }}
     >
-      {image && mobileImage && (
+      {image && (
         /* A <picture> rather than two next/image elements toggled with CSS:
            hiding an <img> does not stop the browser fetching it, so the CSS
            version downloaded both heroes on every load — 2.8 MB between them.
            A source/media pair fetches exactly one. next/image buys us nothing
-           here anyway, since the project runs with unoptimized: true. */
+           here anyway, since the project runs with unoptimized: true.
+
+           Every head comes through here, with or without art direction. It used
+           to be that only the two-image case did, and the single-image case fell
+           through to a next/image that emitted no srcset at all — so the four
+           band heads each shipped their full-size original, 1.4 MB in the case of
+           /locations. The <source> below is the art-direction swap; the <img>
+           carries the srcset that serves everyone else. */
         <picture>
-          <source media="(max-width: 767px)" srcSet={mobileImage} />
-          <source media="(min-width: 768px)" srcSet={image} />
+          {mobileImage && (
+            <source
+              media="(max-width: 767px)"
+              srcSet={mobileSet ?? mobileImage}
+              sizes="100vw"
+            />
+          )}
           <img
             src={image}
+            srcSet={desktopSet ?? undefined}
+            sizes="100vw"
             alt={imageAlt}
             fetchPriority="high"
             decoding="async"
             className="absolute inset-0 h-full w-full object-cover"
           />
         </picture>
-      )}
-      {image && !mobileImage && (
-        <Image
-          src={image}
-          alt={imageAlt}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
       )}
 
       {/* Mandatory. See the note above. */}
@@ -129,4 +139,19 @@ export function PageHead({
       </div>
     </div>
   );
+}
+
+const PREFIX = "/storage/v1/object/public/";
+
+/** Recovers bucket + path from a resolved media URL and returns its srcset. */
+function setFor(url: string): string | null {
+  const at = url.indexOf(PREFIX);
+  if (at === -1) return null;
+  const rest = url.slice(at + PREFIX.length);
+  const slash = rest.indexOf("/");
+  if (slash === -1) return null;
+  const bucket = rest.slice(0, slash);
+  const objectPath = rest.slice(slash + 1);
+  return responsiveSource(bucket as Parameters<typeof responsiveSource>[0], objectPath)
+    .srcSet;
 }
