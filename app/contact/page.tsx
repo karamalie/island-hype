@@ -8,7 +8,13 @@
 
 import type { Metadata } from "next";
 import { getPackageCards } from "@/lib/data/packages";
-import { getContactDetails, whatsappHref } from "@/lib/data/settings";
+import {
+  getContactDetails,
+  instagramHandle,
+  instagramHref,
+  telHref,
+  whatsappHref,
+} from "@/lib/data/settings";
 import { SITE_IMAGES } from "@/lib/design/site-images";
 import { Container, Label, Section } from "@/components/ui";
 import { Footer } from "@/components/layout/footer";
@@ -65,6 +71,7 @@ export default async function ContactPage({
                 eyebrow: p.locationName,
               }))}
               initialPackageId={initial}
+              replyFrom={contact.email}
             />
           </div>
 
@@ -76,16 +83,33 @@ export default async function ContactPage({
               <div className="flex flex-col gap-2">
                 {/* The one place teal fills a button. */}
                 <a
-                  href={whatsappHref(contact.whatsapp, "Hello — I'm looking at your packages.")}
+                  href={whatsappHref(
+                    contact.phone,
+                    "Hello — I'm looking at your packages."
+                  )}
                   className="flex h-12 items-center justify-center rounded-full bg-teal-deep px-5 text-body-s font-medium text-white hover:bg-teal-press"
                 >
                   WhatsApp us
                 </a>
                 <a
-                  href={`tel:${contact.phone.replace(/\s/g, "")}`}
+                  href={telHref(contact.phone)}
                   className="flex h-12 items-center justify-center rounded-full border border-ink-200 bg-white px-5 text-body-s font-medium text-ink-900 hover:bg-ink-50"
                 >
                   {contact.phone}
+                </a>
+                {/* The form posts to this address, so it is offered directly too —
+                    some people would simply rather write an email. */}
+                <a
+                  href={`mailto:${contact.email}?subject=${encodeURIComponent("Maldives package enquiry")}`}
+                  className="flex h-12 items-center justify-center rounded-full border border-ink-200 bg-white px-5 text-body-s font-medium text-ink-900 hover:bg-ink-50"
+                >
+                  {contact.email}
+                </a>
+                <a
+                  href={instagramHref(contact.instagram)}
+                  className="flex h-12 items-center justify-center rounded-full border border-ink-200 bg-white px-5 text-body-s font-medium text-ink-900 hover:bg-ink-50"
+                >
+                  {instagramHandle(contact.instagram)}
                 </a>
               </div>
               <p className="m-0 mt-4 text-caption leading-5 text-meta">

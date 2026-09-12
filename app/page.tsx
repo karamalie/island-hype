@@ -60,7 +60,7 @@ export default async function HomePage() {
         contained={false}
         image={getImageUrl("images", SITE_IMAGES.homeHero)}
         mobileImage={getImageUrl("images", SITE_IMAGES.homeHeroMobile)}
-        imageAlt="Overwater villas on a Maldivian lagoon, seen from the air"
+        imageAlt="A Maldivian atoll and its reef from the air"
         eyebrow="Maldives · stay, transfers and meals in one price"
         title="The water really is that colour."
         lede="Twelve hundred islands, twenty-six atolls, and a reef you can swim to from almost any of them. Pick the one you like — the stay, the transfers and the meals are already in the price."
@@ -186,7 +186,13 @@ export default async function HomePage() {
                 <Link
                   key={l.slug}
                   href={`/locations/${l.slug}`}
-                  className="group min-w-0 shrink grow basis-[180px] max-w-[280px]"
+                  /* Full width inside the gutter on a phone, two-up from 480px.
+                     Both halves of that matter. A 180px basis lets two tiles
+                     squeeze onto a 430px phone at 183px each, too small to read;
+                     but holding one-up all the way to sm (640px) gives a 3:4 tile
+                     520px wide and 693px tall, which is worse. 480px is where
+                     two tiles first read properly. */
+                  className="group min-w-0 basis-full min-[480px]:shrink min-[480px]:grow min-[480px]:basis-[180px] min-[480px]:max-w-[280px]"
                 >
                   <PhotoFrame
                     src={l.coverImage}

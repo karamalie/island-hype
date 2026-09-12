@@ -124,17 +124,25 @@ export async function submitDateEnquiry(formData: FormData): Promise<EnquiryResu
   }
 }
 
-/** Where enquiry notifications go. Editable in admin settings. */
+/**
+ * Where enquiry notifications go. Editable in admin settings, and falling back to
+ * the business address rather than to nothing — an unset row used to mean every
+ * enquiry landed in the database and nobody was told about it.
+ */
 async function notificationEmails(): Promise<string[]> {
   try {
-    const setting = await prisma.siteSetting.findUnique({
-      where: { key: "notification_emails" },
+    const rows = await prisma.siteSetting.findMany({
+      where: { key: { in: ["notification_emails", "contact_email"] } },
     });
-    return (setting?.value ?? "")
+    const explicit = (rows.find((r) => r.key === "notification_emails")?.value ?? "")
       .split(",")
       .map((e) => e.trim())
       .filter(Boolean);
+    if (explicit.length > 0) return explicit;
+
+    const fallback = rows.find((r) => r.key === "contact_email")?.value?.trim();
+    return fallback ? [fallback] : ["info@islandhypemaldives.com"];
   } catch {
-    return [];
+    return ["info@islandhypemaldives.com"];
   }
 }

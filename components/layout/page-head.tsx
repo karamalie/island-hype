@@ -57,24 +57,32 @@ export function PageHead({
       className={cn("relative flex flex-col", isHero ? "min-h-[640px]" : "min-h-[380px]")}
       style={image ? undefined : { background: "var(--ground-photo)" }}
     >
-      {image && (
+      {image && mobileImage && (
+        /* A <picture> rather than two next/image elements toggled with CSS:
+           hiding an <img> does not stop the browser fetching it, so the CSS
+           version downloaded both heroes on every load — 2.8 MB between them.
+           A source/media pair fetches exactly one. next/image buys us nothing
+           here anyway, since the project runs with unoptimized: true. */
+        <picture>
+          <source media="(max-width: 767px)" srcSet={mobileImage} />
+          <source media="(min-width: 768px)" srcSet={image} />
+          <img
+            src={image}
+            alt={imageAlt}
+            fetchPriority="high"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </picture>
+      )}
+      {image && !mobileImage && (
         <Image
           src={image}
           alt={imageAlt}
           fill
           priority
           sizes="100vw"
-          className={cn("object-cover", mobileImage && "hidden md:block")}
-        />
-      )}
-      {mobileImage && (
-        <Image
-          src={mobileImage}
-          alt={imageAlt}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover md:hidden"
+          className="object-cover"
         />
       )}
 

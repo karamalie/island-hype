@@ -18,9 +18,11 @@ export interface EnquiryFormProps {
   packages: { slug: string; id: string; name: string; eyebrow: string }[];
   /** Preselected when arriving from a package page. */
   initialPackageId?: string;
+  /** Shown in the sent state, so the reply is expected from a named address. */
+  replyFrom?: string;
 }
 
-export function EnquiryForm({ packages, initialPackageId }: EnquiryFormProps) {
+export function EnquiryForm({ packages, initialPackageId, replyFrom }: EnquiryFormProps) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -42,8 +44,9 @@ export function EnquiryForm({ packages, initialPackageId }: EnquiryFormProps) {
       <div className="rounded-lg border border-ink-200 border-l-[3px] border-l-teal-bright bg-teal-tint p-6">
         <div className="mb-1.5 font-mono text-label-sm uppercase text-teal-deep">Sent</div>
         <p className="m-0 text-body-xs leading-[22px] text-ink-900">
-          Thanks — that&rsquo;s with us. You&rsquo;ll hear back from a person in
-          Male&rsquo;, usually within a few hours.
+          Thanks — that&rsquo;s with us. You&rsquo;ll hear back from a person
+          {replyFrom ? <> at <strong className="font-medium">{replyFrom}</strong></> : null},
+          usually within a few hours.
         </p>
       </div>
     );
