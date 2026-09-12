@@ -105,7 +105,10 @@ export default async function HomePage() {
             image="left"
             src={SITE_IMAGES.homeWhyHere}
             bucket="images"
-            alt="An atoll and its reef from the air"
+            /* Landscape: the image is a whole island and a 4:5 crop cuts its
+               ends off, which is the one thing this section cannot afford. */
+            ratio="4 / 3"
+            alt="A Maldivian island ringed by its reef, from the air"
             eyebrow="Why here"
             title="A country made almost entirely of water."
             body="You don't really travel to the Maldives. You pick one small piece of it and settle in — a single island, a reef off the end of the jetty, and very little reason to leave until the boat comes back."

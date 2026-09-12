@@ -46,13 +46,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "Island Hype",
-    title: "Island Hype - Maldives Travel Packages",
+    title: "Island Hype — Stay somewhere worth the hype",
     description:
       "Discover handpicked Maldives resort and guesthouse packages. Book your dream island getaway today.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Island Hype - Maldives Travel Packages",
+    title: "Island Hype — Stay somewhere worth the hype",
     description: "Discover handpicked Maldives resort and guesthouse packages.",
   },
   robots: {

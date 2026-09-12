@@ -29,6 +29,15 @@ export interface EditorialSplitProps {
   body: string;
   rows: SplitRow[];
   link?: { label: string; href: string };
+  /**
+   * The frame's aspect. Portrait by default, which suits a tall column of prose.
+   *
+   * It is a prop because the image has to be able to decide: the "why here"
+   * section shows a whole island ringed by reef, and a 4:5 crop of a 1.28:1
+   * landscape cuts both ends off the island — losing exactly the thing the
+   * section is arguing.
+   */
+  ratio?: string;
 }
 
 export function EditorialSplit({
@@ -36,6 +45,7 @@ export function EditorialSplit({
   src,
   bucket,
   alt,
+  ratio = "4 / 5",
   eyebrow,
   title,
   body,
@@ -47,7 +57,7 @@ export function EditorialSplit({
       src={src}
       bucket={bucket}
       alt={alt}
-      ratio="4 / 5"
+      ratio={ratio}
       radius="xl"
       className={cn("min-w-0 max-h-[520px]", image === "right" && "order-2")}
       sizes="(max-width: 768px) 100vw, 560px"

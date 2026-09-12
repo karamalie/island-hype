@@ -184,6 +184,14 @@
     ],
     "ext": "jpg"
   },
+  "images/guide/maldives-island.webp": {
+    "widths": [
+      480,
+      768,
+      1200
+    ],
+    "ext": "webp"
+  },
   "images/guide/maldives-map.jpg": {
     "widths": [
       480,

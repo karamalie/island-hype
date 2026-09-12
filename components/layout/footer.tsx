@@ -11,6 +11,7 @@
 // this is a server component: staff change a number without a deploy.
 
 import Link from "next/link";
+import { Logo } from "./logo";
 import {
   getContactDetails,
   instagramHandle,
@@ -40,9 +41,16 @@ export async function Footer() {
       <div className="mx-auto w-full max-w-[var(--container-page)]">
         <div className="flex flex-wrap justify-between gap-12 border-b border-ink-700 pb-10">
           <div className="max-w-[22em]">
-            <div className="mb-4 font-display text-[24px] italic leading-[30px] text-white">
-              Island Hype
-            </div>
+            {/* The full lockup here: the footer has the vertical room for the
+                mark, and gold on ink-900 is 6.24:1 — its best ground on the site. */}
+            <Logo form="lockup" ground="ink" width={186} className="mb-5" />
+            {/* The tagline, given its own line and the brand gold rather than the
+                body grey. It is the one piece of copy here that is the business
+                talking about itself, so it should not read as a caption under the
+                logo — the sentence below it does that job. */}
+            <p className="m-0 mb-3 font-display text-[19px] italic leading-[26px] text-[#AC9A74]">
+              Stay somewhere worth the hype.
+            </p>
             <p className="m-0 text-body-xs leading-[22px] text-meta-inverse">
               Maldives packages with the stay, the transfers and the meals in one
               price. {contact.place}.

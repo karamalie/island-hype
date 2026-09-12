@@ -21,6 +21,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 
 export type NavSurface = "glass" | "solid";
@@ -58,15 +59,14 @@ export function NavBar({ surface, active, cta }: NavBarProps) {
         !onImage && "border-b border-ink-200 bg-white"
       )}
     >
-      <Link
-        href="/"
-        className={cn(
-          "font-display text-[24px] italic leading-[30px]",
-          onImage ? "text-white" : "text-ink-900"
-        )}
-      >
-        Island Hype
-      </Link>
+      {/* On a photograph the gold sits in a white pill; on the solid white nav it
+          needs no ground. Either way it is the same gold asset. */}
+      <Logo
+        form="horizontal"
+        ground={onImage ? "photo" : "white"}
+        width={onImage ? 208 : 216}
+        priority
+      />
 
       {/* Desktop pill */}
       <nav

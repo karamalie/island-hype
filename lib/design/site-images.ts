@@ -25,10 +25,15 @@ export const SITE_IMAGES = {
    */
   homeHeroMobile: "guide/overwater-jetty-aerial.webp",
   /**
-   * 4:5 portrait, "why here". No text over it, so brightness does not matter —
-   * only that it reads as an atoll rim.
+   * "Why here". No text over it, so brightness does not matter — only that it
+   * reads as the argument the section is making.
+   *
+   * Client-supplied, and it makes the argument literally: a whole island ringed
+   * by its reef with open ocean on every side. Landscape at 1280x1003, so the
+   * section's frame is passed 4/3 rather than the default 4/5 — a portrait crop
+   * cuts both ends off the island and loses the ring, which is the point.
    */
-  homeWhyHere: "guide/island-aerial-heart.png",
+  homeWhyHere: "guide/maldives-island.webp",
   /** 4:5 portrait, "what's included" — a dhoni, since transfers are the point. */
   homeIncluded: "guide/dhoni-sunset.jpg",
   /** 1:1, the locations frame in the rows fallback. No text over it. */
