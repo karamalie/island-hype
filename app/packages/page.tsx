@@ -1,199 +1,175 @@
 // app/packages/page.tsx
-import { Suspense } from "react";
-import { cookies } from "next/headers";
-import Link from "next/link";
-import { Container } from "@/components/ui/container";
-import { Section } from "@/components/ui/section";
-import { Button } from "@/components/ui/button";
-import { PackageCard } from "@/components/packages/package-card";
-import { PackageFilters } from "@/components/packages/package-filters";
-import { getPackages, getFilterOptions, SortOption } from "@/lib/data/packages";
-import type { Market } from "@prisma/client";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Search, MessageCircle, Phone } from "lucide-react";
-import { SortDropdown } from "@/components/packages/sort-dropdown";
+//
+// The listing. Its job is comparison, so the layout switches on how much there is
+// to compare: wide rows at four or fewer, where each row can carry a blurb and a
+// three-track spec grid, and a card grid at five and up.
+//
+// Filter state lives in the URL. When a filter matches nothing, the chip row
+// stays above the empty panel so the cause is legible — that is why the filter
+// bar is forced visible in the empty state regardless of count.
+
+import type { Metadata } from "next";
+import { getPackageCards, getPackageFilterOptions, openCount } from "@/lib/data/packages";
+import { packageListDensity } from "@/lib/design/density";
+import { resultCount, resultHint } from "@/lib/design/inventory";
+import { SITE_IMAGES } from "@/lib/design/site-images";
 import { getImageUrl } from "@/lib/image-urls";
-import { PageHero } from "@/components/layout/page-hero";
-import { Badge } from "@/components/ui/badge";
+import { Container, Label, Section } from "@/components/ui";
+import { Footer } from "@/components/layout/footer";
+import { PageHead } from "@/components/layout/page-head";
+import { NoResults, PackageCard, Toolbar } from "@/components/patterns";
+import Link from "next/link";
 
-interface PageProps {
-  searchParams: Promise<{
-    location?: string;
-    accommodationType?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    duration?: string;
-    search?: string;
-    sort?: string;
-  }>;
-}
-
-async function getMarket(): Promise<Market> {
-  const cookieStore = await cookies();
-  const marketCookie = cookieStore.get("market");
-  return (marketCookie?.value as Market) || "INTERNATIONAL";
-}
-
-// Rendered at request time on the server (DB is local; not built off-server).
 export const dynamic = "force-dynamic";
 
-export default async function PackagesPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const market = await getMarket();
-  const filterOptionsPromise = getFilterOptions();
+export const metadata: Metadata = {
+  title: "Packages",
+  description:
+    "Every Island Hype package is a single island with the boat or plane that gets you there, priced per person and in full.",
+};
 
-  // Parse duration filter
-  let minNights: number | undefined;
-  let maxNights: number | undefined;
-  if (params.duration) {
-    const [min, max] = params.duration.split("-");
-    minNights = parseInt(min);
-    maxNights = max ? parseInt(max) : undefined;
-  }
-
-  const [packages, filterOptions] = await Promise.all([
-    getPackages(
-      {
-        location: params.location,
-        accommodationType: params.accommodationType,
-        minPrice: params.minPrice ? parseFloat(params.minPrice) : undefined,
-        maxPrice: params.maxPrice ? parseFloat(params.maxPrice) : undefined,
-        minNights,
-        maxNights,
-        search: params.search,
-      },
-      (params.sort as SortOption) || "featured",
-      market
-    ),
-    filterOptionsPromise,
+export default async function PackagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tag?: string }>;
+}) {
+  const { tag } = await searchParams;
+  const [packages, filters] = await Promise.all([
+    getPackageCards({ tagSlug: tag }),
+    getPackageFilterOptions(),
   ]);
 
-  // Currency
-  const currency = market === "LOCAL" ? "MVR" : "USD";
+  const n = openCount(packages);
+  const empty = packages.length === 0;
+  // The full bar is forced on in the empty state so the chips that caused it stay.
+  const density = empty
+    ? { layout: "grid" as const, quickPills: false, filterBar: true }
+    : packageListDensity(n);
 
   return (
-    <main className="min-h-screen bg-white">
-      <PageHero
-        backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
-        backgroundAlt="Maldives aerial"
-        overlayTone="medium"
-        minHeightClassName="min-h-[clamp(24rem,52vh,36rem)]"
-        title={
-          <>
-            Explore Our
-            <br />
-            <span className="font-display italic">Travel Packages</span>
-          </>
-        }
-        subtitle="Discover handpicked Maldives experiences, from budget-friendly local islands to luxury resort escapes. Every package includes accommodation, activities, and unforgettable moments."
+    <main>
+      <PageHead
+        image={getImageUrl("images", SITE_IMAGES.packagesHead)}
+        imageAlt="An overwater jetty reaching into a lagoon"
+        eyebrow="Packages"
+        title="Stay, transfers and meals in one price."
+        lede="Every one is a single island with the boat or plane that gets you there. Pick the shape of the trip — we'll confirm the dates."
+        nav={{ active: "packages", cta: { label: "Book now", href: "/contact", arrow: true } }}
       />
 
-      {/* Filters Section */}
-      <Section spacing="sm" surface="plain" className="border-b border-gray-200">
+      <Toolbar
+        count={resultCount(n, empty)}
+        hint={resultHint({ count: n, empty, sorted: n >= 6 })}
+        density={density}
+        tags={filters.tags}
+        activeTag={tag ?? null}
+        basePath="/packages"
+      />
+
+      <Section flush className="pt-10">
         <Container>
-          <Suspense fallback={<FiltersSkeleton />}>
-            <PackageFilters filterOptions={filterOptions} />
-          </Suspense>
-        </Container>
-      </Section>
-
-      {/* Results Section */}
-      <Section spacing="md" surface="plain">
-        <Container>
-          {/* Results Header */}
-          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                {packages.length === 0
-                  ? "No packages found"
-                  : `${packages.length} ${
-                      packages.length === 1 ? "Package" : "Packages"
-                    } Available`}
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Showing prices in {currency}
-              </p>
-            </div>
-
-            {/* Sort Dropdown */}
-            <SortDropdown currentSort={params.sort || "featured"} />
-          </div>
-
-          {/* Package Grid */}
-          {packages.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {empty ? (
+            <NoResults
+              primary={{ label: "Clear all filters", href: "/packages" }}
+              secondary={{ label: "Ask about dates", href: "/contact" }}
+            />
+          ) : density.layout === "rows" ? (
+            <div className="flex flex-col gap-6">
               {packages.map((pkg) => (
-                <PackageCard key={pkg.id} package={pkg} currency={currency} />
+                <PackageCard key={pkg.id} pkg={pkg} form="row" />
               ))}
             </div>
           ) : (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full surface-maldives-empty mb-6">
-                <Search className="w-10 h-10 text-gray-400" />
+            <div className="flex flex-wrap gap-6">
+              {packages.map((pkg) => (
+                <PackageCard key={pkg.id} pkg={pkg} form="grid" />
+              ))}
+            </div>
+          )}
+
+          {!empty && (
+            // Asks about the packages above, not an offer to build a custom trip.
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-6 rounded-lg border border-ink-200 p-6">
+              <div className="min-w-0 max-w-[36em]">
+                <div className="mb-1.5 text-heading-s">Not sure which month is best?</div>
+                <p className="m-0 text-body-xs text-ink-700">
+                  Send us the dates you can travel and we&rsquo;ll tell you which of
+                  these is at its best then — and what it costs that week.
+                </p>
               </div>
-              <h3 className="text-2xl font-bold mb-2 text-gray-900">
-                No packages found
-              </h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Try adjusting your filters to see more results, or clear all
-                filters to view our complete collection.
-              </p>
-              <Link href="/packages">
-                <Button size="lg">Clear All Filters</Button>
+              <Link
+                href="/contact"
+                className="inline-flex h-11 shrink-0 items-center rounded-full border border-ink-200 bg-white px-[22px] text-body-xs font-medium text-ink-900 hover:bg-ink-50"
+              >
+                Ask about dates
               </Link>
             </div>
           )}
         </Container>
       </Section>
 
-      {/* CTA Section */}
-      <Section spacing="lg" surface="soft">
+      {/* In every price above — the zero-inventory floor for this page */}
+      <Section tone="muted" bordered="top" className="mt-[var(--section-y)]">
         <Container>
-          <div className="max-w-3xl mx-auto text-center">
-            <Badge variant="primary" size="lg" className="mb-6">
-              Tailored Island Journeys
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-display mb-6 text-gray-900">
-              Can&apos;t Find What You&apos;re Looking For?
+          <div className="mb-10 max-w-[620px]">
+            <Label className="mb-4">In every price above</Label>
+            <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+              The number on the card is the number.
             </h2>
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              Let us create a custom package tailored to your dreams. Contact
-              our travel experts today for personalized recommendations.
+            <p className="m-0 text-body-l text-ink-700">
+              Transfers are the part that catches people out, so they are never a
+              line item added later.
             </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button
-                size="lg"
-                className="bg-[var(--maldives-ink-900)] text-white hover:bg-[#09101d] gap-2 shadow-xl btn-interactive btn-shimmer"
-              >
-                <MessageCircle className="w-5 h-5" />
-                Contact Us
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-gray-300 text-gray-800 hover:bg-white gap-2 btn-interactive"
-              >
-                <Phone className="w-5 h-5" />
-                Call +960 123 4567
-              </Button>
-            </div>
+          </div>
+          <div className="flex flex-wrap gap-6">
+            <IncludedCard
+              eyebrow="Included"
+              title="Return transfers"
+              body="Seaplane, speedboat or domestic hop, booked to meet your flight in both directions."
+            />
+            <IncludedCard
+              eyebrow="Included"
+              title="The stated meal plan"
+              body="Whatever the card says — breakfast, half-board, all-inclusive — for every night of the stay."
+            />
+            {/* Not included: the eyebrow drops to meta grey rather than teal. */}
+            <IncludedCard
+              eyebrow="Not included"
+              title="International flights"
+              body="You book those, or we'll quote them alongside. Green tax and visa are handled on arrival."
+              excluded
+            />
           </div>
         </Container>
       </Section>
+
+      <Footer />
     </main>
   );
 }
 
-// Loading skeleton for filters
-function FiltersSkeleton() {
+function IncludedCard({
+  eyebrow,
+  title,
+  body,
+  excluded = false,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  excluded?: boolean;
+}) {
   return (
-    <div className="glass rounded-2xl p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
-      {[...Array(5)].map((_, i) => (
-        <div key={i} className="md:col-span-2">
-          <Skeleton className="h-4 w-20 mb-2" />
-          <Skeleton className="h-10 w-full rounded-full" />
-        </div>
-      ))}
+    <div className="min-w-0 shrink grow basis-[240px] max-w-[380px] rounded-lg border border-ink-200 bg-white p-6">
+      <div
+        className={`mb-4 font-mono text-label uppercase ${
+          excluded ? "text-meta" : "text-teal-deep"
+        }`}
+      >
+        {eyebrow}
+      </div>
+      <div className="mb-2 text-heading-s">{title}</div>
+      <p className="m-0 text-body-s text-ink-700">{body}</p>
     </div>
   );
 }

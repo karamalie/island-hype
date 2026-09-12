@@ -1,402 +1,320 @@
 // app/accommodations/[slug]/page.tsx
+//
+// One island. Same shape as the package detail, different content — and one
+// deliberate difference in tone: the overview includes the drawbacks. Saying the
+// buildings are showing their age, or that this is the wrong island if you want
+// marble and a butler, is what makes the rest of the page believable.
+//
+// The rail quotes the package price, not a room rate, because rooms are not sold
+// standalone. The closing band says so outright.
+
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
+import { getStayDetail } from "@/lib/data/accommodations";
 import {
-  MapPin,
-  Star,
-  Wifi,
-  Utensils,
-  Waves,
-  Phone,
-  Mail,
-  CheckCircle2,
-  Clock,
-  Users,
-  Sparkles,
-  Calendar,
-} from "lucide-react";
-import { getImageUrl } from "@/lib/image-urls";
-import { getAccommodationBySlug } from "@/lib/data/accommodations";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+  accommodationPackagesCta,
+  accommodationPackagesHeading,
+} from "@/lib/design/inventory";
+import { formatMoney } from "@/lib/design/pricing";
+import { Badge, Container, Label, Mark, Section } from "@/components/ui";
 import { Footer } from "@/components/layout/footer";
-import { AccommodationGallery } from "@/components/accommodations/accommodation-gallery";
+import { NavBar } from "@/components/layout/nav-bar";
+import { AtAGlance, FaqRows, Gallery } from "@/components/patterns";
 
-// Icon mapping for amenities
-const amenityIcons: Record<string, React.ElementType> = {
-  wifi: Wifi,
-  restaurant: Utensils,
-  pool: Waves,
-  spa: Sparkles,
-};
-
-interface PageProps {
-  params: Promise<{
-    slug: string;
-  }>;
-}
-
-// Rendered at request time on the server (DB is local; not built off-server).
 export const dynamic = "force-dynamic";
 
-export default async function AccommodationDetailsPage({ params }: PageProps) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
-  const accommodation = await getAccommodationBySlug(slug);
+  const stay = await getStayDetail(slug);
+  if (!stay) return { title: "Stay not found" };
+  return { title: stay.name, description: stay.blurb ?? undefined };
+}
 
-  if (!accommodation) {
-    notFound();
-  }
-
-  // Combine accommodation and location images for gallery
-  const allImages = [
-    ...accommodation.images.map((img) => ({
-      url: getImageUrl("accommodations", img.url),
-      alt: img.alt || accommodation.name,
-    })),
-    ...accommodation.location.images.slice(0, 3).map((img) => ({
-      url: getImageUrl("locations", img.url),
-      alt: img.alt || accommodation.location.name,
-    })),
-  ];
+export default async function AccommodationDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const stay = await getStayDetail(slug);
+  if (!stay) notFound();
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center gap-2 text-sm">
-            <Link href="/" className="text-gray-600 hover:text-gray-900">
-              Home
-            </Link>
-            <span className="text-gray-400">/</span>
-            <Link
-              href="/accommodations"
-              className="text-gray-600 hover:text-gray-900"
-            >
-              Accommodations
-            </Link>
-            <span className="text-gray-400">/</span>
-            <span className="text-gray-900 font-medium">
-              {accommodation.name}
-            </span>
-          </nav>
-        </div>
-      </div>
+    <main>
+      <NavBar surface="solid" active="stays" cta={{ label: "Book now", href: "/contact" }} />
 
-      {/* Header */}
-      <section className="border-b border-gray-200 bg-maldives-sand-lagoon">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
-          <div className="flex items-center flex-wrap gap-3 mb-4">
-            <Badge
-              variant="outline"
-              size="lg"
-              className="border-gray-300 text-gray-800 capitalize"
-            >
-              {accommodation.type.toLowerCase()}
-            </Badge>
-            {accommodation.location.atoll && (
-              <Badge
-                variant="outline"
-                size="lg"
-                className="border-gray-300 text-gray-800"
-              >
-                {accommodation.location.atoll}
-              </Badge>
-            )}
-            {accommodation.starRating && (
-              <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border border-gray-200">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="font-semibold text-gray-900">
-                  {accommodation.starRating}
-                </span>
-              </div>
-            )}
-          </div>
+      <Container className="pt-8">
+        <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2.5 text-caption text-meta">
+          <Link href="/accommodations" className="hover:text-ink-900">Stays</Link>
+          <span className="text-meta-inverse">/</span>
+          <Link href={`/locations/${stay.islandSlug}`} className="hover:text-ink-900">
+            {stay.islandName}
+          </Link>
+          <span className="text-meta-inverse">/</span>
+          <span className="text-ink-900">{stay.name}</span>
+        </nav>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4">
-            {accommodation.name}
-          </h1>
-
-          <div className="flex items-center flex-wrap gap-6 text-gray-700">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-teal-600" />
-              <span className="text-lg">{accommodation.location.name}</span>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-8">
+          <div className="min-w-0 max-w-[700px]">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Label>{stay.islandName}</Label>
+              <Badge tone="tint">{stay.typeLabel}</Badge>
             </div>
-            {accommodation.location.transferTime && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-teal-600" />
-                <span className="text-lg">
-                  {accommodation.location.transferTime} min from Malé
-                </span>
-              </div>
+            <h1 className="m-0 mb-4 text-[clamp(32px,4.2vw,52px)] font-medium leading-[1.08] tracking-[-0.025em]">
+              {stay.name}
+            </h1>
+            {stay.blurb && (
+              <p className="m-0 max-w-[34em] text-body-l text-ink-700">{stay.blurb}</p>
+            )}
+          </div>
+          <div className="shrink-0">
+            {stay.nightlyFrom !== null ? (
+              <>
+                <div>
+                  <span className="text-[32px] font-semibold leading-[38px]">
+                    {formatMoney(stay.nightlyFrom, "USD")}
+                  </span>
+                  <span className="text-body-xs text-meta"> / night</span>
+                </div>
+                <div className="mt-1 text-body-xs text-meta">{stay.packagesLine}</div>
+              </>
+            ) : (
+              <div className="text-body-xs text-meta">{stay.packagesLine}</div>
             )}
           </div>
         </div>
-      </section>
+      </Container>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-12">
-            {/* Description */}
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                About This Property
+      <Container>
+        <Gallery
+          images={stay.images}
+          cover={stay.coverImage}
+          bucket="accommodations"
+          name={stay.name}
+        />
+      </Container>
+
+      <Container className="pt-14">
+        <div className="flex flex-wrap items-start gap-14">
+          <div className="min-w-0 shrink grow basis-[420px]">
+            <AtAGlance
+              className="mb-10 border-b border-ink-200 pb-10"
+              cells={[
+                { label: "Island", value: stay.islandName },
+                { label: "Transfer", value: stay.transfer },
+                { label: "Rooms", value: stay.rooms },
+                { label: "Board", value: stay.board },
+                { label: "House reef", value: stay.houseReef },
+                { label: "Suits", value: stay.suits },
+              ]}
+            />
+
+            <div className="mb-12">
+              <h2 className="m-0 mb-5 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                What it&rsquo;s like to stay here
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-gray-200">
-                  <Image
-                    src={getImageUrl(
-                      "accommodations",
-                      accommodation.coverImage || "placeholder.jpg"
-                    )}
-                    alt={accommodation.name}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+              {stay.description
+                .split("\n\n")
+                .filter(Boolean)
+                .map((para: string, i: number) => (
+                  <p
+                    key={i}
+                    className="m-0 mb-4 max-w-[34em] text-[17px] leading-7 text-ink-700 last:mb-0"
+                  >
+                    {para}
+                  </p>
+                ))}
+            </div>
+
+            {stay.roomTypes.length > 0 && (
+              <div className="mb-12">
+                <div className="mb-6 flex flex-wrap items-baseline justify-between gap-5">
+                  <h2 className="m-0 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                    The rooms
+                  </h2>
+                  <Label>
+                    {stay.roomTypes.length} room {stay.roomTypes.length === 1 ? "type" : "types"}
+                  </Label>
                 </div>
-                <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
-                  {accommodation.description}
-                </p>
-              </div>
-            </section>
-
-            {/* Gallery Carousel */}
-            {allImages.length > 0 && (
-              <AccommodationGallery
-                images={allImages}
-                accommodationName={accommodation.name}
-              />
-            )}
-
-            {/* Room Types */}
-            {accommodation.roomTypes.length > 0 && (
-              <section>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  Room Types Available
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {accommodation.roomTypes.map((room, index) => (
-                    <Card key={index} className="border-0 shadow-sm">
-                      <div className="p-6">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-teal-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">
-                              {room}
-                            </h3>
-                          </div>
-                        </div>
+                <div>
+                  {stay.roomTypes.map((r, i) => (
+                    <div
+                      key={r.id}
+                      className={`border-t border-ink-200 py-6 ${
+                        i === stay.roomTypes.length - 1 ? "border-b" : ""
+                      }`}
+                    >
+                      <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-4">
+                        <span className="text-heading-s">{r.name}</span>
+                        {r.nightlyFrom !== null && (
+                          <span>
+                            <span className="text-[18px] font-semibold leading-6">
+                              {formatMoney(r.nightlyFrom, "USD")}
+                            </span>
+                            <span className="text-caption text-meta"> / night</span>
+                          </span>
+                        )}
                       </div>
-                    </Card>
+                      {r.blurb && (
+                        <p className="m-0 mb-4 max-w-[34em] text-body-s text-ink-700">
+                          {r.blurb}
+                        </p>
+                      )}
+                      <div
+                        className="grid gap-5"
+                        style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
+                      >
+                        {[
+                          { label: "Size", value: r.size },
+                          { label: "Sleeps", value: r.sleeps },
+                          { label: "Access", value: r.access },
+                        ]
+                          .filter((c) => c.value)
+                          .map((c) => (
+                            <div key={c.label} className="min-w-0">
+                              <div className="mb-0.5 font-mono text-label-sm uppercase text-meta">
+                                {c.label}
+                              </div>
+                              <div className="text-body-xs">{c.value}</div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </section>
-            )}
-
-            {/* Amenities */}
-            {accommodation.amenities.length > 0 && (
-              <section>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  Amenities & Facilities
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {accommodation.amenities.map((amenity, index) => {
-                    const IconComponent =
-                      amenityIcons[amenity.toLowerCase()] || CheckCircle2;
-                    return (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center">
-                          <IconComponent className="w-5 h-5 text-teal-600" />
-                        </div>
-                        <span className="text-gray-700">{amenity}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* Location Info */}
-            <section className="border-t border-gray-200 pt-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Location
-              </h2>
-              <div className="bg-gray-50 rounded-2xl p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  {accommodation.location.name}
-                </h3>
-                <p className="text-gray-600 leading-relaxed mb-4">
-                  {accommodation.location.description}
-                </p>
-
-                {/* Location Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Atoll</p>
-                    <p className="font-medium text-gray-900">
-                      {accommodation.location.atoll}
-                    </p>
-                  </div>
-                  {accommodation.location.island && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Island</p>
-                      <p className="font-medium text-gray-900">
-                        {accommodation.location.island}
-                      </p>
-                    </div>
-                  )}
-                  {accommodation.location.transferTime && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Transfer</p>
-                      <p className="font-medium text-gray-900">
-                        {accommodation.location.transferTime} min{" "}
-                        {accommodation.location.transferType?.toLowerCase()}{" "}
-                        from Malé Airport
-                      </p>
-                    </div>
-                  )}
-                </div>
               </div>
-            </section>
-
-            {/* Available Packages */}
-            {accommodation.packages.length > 0 && (
-              <section className="border-t border-gray-200 pt-12">
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  Available Packages
-                </h2>
-                <div className="grid grid-cols-1 gap-6">
-                  {accommodation.packages.map((pkg) => {
-                    const pricing = pkg.pricing[0];
-                    return (
-                      <Link key={pkg.id} href={`/packages/${pkg.slug}`}>
-                        <Card className="border-0 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
-                          <div className="p-6">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2 hover:text-teal-600 transition-colors">
-                                  {pkg.name}
-                                </h3>
-                                <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                                  {pkg.shortDesc}
-                                </p>
-                                <div className="flex items-center gap-4 text-sm text-gray-500">
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" />
-                                    {pkg.minNights} nights
-                                  </span>
-                                  {pkg.maxGuests && (
-                                    <span className="flex items-center gap-1">
-                                      <Users className="w-4 h-4" />
-                                      Up to {pkg.maxGuests} guests
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              {pricing && (
-                                <div className="text-right">
-                                  <p className="text-sm text-gray-500">From</p>
-                                  <p className="text-2xl font-bold text-gray-900">
-                                    ${pricing.basePrice}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    per person
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
             )}
+
+            {stay.facilityGroups.length > 0 && (
+              <div className="mb-12">
+                <h2 className="m-0 mb-6 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                  On the island
+                </h2>
+                <div className="flex flex-wrap gap-10">
+                  {stay.facilityGroups.map((g) => (
+                    <div key={g.group} className="min-w-0 shrink grow basis-[240px]">
+                      <div className="mb-4 font-mono text-label uppercase text-teal-deep">
+                        {g.group}
+                      </div>
+                      {g.items.map((item) => (
+                        <div
+                          key={item}
+                          className="flex items-baseline gap-3 border-b border-ink-200 py-3"
+                        >
+                          <Mark className="text-[12px]" />
+                          <span className="text-body-s text-ink-700">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                {/* What is absent, said plainly. */}
+                {stay.absentNote && (
+                  <p className="m-0 mt-5 max-w-[34em] text-body-xs leading-[22px] text-meta">
+                    {stay.absentNote}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <FaqRows items={stay.faqs} />
           </div>
 
-          {/* Right Column - Contact Card */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24">
-              <Card className="border-0 shadow-xl">
-                <div className="p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                    Get in Touch
-                  </h3>
-
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    Interested in staying at {accommodation.name}? Contact us
-                    for availability, pricing, and special offers.
-                  </p>
-
-                  {/* Contact Info */}
-                  <div className="space-y-4 mb-8">
-                    {accommodation.contactEmail && (
-                      <a
-                        href={`mailto:${accommodation.contactEmail}`}
-                        className="flex items-center gap-3 text-gray-700 hover:text-teal-600 transition-colors"
-                      >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center">
-                          <Mail className="w-5 h-5 text-teal-600" />
-                        </div>
-                        <span className="text-sm">
-                          {accommodation.contactEmail}
-                        </span>
-                      </a>
-                    )}
-                    {accommodation.contactPhone && (
-                      <a
-                        href={`tel:${accommodation.contactPhone}`}
-                        className="flex items-center gap-3 text-gray-700 hover:text-teal-600 transition-colors"
-                      >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center">
-                          <Phone className="w-5 h-5 text-teal-600" />
-                        </div>
-                        <span className="text-sm">
-                          {accommodation.contactPhone}
-                        </span>
-                      </a>
-                    )}
-                  </div>
-
-                  {/* CTA Buttons */}
-                  <div className="space-y-3">
-                    <Button className="w-full" size="lg">
-                      Request Availability
-                    </Button>
-                    <Button variant="outline" className="w-full" size="lg">
-                      View Packages
-                    </Button>
-                  </div>
-
-                  {/* Quick Info */}
-                  <div className="mt-8 pt-8 border-t border-gray-200 space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Response Time</span>
-                      <span className="text-gray-900 font-medium">
-                        Within 24 hours
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Languages</span>
-                      <span className="text-gray-900 font-medium">
-                        English, Dhivehi
-                      </span>
-                    </div>
-                  </div>
+          <div className="min-w-0 shrink basis-[340px] sticky top-6">
+            <div className="rounded-lg border border-ink-200 bg-white p-6 shadow-card-hover">
+              <div className="mb-3 font-mono text-label-sm uppercase text-meta">
+                Sold as a package
+              </div>
+              {stay.nightlyFrom !== null && (
+                <div className="mb-1 flex items-baseline justify-between gap-3">
+                  <span>
+                    <span className="text-price-lg">
+                      {formatMoney(stay.nightlyFrom, "USD")}
+                    </span>
+                    <span className="text-caption text-meta"> / night</span>
+                  </span>
                 </div>
-              </Card>
+              )}
+              <div className="mb-5 text-caption text-meta">
+                {stay.transfer ? `${stay.transfer} and meals included` : "Transfers and meals included"}
+              </div>
+
+              {stay.packageSlug ? (
+                <Link
+                  href={`/packages/${stay.packageSlug}`}
+                  className="mb-2 flex h-[52px] w-full items-center justify-center rounded-full bg-ink-900 text-body-m font-medium text-white hover:bg-ink-800"
+                >
+                  {accommodationPackagesCta(stay.packageCount)}
+                </Link>
+              ) : (
+                <Link
+                  href="/packages"
+                  className="mb-2 flex h-[52px] w-full items-center justify-center rounded-full bg-ink-900 text-body-m font-medium text-white hover:bg-ink-800"
+                >
+                  See all packages
+                </Link>
+              )}
+              <Link
+                href="/contact"
+                className="mb-5 flex h-12 w-full items-center justify-center rounded-full border border-ink-200 bg-white text-body-s font-medium text-ink-900 hover:bg-ink-50"
+              >
+                Ask about a room
+              </Link>
+
+              <div className="border-t border-ink-200 pt-5">
+                <div className="mb-2.5 flex items-baseline gap-2.5">
+                  <Mark className="text-[11px]" />
+                  <span className="text-caption leading-5 text-ink-700">
+                    We have stayed here — ask us anything specific
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2.5">
+                  <Mark className="text-[11px]" />
+                  <span className="text-caption leading-5 text-ink-700">
+                    Room and seats confirmed with the island before you pay
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Container>
+
+      <Section tone="muted" bordered="top" className="mt-[var(--section-y)]">
+        <Container>
+          <div className="flex flex-wrap items-end justify-between gap-8">
+            <div className="min-w-0 max-w-[30em]">
+              <Label className="mb-4">How to book it</Label>
+              <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+                {accommodationPackagesHeading(stay.packageCount)}
+              </h2>
+              <p className="m-0 text-body-l text-ink-700">
+                We do not sell rooms on their own — the transfer is the hard part and
+                it belongs in the price.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={stay.packageSlug ? `/packages/${stay.packageSlug}` : "/packages"}
+                className="inline-flex h-[52px] items-center rounded-full bg-ink-900 px-7 text-body-m font-medium text-white hover:bg-ink-800"
+              >
+                {accommodationPackagesCta(stay.packageCount)}
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex h-[52px] items-center rounded-full border border-ink-200 bg-white px-7 text-body-m font-medium text-ink-900 hover:bg-ink-50"
+              >
+                Ask about dates
+              </Link>
+            </div>
+          </div>
+        </Container>
+      </Section>
 
       <Footer />
     </main>

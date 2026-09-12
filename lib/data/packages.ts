@@ -606,10 +606,16 @@ export interface PackageSuggestion {
 }
 
 export interface PackageDetail extends PackageCard {
+  description: string;
   longBlurb: string | null;
   bestMonths: string | null;
   minNights: number;
   maxNights: number | null;
+  /** The rail validates against these, and lifecycleOf() is derived from them. */
+  travelWindowStart: Date | null;
+  travelWindowEnd: Date | null;
+  bookingWindowStart: Date | null;
+  bookingWindowEnd: Date | null;
   images: { id: string; url: string; alt: string | null }[];
   included: string[];
   location: Location;
@@ -666,10 +672,15 @@ export async function getPackageDetail(
 
   return {
     ...card,
+    description: row.description,
     longBlurb: row.longBlurb,
     bestMonths: row.bestMonths,
     minNights: row.minNights,
     maxNights: row.maxNights,
+    travelWindowStart: row.travelWindowStart,
+    travelWindowEnd: row.travelWindowEnd,
+    bookingWindowStart: row.bookingWindowStart,
+    bookingWindowEnd: row.bookingWindowEnd,
     images: row.images.map((i) => ({ id: i.id, url: i.url, alt: i.alt })),
     included: row.inclusions.map((i) => i.details ? `${i.item} — ${i.details}` : i.item),
     location: row.location,

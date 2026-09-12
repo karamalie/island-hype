@@ -1,88 +1,48 @@
 // components/ui/card.tsx
-import { forwardRef, HTMLAttributes } from "react";
+//
+// Three variants, down from eight. The five that went were the glass cards, and
+// glass does not belong on something that scrolls over flat ground — it only
+// reads as glass when there is a photograph behind it.
+//
+// The rule the old set broke: a resting card uses a border, not a shadow. Shadow
+// is the hover state, so it means "this lifts" rather than decorating everything.
+
+import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
+export type CardVariant = "default" | "image-overlay" | "elevated";
+
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?:
-    | "default"
-    | "outline"
-    | "elevated"
-    | "glass"
-    | "glass-dark"
-    | "clean" // No border, just rounded
-    | "clean-elevated" // Soft shadow for light backgrounds
-    | "clean-bordered"; // Subtle border
-  hover?: boolean; // Add hover lift effect
+  variant?: CardVariant;
+  /** Lift on hover. Only for cards that are themselves a link. */
+  interactive?: boolean;
 }
 
-const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = "default", hover = false, ...props }, ref) => {
-    const variants = {
-      // Default with border
-      default: "bg-white border border-[var(--border-color)]",
-      // Border only, transparent
-      outline: "bg-transparent border border-[var(--border-color)]",
-      // Shadow elevation
-      elevated: "bg-white shadow-lg",
-      // Glass for image/dark backgrounds
-      glass: "glass-card",
-      // Dark glass
-      "glass-dark": "glass-dark",
-      // Clean - just white rounded (no border/shadow)
-      clean: "bg-white",
-      // Clean with soft shadow (for light backgrounds like Image 2)
-      "clean-elevated": "bg-white shadow-soft",
-      // Clean with subtle border
-      "clean-bordered": "bg-white border border-[var(--color-gray-200)]",
-    };
+const variants: Record<CardVariant, string> = {
+  default: "bg-white border border-ink-200 rounded-lg",
+  // The scrim is mandatory, not optional: text over an unscrimmed photograph is
+  // legible only by luck.
+  "image-overlay": "rounded-xl overflow-hidden relative",
+  // The booking rail. The only card with a resting shadow.
+  elevated: "bg-white border border-ink-200 rounded-lg shadow-card-hover",
+};
 
-    const hoverStyles = hover
-      ? "transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg cursor-pointer"
-      : "";
-
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "rounded-2xl overflow-hidden",
-          variants[variant],
-          hoverStyles,
-          className
-        )}
-        {...props}
-      />
-    );
-  }
-);
-
-Card.displayName = "Card";
-
-const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("p-6", className)} {...props} />
-  )
-);
-
-CardHeader.displayName = "CardHeader";
-
-const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
-  )
-);
-
-CardContent.displayName = "CardContent";
-
-const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+  { className, variant = "default", interactive = false, ...props },
+  ref
+) {
+  return (
     <div
       ref={ref}
-      className={cn("p-6 pt-0 flex items-center", className)}
+      className={cn(
+        variants[variant],
+        interactive &&
+          "transition-[box-shadow,transform] duration-[220ms] ease-[var(--ease-standard)] hover:shadow-card-hover hover:-translate-y-0.5",
+        className
+      )}
       {...props}
     />
-  )
-);
+  );
+});
 
-CardFooter.displayName = "CardFooter";
-
-export { Card, CardHeader, CardContent, CardFooter };
+export { Card };

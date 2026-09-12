@@ -1,870 +1,619 @@
 // app/guide/page.tsx
-import Image from "next/image";
+//
+// The first-timer's guide. Ten sections, up from the six the old page had, with
+// geography and people deliberately first: they are the "what is this country"
+// grounding that every practical section below assumes.
+//
+// No photo band — this is editorial, and a hero would push the contents rail and
+// the first paragraph below the fold.
+//
+// This is the one page on the client's real photography rather than placeholders.
+// The images are served from our own media route; they used to hot-link the live
+// site, which is fine for review and wrong for shipping.
+//
+// §10 Things to do sits OUTSIDE the two-column article, at full container width,
+// so the six activity cards get three-up on a desktop. It is still in the
+// contents rail and still anchored #do.
+
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getImageUrl } from "@/lib/image-urls";
-import { Navbar } from "@/components/layout/nav-bar";
+import { Container, Label, Section } from "@/components/ui";
 import { Footer } from "@/components/layout/footer";
+import { NavBar } from "@/components/layout/nav-bar";
+import { ClosingCta, PhotoFrame } from "@/components/patterns";
+import { ContentsRail } from "@/components/guide/contents-rail";
 import {
-  MapPin,
-  Plane,
-  Ship,
-  Waves,
-  Sun,
-  Droplets,
-  Users,
-  Heart,
-  Coffee,
-  Camera,
-  Compass,
-  CalendarDays,
-  Thermometer,
-  Globe,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+  Callout,
+  CompareCards,
+  DataTable,
+  H2,
+  H3,
+  MarkList,
+  P,
+  PullQuote,
+  StatRow,
+  ValueRows,
+} from "@/components/guide/prose";
+
+export const metadata: Metadata = {
+  title: "The Maldives, for people who haven't been",
+  description:
+    "What the Maldives actually is — the geography, the people, the faith — and everything we get asked before people book: when to come, what a transfer really costs, and resort versus local island.",
+};
+
+const CONTENTS = [
+  { id: "geography", label: "Geography" },
+  { id: "culture", label: "People and culture" },
+  { id: "when", label: "When to come" },
+  { id: "island", label: "Resort or local island" },
+  { id: "transfers", label: "Transfers, explained" },
+  { id: "cost", label: "What things cost" },
+  { id: "water", label: "In the water" },
+  { id: "etiquette", label: "Rules and etiquette" },
+  { id: "pack", label: "What to pack" },
+  { id: "do", label: "Things to do" },
+];
+
+const ACTIVITIES = [
+  {
+    src: "guide/snorkeling-reef.jpg",
+    title: "Diving and snorkelling",
+    body: "Twenty to fifty metres of visibility over reefs that are in genuinely good condition. Manta rays, whale sharks, grey reef sharks and turtles, most of it reachable from a house reef rather than a boat.",
+    season: "Best December – April for visibility",
+    alt: "Snorkeller over a shallow coral reef",
+  },
+  {
+    src: "guide/manta-ray.jpg",
+    title: "Marine encounters",
+    body: "Hanifaru Bay in Baa gathers manta rays in numbers that are hard to credit — a hundred or more feeding at once. Snorkel only, strictly permitted, and worth planning a whole trip around.",
+    season: "Best May – November, Baa Atoll",
+    alt: "A manta ray gliding over the reef",
+  },
+  {
+    src: "guide/surfing-waves.jpg",
+    title: "Surfing",
+    body: "Reef breaks at Thulusdhoo and Himmafushi, within reach of Male' on a speedboat. The biggest swells arrive June to September, which is also when the resorts are cheapest.",
+    season: "Season February – November",
+    alt: "A surfer riding a wave off a Maldivian island",
+  },
+  {
+    src: "guide/local-island-life.jpg",
+    title: "Island hopping",
+    body: "Inhabited islands with schools, tea shops, fishing harbours and a football pitch. The cheapest and most interesting day you can have here — and the one most visitors skip entirely.",
+    season: "Modest dress required",
+    alt: "A street on an inhabited Maldivian island",
+  },
+  {
+    src: "guide/sea-of-stars.jpg",
+    title: "Sea of stars",
+    body: "Bioluminescent plankton lighting the shallows blue as they are disturbed. Unpredictable and impossible to book — Vaadhoo in Raa is the island it is named for.",
+    season: "Best June – December",
+    alt: "Bioluminescent plankton glowing in the shallows",
+  },
+  {
+    src: "guide/dhoni-sunset.jpg",
+    title: "Sunset dhoni cruise",
+    body: "A couple of hours on a traditional dhoni as the light goes, usually with spinner dolphins alongside. Almost every island runs one and it is almost always worth doing.",
+    season: "Year round",
+    alt: "A traditional dhoni at sunset",
+  },
+];
 
 export default function GuidePage() {
   return (
-    <main className="min-h-screen bg-white">
-      <Navbar />
+    <main>
+      <NavBar surface="solid" active="guide" cta={{ label: "Book now", href: "/packages" }} />
 
-      {/* Hero Section - Grid Layout */}
-      <section className="border-b-2 border-black">
-        <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[600px]">
-          {/* Left Content */}
-          <div className="border-r-2 border-black p-12 lg:p-16 flex flex-col justify-center">
-            <h1 className="text-6xl lg:text-7xl font-bold text-gray-900 mb-8 leading-[1.1]">
-              Maldives for
-              <br />
-              the sense
-            </h1>
-            <p className="text-gray-600 text-lg mb-8 max-w-md leading-relaxed">
-              Find an experience collective that awakens your senses, brings
-              balance, and provides the gift of lifetime memories.
-            </p>
-            <div>
-              <Link href="/packages">
-                <Button size="lg" className="rounded-full px-8">
-                  Explore Packages
-                </Button>
-              </Link>
-            </div>
+      {/* Article head — on white, because this is editorial */}
+      <Container className="pt-14">
+        <div className="max-w-[760px]">
+          <Label className="mb-5">First-timer&rsquo;s guide</Label>
+          <h1 className="m-0 mb-5 text-display-l">
+            The Maldives, for people who haven&rsquo;t been.
+          </h1>
+          <p className="m-0 text-[clamp(17px,1.6vw,20px)] leading-[1.55] text-ink-700">
+            What the Maldives actually is — the geography, the people, the faith —
+            and then everything we get asked before people book: when to come, what
+            a transfer really costs, and the difference between a resort island and
+            a local one. Written by people who live here.
+          </p>
+        </div>
+      </Container>
 
-            {/* Small Image Grid */}
-            <div className="grid grid-cols-2 gap-4 mt-12">
-              <div className="relative aspect-square rounded-2xl overflow-hidden">
-                <Image
-                  src={getImageUrl(
-                    "images",
-                    "guide/overwater-villas-aerial.jpg"
-                  )}
-                  alt="Overwater villas"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="relative aspect-square rounded-2xl overflow-hidden">
-                <Image
-                  src={getImageUrl("images", "guide/island-aerial-heart.jpg")}
-                  alt="Island aerial view"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </div>
+      <Container className="pt-10">
+        <PhotoFrame
+          src="guide/hero-aerial.jpg"
+          bucket="images"
+          alt="A Maldivian atoll from the air, reef shelving into deep water"
+          ratio="21 / 9"
+          radius="xl"
+          className="min-h-[280px]"
+          sizes="100vw"
+          priority
+        />
+      </Container>
+
+      {/* Two-column article */}
+      <Container className="pt-14">
+        <div className="flex flex-wrap items-start gap-14">
+          <div className="min-w-0 shrink basis-[220px]">
+            <ContentsRail items={CONTENTS} />
           </div>
 
-          {/* Right Image */}
-          <div className="relative min-h-[400px] lg:min-h-full">
-            <Image
-              src={getImageUrl("images", "guide/hero-aerial.jpg")}
-              alt="Maldives overwater walkway"
-              fill
-              className="object-cover"
-              priority
+          <article className="min-w-0 shrink grow basis-[520px]">
+            {/* 01 — Geography */}
+            <H2 id="geography" num="01">
+              Geography
+            </H2>
+            <P>
+              Almost everything that is strange and good about the Maldives follows
+              from its geography. This is a country that is 99% sea, built entirely
+              on coral, with no hill anywhere in it.
+            </P>
+
+            <H3>Understanding atolls</H3>
+            <P>
+              The Maldives is made up of 26 natural atolls containing roughly 1,192
+              coral islands. An atoll is a ring-shaped coral reef enclosing a
+              lagoon, and each one began as a volcano.
+            </P>
+            <P>
+              As those ancient volcanoes subsided beneath the Indian Ocean, coral
+              grew upward on their rims, keeping pace with the sinking rock. The
+              mountain eventually disappeared entirely and the reef remained — a ring
+              of living coral around a shallow turquoise lagoon where a peak used to
+              be.
+            </P>
+            <StatRow
+              stats={[
+                { label: "Atolls", value: "26" },
+                { label: "Islands", value: "1,192" },
+                { label: "Inhabited", value: "~200" },
+                { label: "Land area", value: "298 km²" },
+              ]}
             />
-          </div>
-        </div>
-      </section>
-
-      {/* Coordinates Section */}
-      <section className="border-b-2 border-black py-8">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="flex items-center gap-3 text-gray-900">
-            <MapPin className="w-6 h-6 text-teal-600" />
-            <span className="text-xl font-semibold">3.1058° N, 72.6207° E</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Introduction Section */}
-      <section className="border-b-2 border-black">
-        <div className="max-w-7xl mx-auto px-8 py-16 lg:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-            {/* Left Side - Introduction */}
-            <div className="lg:col-span-7">
-              <p className="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-4">
-                INTRODUCTION
-              </p>
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-12 leading-tight">
-                Bringing alive the magical
-                <br />
-                beauty of the indian ocean.
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <p className="text-gray-600 leading-relaxed">
-                    The archipelago&apos;s pristine coral reefs in crystal clear
-                    lagoons, white sandy beaches, and abundant marine life have
-                    lent to the island nation&apos;s reputation as the
-                    quintessential tropical paradise.
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-600 leading-relaxed">
-                    In a destination where one atoll is as stunning as the next,
-                    where you stay can make a world of difference. Travelers
-                    looking to enhance their Maldivian getaway have a choice of
-                    island resorts that will allow them to make the most of
-                    their stay.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side - Image */}
-            <div className="lg:col-span-5">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
-                <Image
-                  src={getImageUrl("images", "guide/island-beach-aerial.jpg")}
-                  alt="Maldives beach aerial"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Large Image Grid Section */}
-      <section className="border-b-2 border-black">
-        <div className="grid grid-cols-1 lg:grid-cols-3 min-h-[500px]">
-          <div className="relative border-r-2 border-black">
-            <Image
-              src={getImageUrl("images", "guide/island-resort-wide.jpg")}
-              alt="Overwater jetty"
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="relative lg:col-span-2">
-            <Image
-              src={getImageUrl("images", "guide/overwater-jetty-aerial.jpg")}
-              alt="Island resort"
-              fill
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Geography Section */}
-      <section className="border-b-2 border-black py-16 lg:py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            {/* Content */}
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <Globe className="w-8 h-8 text-teal-600" />
-                <h2 className="text-4xl font-bold text-gray-900">Geography</h2>
-              </div>
-
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6">
-                Understanding Atolls
-              </h3>
-              <p className="text-gray-600 leading-relaxed mb-6">
-                The Maldives consists of <strong>26 natural atolls</strong>{" "}
-                comprising approximately <strong>1,192 coral islands</strong>.
-                Atolls are ring-shaped coral reefs that encircle lagoons, formed
-                millions of years ago from sunken volcanic mountains.
-              </p>
-              <p className="text-gray-600 leading-relaxed mb-8">
-                As ancient volcanoes slowly subsided beneath the Indian Ocean,
-                coral polyps built massive reefs on top of these sunken peaks.
-                What remained were these spectacular ring-shaped formations
-                surrounding turquoise lagoons—the signature feature of the
-                Maldives.
-              </p>
-
-              {/* Quick Facts */}
-              <div className="grid grid-cols-2 gap-4 bg-white rounded-2xl p-6 border-2 border-gray-200">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Total Atolls</p>
-                  <p className="text-2xl font-bold text-gray-900">26</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Total Islands</p>
-                  <p className="text-2xl font-bold text-gray-900">1,192</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Inhabited</p>
-                  <p className="text-2xl font-bold text-gray-900">~200</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Land Area</p>
-                  <p className="text-2xl font-bold text-gray-900">298 km²</p>
-                </div>
-              </div>
-
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6 mt-12">
-                The Indian Ocean
-              </h3>
-              <p className="text-gray-600 leading-relaxed mb-4">
-                Located in the heart of the Indian Ocean, the Maldives sits{" "}
-                <strong>750km southwest of India</strong> and{" "}
-                <strong>400km southwest of Sri Lanka</strong>. The archipelago
-                stretches 823km north to south, positioned on the
-                Chagos-Laccadive Ridge—an extinct volcanic mountain range.
-              </p>
-              <p className="text-gray-600 leading-relaxed">
-                Crystal-clear turquoise waters surround every island, with
-                visibility reaching 20-30 meters during the dry season. The warm
-                Indian Ocean (26-30°C year-round) teems with vibrant coral
-                reefs, tropical fish, manta rays, whale sharks, and sea turtles.
-              </p>
-            </div>
-
-            {/* Image & Map */}
-            <div className="space-y-6">
-              <div className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-200">
-                <Image
-                  src={getImageUrl("images", "guide/maldives-map.jpg")}
-                  alt="Maldives map location"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-gray-200">
-                <Image
-                  src={getImageUrl("images", "guide/atoll-formation.jpg")}
-                  alt="Atoll ring formation"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Climate & Best Time Section */}
-      <section className="border-b-2 border-black py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="flex items-center gap-3 mb-12">
-            <Sun className="w-8 h-8 text-teal-600" />
-            <h2 className="text-4xl font-bold text-gray-900">
-              Climate & Best Time to Visit
-            </h2>
-          </div>
-
-          {/* Temperature Info */}
-          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-8 mb-12 border-2 border-teal-100">
-            <div className="flex items-start gap-6">
-              <Thermometer className="w-12 h-12 text-teal-600 flex-shrink-0" />
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-                  Year-Round Tropical Paradise
-                </h3>
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  The Maldives enjoys a consistently warm tropical climate with
-                  temperatures ranging <strong>24-33°C (75-91°F)</strong>{" "}
-                  throughout the year. Temperature rarely falls below 25°C even
-                  at night, making it perfect for beach activities any time of
-                  year.
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Hottest month:</strong> April (up to 32°C) •{" "}
-                  <strong>Water temperature:</strong> 26-30°C year-round
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Seasons Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 lg:divide-x lg:divide-black/35">
-            {/* Dry Season */}
-            <div className="border-2 border-gray-200 rounded-2xl p-8 bg-white lg:mr-6">
-              <div className="flex items-center justify-between mb-6">
-                <Badge className="bg-teal-600 text-white text-sm px-4 py-1">
-                  BEST TIME
-                </Badge>
-                <CalendarDays className="w-6 h-6 text-teal-600" />
-              </div>
-
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Dry Season
-              </h3>
-              <p className="text-lg font-semibold text-teal-600 mb-6">
-                December - April
-              </p>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex items-start gap-3">
-                  <Sun className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600 text-sm">
-                    Minimal rainfall, low humidity, 8-9 hours daily sunshine
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Waves className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600 text-sm">
-                    Calm, crystal-clear seas with 20-30m visibility
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Camera className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600 text-sm">
-                    Perfect for beach relaxation, snorkeling, diving,
-                    photography
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm font-semibold text-gray-900 mb-2">
-                  Peak Months
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>January-February:</strong> Driest months
-                  <br />
-                  <strong>December:</strong> Festive season
-                </p>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-sm text-gray-500">
-                  ⚠️ Highest prices • Most crowded • Book 3-6 months in advance
-                </p>
-              </div>
-            </div>
-
-            {/* Wet Season */}
-            <div className="border-2 border-gray-200 rounded-2xl p-8 bg-white lg:ml-6">
-              <div className="flex items-center justify-between mb-6">
-                <Badge variant="outline" className="text-sm px-4 py-1">
-                  BUDGET FRIENDLY
-                </Badge>
-                <Droplets className="w-6 h-6 text-blue-600" />
-              </div>
-
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Wet Season
-              </h3>
-              <p className="text-lg font-semibold text-blue-600 mb-6">
-                May - November
-              </p>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex items-start gap-3">
-                  <Droplets className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600 text-sm">
-                    Short intense downpours followed by sunshine (7-8 inches
-                    monthly)
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Waves className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600 text-sm">
-                    Slightly rougher seas but still swimmable, lower visibility
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Heart className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600 text-sm">
-                    Perfect for surfers, budget travelers, manta rays & whale
-                    sharks
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 rounded-xl p-4">
-                <p className="text-sm font-semibold text-gray-900 mb-2">
-                  Marine Life Bonus
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>May-November:</strong> Manta ray & whale shark season
-                  <br />
-                  <strong>June-September:</strong> Best for Hanifaru Bay (Baa
-                  Atoll)
-                </p>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-sm text-teal-600 font-medium">
-                  ✓ 20-40% cheaper • Fewer crowds • Better marine encounters
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Shoulder Season Note */}
-          <div className="mt-8 bg-amber-50 border-2 border-amber-200 rounded-2xl p-6">
-            <h4 className="font-semibold text-gray-900 mb-2">
-              Shoulder Season (April & November)
-            </h4>
-            <p className="text-gray-600 text-sm">
-              Mix of sunny days and light showers with moderate crowds and
-              prices. Good value with decent weather conditions.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* People & Culture Section */}
-      <section className="border-b-2 border-black py-16 lg:py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-0 lg:divide-x lg:divide-black/35">
-            {/* Image First */}
-            <div className="space-y-6 lg:pr-8">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border-2 border-gray-200">
-                <Image
-                  src={getImageUrl("images", "guide/male-mosque.jpg")}
-                  alt="Malé Grand Friday Mosque"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-gray-200">
-                <Image
-                  src={getImageUrl("images", "guide/bodu-beru-performance.jpg")}
-                  alt="Traditional Bodu Beru performance"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-5">
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                  Image Notes
-                </h4>
-                <p className="text-sm text-gray-600 leading-relaxed mb-2">
-                  The Grand Friday Mosque area in Malé is one of the capital&apos;s
-                  main landmarks. The Islamic Centre opened in 1984, and the
-                  mosque is known as the country&apos;s largest, with capacity for
-                  around 5,000 worshippers.
-                </p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Bodu Beru literally means &quot;big drum.&quot; Traditional
-                  drums are made from coconut wood with goatskin drum heads, and
-                  performances typically build from a steady opening rhythm to a
-                  fast, high-energy crescendo.
-                </p>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="lg:pl-8">
-              <div className="flex items-center gap-3 mb-6">
-                <Users className="w-8 h-8 text-teal-600" />
-                <h2 className="text-4xl font-bold text-gray-900">
-                  People & Culture
-                </h2>
-              </div>
-
-              <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-                The Maldivian People
-              </h3>
-              <p className="text-gray-600 leading-relaxed mb-6">
-                Maldivians are warm, family-oriented people of Indo-Aryan
-                descent with influences from Arab, African, and Southeast Asian
-                traders. The population of 515,000 speaks{" "}
-                <strong>Dhivehi</strong> (written in Thaana script), though{" "}
-                <strong>English is widely spoken</strong>, especially in tourism
-                areas and among younger generations.
-              </p>
-
-              <h3 className="text-2xl font-semibold text-gray-900 mb-4 mt-8">
-                Religion: Islam
-              </h3>
-              <p className="text-gray-600 leading-relaxed mb-4">
-                The Maldives is a <strong>100% Muslim nation</strong> (Sunni
-                Islam), having converted in 1153 AD. Islam is the state religion
-                and all citizens must be Muslim. Daily life is regulated by
-                Islamic principles with 5 daily prayers—shops close for 10-15
-                minutes after each call to prayer.
-              </p>
-
-              <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 mb-8">
-                <h4 className="font-semibold text-gray-900 mb-4">
-                  Cultural Highlights
-                </h4>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <Coffee className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600 text-sm">
-                      <strong>Traditional Bodu Beru:</strong> Drumming and
-                      dancing performances (15-20 men)
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Coffee className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600 text-sm">
-                      <strong>Cuisine:</strong> Fish-based (tuna), coconut, rice
-                      — Try Mas Huni (national dish)
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Coffee className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600 text-sm">
-                      <strong>Crafts:</strong> Intricate lacquerwork, wood
-                      carving, woven mats
-                    </span>
-                  </li>
-                </ul>
-              </div>
-
-              <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-                Important: Dress Code & Restrictions
-              </h3>
-
-              {/* Resort vs Local Islands */}
-              <div className="space-y-4">
-                <div className="bg-teal-50 border-2 border-teal-200 rounded-xl p-6">
-                  <h4 className="font-semibold text-teal-900 mb-3 flex items-center gap-2">
-                    <span className="text-2xl">🏝️</span> Resort/Private Islands
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>✓ Bikinis & swimwear allowed everywhere on beach</li>
-                    <li>✓ Alcohol served (resorts have special license)</li>
-                    <li>✓ Western standards apply</li>
-                    <li className="text-red-600 font-medium">
-                      ⚠️ Topless sunbathing banned ($1,000 fine)
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6">
-                  <h4 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
-                    <span className="text-2xl">🏘️</span> Local/Inhabited Islands
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>
-                      • <strong>Modest dress required:</strong> Cover shoulders
-                      to knees
-                    </li>
-                    <li>
-                      •{" "}
-                      <strong>
-                        Bikinis ONLY at designated &quot;Bikini Beaches&quot;
-                      </strong>
-                    </li>
-                    <li>• NO alcohol anywhere</li>
-                    <li>• NO public displays of affection</li>
-                    <li>• NO pork products</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Transport Section */}
-      <section className="border-b-2 border-black py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="flex items-center gap-3 mb-12">
-            <Plane className="w-8 h-8 text-teal-600" />
-            <h2 className="text-4xl font-bold text-gray-900">Getting Around</h2>
-          </div>
-
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 mb-12">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-              Why Transport Matters
-            </h3>
-            <p className="text-gray-700 leading-relaxed">
-              <strong>Islands are separated by water</strong> — you cannot drive
-              between them. The atolls spread across 823km, creating significant
-              distances between destinations. Every transfer must be arranged by
-              your resort or guesthouse for a cost.
-            </p>
-          </div>
-
-          {/* Transport Options Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {/* Speedboat */}
-            <div className="border-2 border-gray-200 rounded-2xl p-6 bg-white">
-              <Ship className="w-10 h-10 text-blue-600 mb-4" />
-              <h4 className="font-semibold text-gray-900 mb-2">Speedboat</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                For nearby islands (North/South Malé Atoll)
-              </p>
-              <ul className="text-xs text-gray-500 space-y-1">
-                <li>• 15-90 minutes</li>
-                <li>• Daytime only</li>
-                <li>• Shared or private</li>
-              </ul>
-            </div>
-
-            {/* Seaplane */}
-            <div className="border-2 border-teal-200 rounded-2xl p-6 bg-teal-50">
-              <Plane className="w-10 h-10 text-teal-600 mb-4" />
-              <h4 className="font-semibold text-gray-900 mb-2">Seaplane</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                For islands 30+ minutes away
-              </p>
-              <ul className="text-xs text-gray-500 space-y-1">
-                <li>• 15-45 minute flights</li>
-                <li>• Scenic aerial views</li>
-                <li>• 6am-4pm only</li>
-                <li>• Weather dependent</li>
-              </ul>
-            </div>
-
-            {/* Domestic Flight */}
-            <div className="border-2 border-gray-200 rounded-2xl p-6 bg-white">
-              <Plane className="w-10 h-10 text-purple-600 mb-4" />
-              <h4 className="font-semibold text-gray-900 mb-2">
-                Domestic Flight
-              </h4>
-              <p className="text-sm text-gray-600 mb-4">
-                For far southern atolls
-              </p>
-              <ul className="text-xs text-gray-500 space-y-1">
-                <li>• Fly to atoll airport</li>
-                <li>• Then speedboat</li>
-                <li>• Most reliable</li>
-              </ul>
-            </div>
-
-            {/* Public Ferry */}
-            <div className="border-2 border-gray-200 rounded-2xl p-6 bg-white">
-              <Ship className="w-10 h-10 text-gray-600 mb-4" />
-              <h4 className="font-semibold text-gray-900 mb-2">Public Ferry</h4>
-              <p className="text-sm text-gray-600 mb-4">Budget option</p>
-              <ul className="text-xs text-gray-500 space-y-1">
-                <li>• Much cheaper</li>
-                <li>• Slower & irregular</li>
-                <li>• Island hopping</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Airport Info */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="border-2 border-gray-200 rounded-2xl p-8 bg-white">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Main International Airport
-              </h3>
-              <p className="text-gray-600 mb-4">
-                <strong>Velana International Airport (MLE)</strong> in Malé
-              </p>
-              <p className="text-sm text-gray-500">
-                Direct flights from Middle East, Asia, Europe via Emirates,
-                Qatar Airways, Singapore Airlines, British Airways, Turkish
-                Airlines
-              </p>
-            </div>
-
-            <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-gray-200">
-              <Image
-                src={getImageUrl("images", "guide/seaplane-water.jpg")}
-                alt="Seaplane on water"
-                fill
-                className="object-cover"
+            <div className="mb-6 flex max-w-[34em] flex-wrap gap-3">
+              <PhotoFrame
+                src="guide/maldives-map.jpg"
+                bucket="images"
+                alt="A map of the Maldives archipelago"
+                ratio="4 / 3"
+                radius="lg"
+                className="min-w-0 shrink grow basis-[200px]"
+                sizes="(max-width: 768px) 100vw, 260px"
+              />
+              <PhotoFrame
+                src="guide/atoll-formation.jpg"
+                bucket="images"
+                alt="An atoll rim, showing the reef ring around a lagoon"
+                ratio="4 / 3"
+                radius="lg"
+                className="min-w-0 shrink grow basis-[200px]"
+                sizes="(max-width: 768px) 100vw, 260px"
               />
             </div>
-          </div>
+            <P>
+              The chain runs north to south in two parallel rows of atolls, which is
+              why a domestic flight can take longer than the international one that
+              got you here.
+            </P>
+
+            <H3>Where it actually is</H3>
+            <P>
+              The Maldives sits in open ocean 750 km south-west of India and 400 km
+              south-west of Sri Lanka, straddling the equator. The archipelago
+              stretches about 823 km from its northernmost atoll to its southernmost
+              — further than the length of Great Britain — across territory that is
+              almost entirely water.
+            </P>
+            <P>
+              It all sits on the Chagos-Laccadive Ridge, an extinct volcanic mountain
+              range running down the floor of the Indian Ocean. The atolls are its
+              summits.
+            </P>
+
+            <H3>The lowest country on earth</H3>
+            <P>
+              Average elevation is about 1.5 metres above sea level and the highest
+              natural point in the entire country is roughly 2.4 metres. Nowhere else
+              is flatter.
+            </P>
+            <P>
+              In practice this is why the islands feel the way they do: you are never
+              more than a couple of hundred metres from water, the horizon is always
+              visible, and the lagoon shelves so gently that you can walk out a long
+              way before it reaches your waist. It is also why coral health and sea
+              level are not abstract topics here — the reef is the land&rsquo;s
+              foundation and its sea defence at the same time.
+            </P>
+            <PhotoFrame
+              src="guide/island-beach-aerial.jpg"
+              bucket="images"
+              alt="A small island and its shelving lagoon from above"
+              ratio="16 / 9"
+              radius="lg"
+              className="mb-10 max-w-[34em]"
+              sizes="(max-width: 768px) 100vw, 560px"
+            />
+
+            {/* 02 — People and culture */}
+            <H2 id="culture" num="02">
+              People and culture
+            </H2>
+            <P>
+              Tourism is arranged so that you can visit the Maldives without meeting
+              it. That is a shame, and easily fixed — a day on an inhabited island is
+              the cheapest and most interesting thing you can do here.
+            </P>
+            <figure className="m-0 mb-6 max-w-[34em]">
+              <PhotoFrame
+                src="guide/male-mosque.jpg"
+                bucket="images"
+                alt="The Grand Friday Mosque in Male'"
+                ratio="16 / 9"
+                radius="lg"
+                sizes="(max-width: 768px) 100vw, 560px"
+              />
+              <figcaption className="mt-3 text-caption leading-5 text-meta">
+                The Grand Friday Mosque in Male&rsquo;, part of the Islamic Centre
+                opened in 1984. It is the largest mosque in the country, with room for
+                around 5,000 worshippers, and its gold dome is the first landmark you
+                see coming into the capital.
+              </figcaption>
+            </figure>
+
+            <H3>The Maldivian people</H3>
+            <P>
+              Around 515,000 people live here, principally of Indo-Aryan descent with
+              Arab, African and South-East Asian ancestry layered in by a thousand
+              years of trade across the Indian Ocean. Family sits at the centre of
+              things, and hospitality is offered quickly and without ceremony.
+            </P>
+            <P>
+              The language is Dhivehi, written in Thaana — a script that runs right to
+              left and is used nowhere else on earth. English is widely spoken,
+              near-universally in tourism and among younger Maldivians, so you will
+              not struggle. A few words still go a long way.
+            </P>
+            <ValueRows
+              rows={[
+                { label: "Hello", value: "Assalaamu alaikum" },
+                { label: "Thank you", value: "Shukuriyaa" },
+                { label: "Yes / no", value: "Aan / noon" },
+                { label: "Delicious", value: "Molhu" },
+              ]}
+            />
+
+            <H3>Islam</H3>
+            <P>
+              The Maldives is a Sunni Muslim country, and has been since its
+              conversion in 1153 AD. Islam is the state religion and citizenship is
+              tied to it. Daily life on inhabited islands runs to the rhythm of the
+              five prayers — shops and cafes close for ten or fifteen minutes after
+              each call, then reopen as if nothing happened.
+            </P>
+            <P>
+              On a resort island you will notice none of this. On a local island it
+              shapes the day, and a little awareness of it is the difference between
+              being a guest and being an inconvenience — see{" "}
+              <a href="#etiquette" className="text-teal-deep hover:text-ink-900">
+                rules and etiquette
+              </a>{" "}
+              below.
+            </P>
+
+            <H3>Music, food and craft</H3>
+            <P>
+              Maldivian culture is a sea culture: the food comes out of the water, the
+              music was made on boats and beaches, and the crafts use what washes up
+              or grows on the island.
+            </P>
+            <MarkList
+              items={[
+                "Bodu beru. Literally “big drum” — fifteen to twenty men, drums of coconut wood and goatskin, starting slow and ending somewhere frantic.",
+                "Mas huni. Shredded smoked tuna, grated coconut, onion and chilli, eaten with flatbread for breakfast. The national dish, and the best thing on any menu here.",
+                "Lacquerwork and weaving. Turned wooden boxes finished in layered red and black lacquer, and reed mats woven in geometric patterns. Both are island crafts with named makers.",
+              ]}
+            />
+            <figure className="m-0 mb-6 max-w-[34em]">
+              <PhotoFrame
+                src="guide/bodu-beru-performance.jpg"
+                bucket="images"
+                alt="A bodu beru drumming performance"
+                ratio="16 / 9"
+                radius="lg"
+                sizes="(max-width: 768px) 100vw, 560px"
+              />
+              <figcaption className="mt-3 text-caption leading-5 text-meta">
+                A bodu beru performance builds from a steady opening rhythm to a fast,
+                high-energy crescendo. Most resorts run one weekly; on a local island
+                you may simply come across one.
+              </figcaption>
+            </figure>
+            <P className="mb-10">
+              Tea shops are the other thing to do. Every inhabited island has one,
+              they are cheap, the short eats are excellent, and nobody will mind you
+              sitting there for an hour.
+            </P>
+
+            {/* 03 — When to come */}
+            <H2 id="when" num="03">
+              When to come
+            </H2>
+            <P>
+              There are two seasons and the difference is not subtle. The dry
+              north-east monsoon runs roughly December to April: flat water, reliable
+              sun, visibility past thirty metres, and the highest prices of the year.
+              The wet south-west monsoon runs May to November: shorter heavy
+              downpours rather than all-day rain, choppier crossings, and prices that
+              can drop by a third.
+            </P>
+            <P>
+              The catch is that the wet season is when the big animals turn up.
+              Plankton blooms bring manta rays into Hanifaru Bay in Baa Atoll between
+              June and November, and whale sharks are more reliable in the south of
+              Ari in the same window.
+            </P>
+            <Callout label="Our answer">
+              If this is your first trip and you want the postcard, come in February.
+              If you have been before, or you dive, come in September and spend the
+              difference on a better villa.
+            </Callout>
+            <DataTable
+              headers={["Months", "Weather", "Prices"]}
+              rows={[
+                ["Dec – Apr", "Dry, flat, clear", "Highest"],
+                ["May – Jul", "Wettest, windy", "Lowest"],
+                ["Aug – Nov", "Mixed, mantas", "Middle"],
+              ]}
+            />
+
+            {/* 04 — Resort or local island */}
+            <H2 id="island" num="04">
+              Resort or local island
+            </H2>
+            <P>
+              This is the decision that sets your budget, and most people make it
+              without knowing there is a choice. A resort island is one island, one
+              hotel, and nobody else on it. A local island is an inhabited Maldivian
+              island where guesthouses operate alongside ordinary life — a school, a
+              mosque, a football pitch, boats going out at four in the morning.
+            </P>
+            <PullQuote>
+              The reef does not care which you choose. A good guesthouse puts you on
+              water every bit as good as a resort three times the price — you just
+              walk to the boat instead of being carried to it, and there is no bar.
+            </PullQuote>
+            <CompareCards
+              cards={[
+                {
+                  title: "Resort island",
+                  items: [
+                    { text: "Alcohol served" },
+                    { text: "Bikinis anywhere" },
+                    { text: "$250–900 a night" },
+                    { text: "Everything on site, at resort prices" },
+                  ],
+                },
+                {
+                  title: "Local island",
+                  items: [
+                    { text: "Dry island — no alcohol", negative: true },
+                    { text: "Swimwear on bikini beach only", negative: true },
+                    { text: "$65–150 a night" },
+                    { text: "Cafés, shops, actual Maldivian food" },
+                  ],
+                },
+              ]}
+            />
+            <P>
+              Plenty of people do both in one trip: three nights on a local island,
+              three on a resort. It costs less than a week of resort and you see
+              considerably more of the country.
+            </P>
+
+            {/* 05 — Transfers */}
+            <H2 id="transfers" num="05">
+              Transfers, properly explained
+            </H2>
+            <P>
+              There is one international airport, Velana, on an island next to
+              Male&rsquo;. Everything else in the country is reached by boat or small
+              plane, and that leg is a real cost that a lot of booking sites leave
+              until checkout.
+            </P>
+            <P>
+              Seaplanes are the expensive, memorable option — a twin-engine Twin
+              Otter, no assigned seats, pilots often barefoot, flying at about five
+              hundred metres. They only fly in daylight. If your inbound lands after
+              roughly four in the afternoon, you will not reach the island that day,
+              and you need a night near the airport.
+            </P>
+            <Callout label="The one thing to check">
+              The single most common way a Maldives trip goes wrong is an evening
+              arrival booked against a seaplane transfer. Check the flight time before
+              you book the island.
+            </Callout>
+            <DataTable
+              headers={["Type", "Typical cost", "Notes"]}
+              rows={[
+                ["Seaplane", "$350–600 return, pp", "Daylight only. 20 kg limit."],
+                ["Speedboat", "$100–250 return, pp", "Runs at night. Rough in the wet season."],
+                ["Domestic flight", "$200–400 return, pp", "Then a short boat at the far end."],
+              ]}
+            />
+            <figure className="m-0 mb-10 max-w-[34em]">
+              <PhotoFrame
+                src="guide/seaplane-water.jpg"
+                bucket="images"
+                alt="A seaplane on the water beside a jetty"
+                ratio="16 / 9"
+                radius="lg"
+                sizes="(max-width: 768px) 100vw, 560px"
+              />
+              <figcaption className="mt-3 text-caption leading-5 text-meta">
+                Twin Otters on floats, no assigned seats, and pilots who are
+                frequently barefoot. Most people rate the flight above the resort.
+              </figcaption>
+            </figure>
+
+            {/* 06 — What things cost */}
+            <H2 id="cost" num="06">
+              What things cost
+            </H2>
+            <P>
+              Resort extras are where budgets go wrong. A half-board rate does not
+              include drinks, and soft drinks are charged like wine. Rough figures,
+              per person, at a mid-range resort:
+            </P>
+            <ValueRows
+              rows={[
+                { label: "Green tax, per night", value: "$6" },
+                { label: "Beer, resort bar", value: "$10–14" },
+                { label: "Single dive, with kit", value: "$70–110" },
+                { label: "Sandbank or snorkel trip", value: "$40–90" },
+                { label: "Meal at a local island café", value: "$5–12" },
+              ]}
+            />
+            <P>
+              Most resorts add a 10% service charge and 16% GST on top of quoted
+              prices. Our package totals already include both.
+            </P>
+
+            {/* 07 — In the water */}
+            <H2 id="water" num="07">
+              In the water
+            </H2>
+            <P>
+              You do not need to dive. A mask and a pair of fins over a good house
+              reef will show you most of what people come here for — reef sharks,
+              turtles, rays, and several hundred species of fish that do not much mind
+              you being there.
+            </P>
+            <P>
+              If you do dive, the channels are the draw: fast water, big schools, and
+              grey reef sharks holding in the current. Vaavu and the southern atolls
+              are where the serious diving is. Hanifaru in Baa is snorkel-only by law
+              and worth planning a trip around.
+            </P>
+            <P>
+              Bring your own mask if you are particular about fit. Loan gear is usually
+              adequate and occasionally awful, and a leaking mask ruins a morning.
+            </P>
+
+            {/* 08 — Rules and etiquette */}
+            <H2 id="etiquette" num="08">
+              Rules and etiquette
+            </H2>
+            <P>
+              The Maldives is a Muslim country and the rules on inhabited islands are
+              real, not advisory. None of it is onerous — it is mostly a matter of
+              knowing before you arrive.
+            </P>
+            <H3>Alcohol</H3>
+            <P>
+              Legal only on resort islands and licensed liveaboards. It cannot be
+              brought into the country — bags are scanned on arrival and bottles are
+              confiscated.
+            </P>
+            <H3>Swimwear</H3>
+            <P>
+              Anything goes on a resort island. On a local island, swimwear is for the
+              designated bikini beach; shoulders and knees covered elsewhere.
+            </P>
+            <H3>Ramadan</H3>
+            <P>
+              Resorts run normally. On local islands, cafés close during daylight hours
+              and it is poor form to eat or drink in the street. Worth avoiding if a
+              local island is your plan.
+            </P>
+
+            {/* 09 — What to pack */}
+            <H2 id="pack" num="09">
+              What to pack
+            </H2>
+            <P>
+              Less than you think, with four exceptions. Note the seaplane baggage
+              limit — 20 kg checked and 5 kg hand, and it is enforced.
+            </P>
+            <CompareCards
+              cards={[
+                {
+                  title: "Bring",
+                  items: [
+                    { text: "Reef-safe sunscreen, factor 50" },
+                    { text: "Your own mask and snorkel" },
+                    { text: "Rash vest — the sun is directly overhead" },
+                    { text: "Modest layer for local islands and Male'" },
+                  ],
+                },
+                {
+                  title: "Leave behind",
+                  items: [
+                    { text: "Alcohol, e-cigarettes, vapes", negative: true },
+                    { text: "Shoes beyond one pair of sandals", negative: true },
+                    { text: "Hairdryer — every room has one", negative: true },
+                    { text: "Cash beyond a little for tips", negative: true },
+                  ],
+                },
+              ]}
+            />
+          </article>
         </div>
-      </section>
+      </Container>
 
-      {/* Things to Do Section */}
-      <section className="border-b-2 border-black py-16 lg:py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="flex items-center gap-3 mb-12">
-            <Compass className="w-8 h-8 text-teal-600" />
-            <h2 className="text-4xl font-bold text-gray-900">Things to Do</h2>
+      {/* 10 — Things to do, outside the article so the cards go three-up */}
+      <Section flush className="pt-[var(--section-y)]">
+        <Container>
+          <div id="do" className="mb-10 max-w-[620px] scroll-mt-24">
+            <div className="mb-3 font-mono text-label text-teal-deep">10</div>
+            <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+              Things to do
+            </h2>
+            <p className="m-0 text-body-l text-ink-700">
+              Six that are worth the effort, and roughly when each one is at its best.
+              Most are bookable through the island once you arrive; the seasonal ones
+              are worth building the trip around.
+            </p>
           </div>
 
-          {/* Activities Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Diving & Snorkeling */}
-            <div className="border-2 border-gray-200 rounded-2xl overflow-hidden bg-white">
-              <div className="relative aspect-video">
-                <Image
-                  src={getImageUrl("images", "guide/snorkeling-reef.jpg")}
-                  alt="Snorkeling in coral reef"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  Diving & Snorkeling
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  World-class dive sites with 20-50m visibility. Encounter manta
-                  rays, whale sharks, reef sharks, and sea turtles.
-                </p>
-                <p className="text-xs text-teal-600 font-medium">
-                  Best: December-April for visibility
-                </p>
-              </div>
-            </div>
-
-            {/* Marine Life */}
-            <div className="border-2 border-gray-200 rounded-2xl overflow-hidden bg-white">
-              <div className="relative aspect-video">
-                <Image
-                  src={getImageUrl("images", "guide/manta-ray.jpg")}
-                  alt="Manta ray encounter"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  Marine Encounters
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  Swim with whale sharks and hundreds of manta rays at Hanifaru
-                  Bay (UNESCO Biosphere Reserve).
-                </p>
-                <p className="text-xs text-teal-600 font-medium">
-                  Best: May-November in Baa Atoll
-                </p>
-              </div>
-            </div>
-
-            {/* Surfing */}
-            <div className="border-2 border-gray-200 rounded-2xl overflow-hidden bg-white">
-              <div className="relative aspect-video">
-                <Image
-                  src={getImageUrl("images", "guide/surfing-waves.jpg")}
-                  alt="Surfing in Maldives"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  Surfing
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  World-class breaks at Thulusdhoo and Himmafushi. Biggest
-                  swells June-September.
-                </p>
-                <p className="text-xs text-teal-600 font-medium">
-                  Season: February-November
-                </p>
-              </div>
-            </div>
-
-            {/* Island Hopping */}
-            <div className="border-2 border-gray-200 rounded-2xl overflow-hidden bg-white">
-              <div className="relative aspect-video">
-                <Image
-                  src={getImageUrl("images", "guide/local-island-life.jpg")}
-                  alt="Local island life"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  Island Hopping
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  Visit local inhabited islands, experience authentic Maldivian
-                  culture, fishing villages, and markets.
-                </p>
-                <p className="text-xs text-teal-600 font-medium">
-                  Modest dress required
-                </p>
-              </div>
-            </div>
-
-            {/* Bioluminescence */}
-            <div className="border-2 border-gray-200 rounded-2xl overflow-hidden bg-white">
-              <div className="relative aspect-video">
-                <Image
-                  src={getImageUrl("images", "guide/sea-of-stars.jpg")}
-                  alt="Bioluminescent plankton"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  Sea of Stars
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  Witness magical bioluminescent plankton creating glowing blue
-                  traces in the water at night.
-                </p>
-                <p className="text-xs text-teal-600 font-medium">
-                  Best: June-December
-                </p>
-              </div>
-            </div>
-
-            {/* Sunset Cruises */}
-            <div className="border-2 border-gray-200 rounded-2xl overflow-hidden bg-white">
-              <div className="relative aspect-video">
-                <Image
-                  src={getImageUrl("images", "guide/dhoni-sunset.jpg")}
-                  alt="Traditional dhoni boat"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  Sunset Cruises
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  Traditional dhoni boat cruises with dolphin spotting and
-                  spectacular sunset views.
-                </p>
-                <p className="text-xs text-teal-600 font-medium">
-                  Year-round activity
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-teal-600 to-cyan-600 text-white">
-        <div className="max-w-4xl mx-auto px-8 text-center">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            Ready to Experience Paradise?
-          </h2>
-          <p className="text-xl text-white/90 mb-8 leading-relaxed">
-            Explore our curated packages and find your perfect Maldivian escape.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/packages">
-              <Button
-                size="lg"
-                className="bg-white text-teal-600 hover:bg-gray-100 rounded-full px-8"
+          <div className="flex flex-wrap gap-6">
+            {ACTIVITIES.map((a) => (
+              <div
+                key={a.title}
+                className="flex min-w-0 shrink grow basis-[300px] max-w-[380px] flex-col overflow-hidden rounded-lg border border-ink-200 bg-white"
               >
-                View All Packages
-              </Button>
-            </Link>
-            <Link href="/locations">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white/10 rounded-full px-8"
-              >
-                Explore Locations
-              </Button>
-            </Link>
+                <PhotoFrame
+                  src={a.src}
+                  bucket="images"
+                  alt={a.alt}
+                  ratio="16 / 9"
+                  sizes="(max-width: 768px) 100vw, 380px"
+                />
+                <div className="flex flex-1 flex-col p-5">
+                  <div className="mb-2.5 min-h-[52px] text-heading-s">{a.title}</div>
+                  <p className="m-0 mb-5 text-body-s text-ink-700">{a.body}</p>
+                  <div className="mt-auto font-mono text-label-sm uppercase text-teal-deep">
+                    {a.season}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
+
+      <Section>
+        <Container>
+          <ClosingCta
+            eyebrow="Still got questions"
+            heading="Ask a person who lives here."
+            lede="We are in Male' and we answer the same day. No obligation, and no sales sequence afterwards."
+            primary={{ label: "Ask us anything", href: "/contact" }}
+            secondary={{ label: "See our packages", href: "/packages" }}
+          />
+        </Container>
+      </Section>
 
       <Footer />
     </main>

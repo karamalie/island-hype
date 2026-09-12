@@ -1,272 +1,133 @@
 // app/accommodations/page.tsx
-import Image from "next/image";
-import Link from "next/link";
-import { Container } from "@/components/ui/container";
-import { Section } from "@/components/ui/section";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+//
+// "Stays" in the nav; /accommodations in the URL.
+//
+// The five kinds of night come first, before any listing, because that is the
+// decision that narrows everything else and it is where the budget is really set.
+// A villa on stilts and a room above a family kitchen are both good weeks, and the
+// gap between them is an order of magnitude.
+
+import type { Metadata } from "next";
+import { getStayCards } from "@/lib/data/accommodations";
+import { getStayTypes } from "@/lib/data/stay-types";
+import { stayListDensity } from "@/lib/design/density";
+import { staysHeading, staysLede } from "@/lib/design/inventory";
+import { SITE_IMAGES } from "@/lib/design/site-images";
 import { getImageUrl } from "@/lib/image-urls";
-import { PageHero } from "@/components/layout/page-hero";
+import { Container, Label, Section } from "@/components/ui";
 import { Footer } from "@/components/layout/footer";
-import { MapPin, Star, Users, Waves, Sparkles } from "lucide-react";
+import { PageHead } from "@/components/layout/page-head";
 import {
-  getAccommodations,
-  getAccommodationFilterOptions,
-} from "@/lib/data/accommodations";
-import { AccommodationFilters } from "@/components/accommodations/accommodations-filters";
+  ClosingCta,
+  EditorialSplit,
+  StayCard,
+  StayTypeCard,
+} from "@/components/patterns";
 
-// Icon mapping for accommodation types
-const typeIcons = {
-  RESORT: Sparkles,
-  GUESTHOUSE: Users,
-  HOTEL: Waves,
-  LIVEABOARD: Waves,
-};
-
-interface PageProps {
-  searchParams: Promise<{
-    type?: string;
-    location?: string;
-    search?: string;
-  }>;
-}
-
-// Rendered at request time on the server (DB is local; not built off-server).
 export const dynamic = "force-dynamic";
 
-export default async function AccommodationsPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const [accommodations, filterOptions] = await Promise.all([
-    getAccommodations({
-      type: params.type,
-      atoll: params.location,
-      search: params.search,
-    }),
-    getAccommodationFilterOptions(),
-  ]);
+export const metadata: Metadata = {
+  title: "Stays",
+  description:
+    "Where you sleep changes the whole trip. Five kinds of night, and the islands we sell them on.",
+};
+
+export default async function AccommodationsPage() {
+  const [stays, stayTypes] = await Promise.all([getStayCards(), getStayTypes()]);
+  const density = stayListDensity(stays.length);
 
   return (
-    <main className="min-h-screen bg-white">
-      <PageHero
-        backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
-        backgroundAlt="Maldives accommodations"
-        overlayTone="medium"
-        minHeightClassName="min-h-[clamp(24rem,52vh,36rem)]"
-        badge={
-          <Badge variant="glass" size="lg" className="text-white border-white/20 mb-6">
-            Where You&apos;ll Stay
-          </Badge>
-        }
-        title={
-          <>
-            <span className="font-light">Find Your</span>
-            <br />
-            <span className="font-display italic">Perfect Stay</span>
-          </>
-        }
-        subtitle="From luxury overwater villas to authentic island guesthouses. Discover accommodations that match your style and budget across the Maldives."
+    <main>
+      <PageHead
+        image={getImageUrl("images", SITE_IMAGES.staysHead)}
+        imageAlt="A resort island at dusk"
+        eyebrow="Stays"
+        title="Where you sleep changes the whole trip."
+        lede="A villa on stilts and a room above a family kitchen are both good weeks. They are very different weeks, and the gap in price is enormous."
+        nav={{ active: "stays", cta: { label: "Book now", href: "/contact", arrow: true } }}
       />
 
-      {/* Filter Section */}
-      <Section spacing="sm" surface="plain" className="border-b border-gray-200">
+      {/* Zero inventory needed, and it frames the budget decision */}
+      <Section flush className="pt-20">
         <Container>
-          <AccommodationFilters
-            atolls={filterOptions.atolls}
-            currentType={params.type}
-            currentLocation={params.location}
+          <div className="mb-10 max-w-[620px]">
+            <Label className="mb-4">Start here</Label>
+            <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+              Five kinds of night.
+            </h2>
+            <p className="m-0 text-body-l text-ink-700">
+              Decide this before you pick an island. It narrows everything else, and
+              it is where the budget is really set.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-6">
+            {stayTypes.map((s) => (
+              <StayTypeCard key={s.id} stayType={s} />
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      <Section flush className="pt-20">
+        <Container>
+          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-ink-200 pb-5">
+            <div className="min-w-0 max-w-[620px]">
+              <Label className="mb-4">The list</Label>
+              <h2 className="m-0 mb-3 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+                {staysHeading(stays.length)}
+              </h2>
+              <p className="m-0 text-[17px] leading-[27px] text-ink-700">
+                {staysLede(stays.length)}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={
+              density.layout === "rows"
+                ? "mt-8 flex flex-col gap-6"
+                : "mt-8 flex flex-wrap gap-6"
+            }
+          >
+            {stays.map((stay) => (
+              <StayCard
+                key={stay.id}
+                stay={stay}
+                form={density.layout === "rows" ? "row" : "grid"}
+              />
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      {/* The page's trust argument. Needs no inventory. */}
+      <Section tone="muted" bordered="top" className="mt-[var(--section-y)]">
+        <Container>
+          <EditorialSplit
+            image="right"
+            src={SITE_IMAGES.staysTrust}
+            bucket="images"
+            alt="A local island street in the late afternoon"
+            eyebrow="How we choose"
+            title="We have stayed in every one of these."
+            body="Not a site visit, not a press trip — a night, and usually several. It is the only way to know whether the house reef is any good or the generator is under your window."
+            rows={[
+              { text: "We swim the house reef before we list the island" },
+              { text: "We eat the half-board menu, not the tasting menu" },
+              { text: "If we would not send our own family, it is not on the list" },
+            ]}
           />
         </Container>
       </Section>
 
-      {/* Results Section */}
-      <Section spacing="md" surface="plain">
+      <Section>
         <Container>
-          {/* Results Header */}
-          <div className="mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              {accommodations.length === 0
-                ? "No accommodations found"
-                : `${accommodations.length} ${
-                    accommodations.length === 1
-                      ? "Accommodation"
-                      : "Accommodations"
-                  } Available`}
-            </h2>
-            {params.type && (
-              <p className="text-gray-600 mt-2">
-                Showing {params.type.toLowerCase()}s
-                {params.location && ` in ${params.location}`}
-              </p>
-            )}
-          </div>
-
-          {/* Accommodations Grid */}
-          {accommodations.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {accommodations.map((accommodation) => {
-                const Icon = typeIcons[accommodation.type];
-                return (
-                  <Link
-                    key={accommodation.id}
-                    href={`/accommodations/${accommodation.slug}`}
-                  >
-                    <Card className="group cursor-pointer border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-full">
-                      {/* Image */}
-                      <div className="relative h-64 overflow-hidden">
-                        <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-110">
-                          <Image
-                            src={getImageUrl(
-                              "accommodations",
-                              accommodation.coverImage || "placeholder.jpg"
-                            )}
-                            alt={accommodation.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          />
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                        {/* Type Badge */}
-                        <div className="absolute top-4 left-4">
-                          <Badge className="bg-white/90 text-gray-900 border-0 gap-1.5">
-                            <Icon className="w-3.5 h-3.5" />
-                            {accommodation.type.toLowerCase()}
-                          </Badge>
-                        </div>
-
-                        {/* Star Rating */}
-                        {accommodation.starRating && (
-                          <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
-                            <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs font-semibold text-gray-900">
-                              {accommodation.starRating}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {/* Content */}
-                      <div className="p-6">
-                        {/* Location */}
-                        <div className="flex items-center gap-1.5 text-gray-600 mb-2">
-                          <MapPin className="w-4 h-4" />
-                          <span className="text-sm">
-                            {accommodation.location.name}
-                          </span>
-                        </div>
-
-                        {/* Name */}
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-teal-600 transition-colors">
-                          {accommodation.name}
-                        </h3>
-
-                        {/* Description */}
-                        <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
-                          {accommodation.shortDesc || accommodation.description}
-                        </p>
-
-                        {/* Amenities Preview */}
-                        {accommodation.amenities.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-4">
-                            {accommodation.amenities
-                              .slice(0, 3)
-                              .map((amenity) => (
-                                <span
-                                  key={amenity}
-                                  className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full"
-                                >
-                                  {amenity}
-                                </span>
-                              ))}
-                            {accommodation.amenities.length > 3 && (
-                              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-                                +{accommodation.amenities.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full surface-maldives-empty mb-6">
-                <Waves className="w-10 h-10 text-gray-400" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2 text-gray-900">
-                No accommodations found
-              </h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Try adjusting your filters to see more results.
-              </p>
-              <Link href="/accommodations">
-                <Button>Clear Filters</Button>
-              </Link>
-            </div>
-          )}
-        </Container>
-      </Section>
-
-      {/* CTA Section - Inspired by Image 2 */}
-      <Section
-        spacing="lg"
-        surface="soft"
-      >
-        <Container>
-          <div className="max-w-4xl mx-auto text-center">
-            <Badge variant="primary" size="lg" className="mb-6">
-              Why Choose Island Hype
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              We ensure that your travel process
-              <br />
-              is perfectly accommodated.
-            </h2>
-
-            {/* Feature Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
-              {[
-                {
-                  icon: Sparkles,
-                  title: "Best Selection",
-                  description:
-                    "Handpicked resorts and guesthouses across all atolls",
-                },
-                {
-                  icon: Users,
-                  title: "Personalized Service",
-                  description:
-                    "Dedicated support to find your perfect accommodation",
-                },
-                {
-                  icon: Star,
-                  title: "Verified Quality",
-                  description: "All properties personally inspected and rated",
-                },
-                {
-                  icon: Waves,
-                  title: "Local Expertise",
-                  description: "Insider knowledge of the Maldives islands",
-                },
-              ].map((feature, index) => (
-                <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full surface-maldives-icon mb-4">
-                    <feature.icon className="w-8 h-8 text-[var(--maldives-ocean-700)]" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ClosingCta
+            heading="Every stay comes as a package."
+            lede="Transfers and meals included, priced per person. Pick the nights and we'll confirm the room."
+            primary={{ label: "See all packages", href: "/packages" }}
+            secondary={{ label: "Ask us", href: "/contact" }}
+          />
         </Container>
       </Section>
 

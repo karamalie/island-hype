@@ -1,293 +1,329 @@
 // app/packages/[slug]/page.tsx
+//
+// The detail page's job is to justify the price, and its design problem is the
+// inverse of the listing's: it has to feel substantial when a package has three
+// photographs and a short stay. So the text sections carry the depth.
+//
+// Note what is NOT here: a day-by-day itinerary. Island Hype sells fixed packages
+// and does not commit to a daily schedule — guests plan their own days. The
+// section that would have held one instead lists what there is to do, with the
+// price-inclusive ones marked, and drops entirely when nothing is linked (which
+// is true for three of the seven packages today).
+
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import {
-  MapPin,
-  Star,
-  Calendar,
-  Users,
-  CheckCircle2,
-  Clock,
-} from "lucide-react";
-import { getImageUrl } from "@/lib/image-urls";
-import { getPackageBySlug } from "@/lib/data/packages";
-import type { Market } from "@prisma/client";
-import { Badge } from "@/components/ui/badge";
-import { BookingCard } from "@/components/packages/booking-card";
-import { PackageGallery } from "@/components/packages/package-gallery";
+import { getPackageCards, getPackageDetail } from "@/lib/data/packages";
+import { showRelated } from "@/lib/design/density";
+import { SITE_IMAGES } from "@/lib/design/site-images";
+import { Badge, Container, Label, Mark, Section } from "@/components/ui";
 import { Footer } from "@/components/layout/footer";
+import { NavBar } from "@/components/layout/nav-bar";
+import {
+  AtAGlance,
+  BookingRail,
+  ClosingCta,
+  FaqRows,
+  Gallery,
+  PackageCard,
+  PhotoFrame,
+  PriceBlock,
+  StepRows,
+} from "@/components/patterns";
 
-interface PageProps {
-  params: Promise<{
-    slug: string;
-  }>;
-}
-
-async function getMarket(): Promise<Market> {
-  const cookieStore = await cookies();
-  const marketCookie = cookieStore.get("market");
-  return (marketCookie?.value as Market) || "INTERNATIONAL";
-}
-
-// Rendered at request time on the server (DB is local; not built off-server).
 export const dynamic = "force-dynamic";
 
-export default async function PackageDetailsPage({ params }: PageProps) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
-  const market = await getMarket();
+  const pkg = await getPackageDetail(slug);
+  if (!pkg) return { title: "Package not found" };
+  return {
+    title: pkg.name,
+    description: pkg.blurb ?? undefined,
+  };
+}
 
-  const pkg = await getPackageBySlug(slug, market);
+export default async function PackageDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const pkg = await getPackageDetail(slug);
+  if (!pkg) notFound();
 
-  if (!pkg) {
-    notFound();
-  }
+  const related = showRelated(pkg.relatedCount)
+    ? (await getPackageCards({ excludeSlug: slug, includeEnded: false })).slice(0, 3)
+    : [];
 
-  // Get pricing for current market
-  const pricing = pkg.pricing.find((p) => p.market === market);
-  const currency = market === "LOCAL" ? "MVR" : "USD";
-
-  // Format price
-
-  // Calculate rating (placeholder - you can add real ratings later)
-  const rating = 4.5;
-
-  // Separate included and optional activities
-  const optionalActivities = pkg.activities.filter((a) => !a.isIncluded);
+  const included = pkg.included;
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center gap-2 text-sm">
-            <Link href="/" className="text-gray-600 hover:text-gray-900">
-              Home
-            </Link>
-            <span className="text-gray-400">/</span>
-            <Link
-              href="/packages"
-              className="text-gray-600 hover:text-gray-900"
-            >
-              Tour Packages
-            </Link>
-            <span className="text-gray-400">/</span>
-            <span className="text-gray-900 font-medium">{pkg.name}</span>
-          </nav>
-        </div>
-      </div>
+    <main>
+      {/* Solid nav: there is no photograph behind it here, so glass would be
+          glass over nothing. */}
+      <NavBar surface="solid" active="packages" cta={{ label: "Book now", href: "/contact" }} />
 
-      {/* Header */}
-      <section className="border-b border-gray-200 bg-maldives-sand-lagoon">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
-          <div className="flex items-center gap-2 text-gray-700 mb-3">
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm">
-              {pkg.location.name}, {pkg.location.atoll}
-            </span>
-          </div>
+      <Container className="pt-8">
+        <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2.5 text-caption text-meta">
+          <Link href="/packages" className="hover:text-ink-900">Packages</Link>
+          <span className="text-meta-inverse">/</span>
+          <Link href={`/locations/${pkg.locationSlug}`} className="hover:text-ink-900">
+            {pkg.locationName}
+          </Link>
+          <span className="text-meta-inverse">/</span>
+          <span className="text-ink-900">{pkg.name}</span>
+        </nav>
 
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-5">
-            {pkg.name}
-          </h1>
-
-          <div className="flex items-center flex-wrap gap-3">
-            <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border border-gray-200">
-              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-              <span className="text-gray-900 font-semibold">{rating}</span>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-8">
+          <div className="min-w-0 max-w-[700px]">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Label>{pkg.eyebrow}</Label>
+              {pkg.badge && <Badge tone="tint">{pkg.badge}</Badge>}
+              {pkg.lifecycle === "ended" && <Badge tone="quiet">Ended</Badge>}
+              {pkg.lifecycle === "upcoming" && pkg.opens && (
+                <Badge tone="quiet">{pkg.opens}</Badge>
+              )}
             </div>
-
-            {pkg.isFeatured && (
-              <Badge className="bg-teal-600 text-white border-0">
-                Featured Package
-              </Badge>
+            <h1 className="m-0 mb-4 text-[clamp(32px,4.2vw,52px)] font-medium leading-[1.08] tracking-[-0.025em]">
+              {pkg.name}
+            </h1>
+            {pkg.blurb && (
+              <p className="m-0 max-w-[34em] text-body-l text-ink-700">{pkg.blurb}</p>
             )}
           </div>
+          <PriceBlock price={pkg.price} size="xl" className="shrink-0" />
         </div>
-      </section>
+      </Container>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Left Column - Content */}
-          <div className="lg:col-span-2 space-y-12">
-            {/* Overview */}
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Overview
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-gray-200">
-                  <Image
-                    src={getImageUrl(
-                      "packages",
-                      pkg.coverImage || "placeholder.jpg"
-                    )}
-                    alt={pkg.name}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+      <Container>
+        <Gallery
+          images={pkg.images}
+          cover={pkg.coverImage}
+          bucket="packages"
+          name={pkg.name}
+        />
+      </Container>
+
+      <Container className="pt-14">
+        {/* Sticky works inside a flex child — do not wrap the rail in an
+            overflow-hidden container. */}
+        <div className="flex flex-wrap items-start gap-14">
+          <div className="min-w-0 shrink grow basis-[420px]">
+            <AtAGlance
+              className="mb-10 border-b border-ink-200 pb-10"
+              cells={[
+                { label: "Location", value: `${pkg.locationName}, ${pkg.atoll}` },
+                { label: "Nights", value: `${pkg.nights} nights, ${pkg.nights + 1} days` },
+                { label: "Stay", value: pkg.stay },
+                { label: "Transfer", value: pkg.transfer ? `${pkg.transfer} each way` : null },
+                { label: "Meals", value: pkg.mealPlan },
+                { label: "Best months", value: pkg.bestMonths },
+              ]}
+            />
+
+            {(pkg.longBlurb || pkg.description) && (
+              <div className="mb-12">
+                <h2 className="m-0 mb-5 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                  What the days look like
+                </h2>
+                {(pkg.longBlurb ?? pkg.description)
+                  .split("\n\n")
+                  .filter(Boolean)
+                  .map((para: string, i: number) => (
+                    <p
+                      key={i}
+                      className="m-0 mb-4 max-w-[34em] text-[17px] leading-7 text-ink-700 last:mb-0"
+                    >
+                      {para}
+                    </p>
+                  ))}
+              </div>
+            )}
+
+            {/* Suggestions, not a schedule. Drops when nothing is linked. */}
+            {pkg.suggestions.length > 0 && (
+              <div className="mb-12">
+                <div className="mb-6 flex flex-wrap items-baseline justify-between gap-5">
+                  <h2 className="m-0 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                    What there is to do
+                  </h2>
+                  <Label>Suggestions</Label>
                 </div>
-                <p className="text-gray-600 leading-relaxed text-lg">
-                  {pkg.description}
+                <div>
+                  {pkg.suggestions.map((s, i) => (
+                    <div
+                      key={s.id}
+                      className={`border-t border-ink-200 py-6 ${
+                        i === pkg.suggestions.length - 1 ? "border-b" : ""
+                      }`}
+                    >
+                      <div className="mb-2 flex flex-wrap items-baseline gap-3">
+                        <span className="text-heading-s">{s.name}</span>
+                        <span
+                          className={`font-mono text-label-sm uppercase ${
+                            s.isIncluded ? "text-teal-deep" : "text-meta"
+                          }`}
+                        >
+                          {s.isIncluded ? "Included" : "Optional"}
+                        </span>
+                      </div>
+                      {s.body && (
+                        <p className="m-0 max-w-[34em] text-body-m leading-[26px] text-ink-700">
+                          {s.body}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="m-0 mt-5 max-w-[34em] text-body-xs leading-[22px] text-meta">
+                  Nothing here is scheduled — the days are yours. These are what
+                  people usually do, and what is already in the price.
                 </p>
               </div>
-
-              {/* Quick Info */}
-              {pkg.location.transferTime && (
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Clock className="w-5 h-5 text-teal-600" />
-                    <span className="text-sm">
-                      {pkg.location.transferTime} min{" "}
-                      {pkg.location.transferType?.toLowerCase()} from Malé
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="w-5 h-5 text-teal-600" />
-                    <span className="text-sm">
-                      {pkg.minNights}-{pkg.maxNights || pkg.minNights} nights
-                    </span>
-                  </div>
-                  {pkg.maxGuests && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Users className="w-5 h-5 text-teal-600" />
-                      <span className="text-sm">
-                        Up to {pkg.maxGuests} guests
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
-
-            {/* Highlights */}
-            {pkg.highlights.length > 0 && (
-              <section>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  Highlights
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {pkg.highlights.map((highlight, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center mt-0.5">
-                        <CheckCircle2 className="w-4 h-4 text-teal-600" />
-                      </div>
-                      <span className="text-gray-700">{highlight}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
             )}
 
-            {/* Gallery */}
-            {pkg.images.length > 0 && (
-              <section>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  Gallery
-                </h2>
-                <PackageGallery images={pkg.images} packageName={pkg.name} />
-              </section>
-            )}
-
-            {/* What's Included */}
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                What&apos;s Included In Your Tour Plan
+            {/* What the price covers */}
+            <div className="mb-12">
+              <h2 className="m-0 mb-6 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                What the price covers
               </h2>
-              <div className="space-y-3">
-                {pkg.inclusions.map((inclusion) => (
-                  <div key={inclusion.id} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-gray-800">{inclusion.item}</span>
-                      {inclusion.details && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          {inclusion.details}
-                        </p>
-                      )}
+              <div className="flex flex-wrap gap-10">
+                {included.length > 0 && (
+                  <div className="min-w-0 shrink grow basis-[260px]">
+                    <div className="mb-4 font-mono text-label uppercase text-teal-deep">
+                      Included
                     </div>
+                    {included.map((item) => (
+                      <div
+                        key={item}
+                        className="flex items-baseline gap-3 border-b border-ink-200 py-3"
+                      >
+                        <Mark className="text-[12px]" />
+                        <span className="text-body-s text-ink-700">{item}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Optional Activities */}
-            {optionalActivities.length > 0 && (
-              <section>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  Optional Activities
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {optionalActivities.map(({ activity }) => (
+                )}
+                <div className="min-w-0 shrink grow basis-[260px]">
+                  <div className="mb-4 font-mono text-label uppercase text-meta">
+                    Not included
+                  </div>
+                  {[
+                    "International flights to Male'",
+                    "Green tax, paid on arrival",
+                    "Scuba diving and paid excursions",
+                    "Alcohol and premium drinks",
+                    "Travel insurance",
+                  ].map((item) => (
                     <div
-                      key={activity.id}
-                      className="border border-gray-200 rounded-xl p-4 hover:border-teal-500 transition-colors"
+                      key={item}
+                      className="flex items-baseline gap-3 border-b border-ink-200 py-3"
                     >
-                      <h3 className="font-semibold text-gray-900 mb-2">
-                        {activity.name}
-                      </h3>
-                      {activity.description && (
-                        <p className="text-sm text-gray-600">
-                          {activity.description}
-                        </p>
-                      )}
-                      {activity.duration && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          Duration: {activity.duration} hours
-                        </p>
-                      )}
+                      <span aria-hidden="true" className="shrink-0 text-[12px] text-meta-inverse">
+                        —
+                      </span>
+                      <span className="text-body-s text-ink-700">{item}</span>
                     </div>
                   ))}
                 </div>
-              </section>
-            )}
+              </div>
+            </div>
 
-            {/* Terms & Cancellation */}
-            {(pkg.terms || pkg.cancellationPolicy) && (
-              <section className="border-t border-gray-200 pt-12">
-                {pkg.terms && (
-                  <div className="mb-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">
-                      Terms & Conditions
-                    </h3>
-                    <p className="text-gray-600 whitespace-pre-line">
-                      {pkg.terms}
-                    </p>
-                  </div>
-                )}
-                {pkg.cancellationPolicy && (
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">
-                      Cancellation Policy
-                    </h3>
-                    <p className="text-gray-600 whitespace-pre-line">
-                      {pkg.cancellationPolicy}
-                    </p>
-                  </div>
-                )}
-              </section>
-            )}
+            {/* Getting there */}
+            <div className="mb-12">
+              <h2 className="m-0 mb-6 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                Getting there
+              </h2>
+              <div className="flex flex-wrap items-start gap-8">
+                <PhotoFrame
+                  src={SITE_IMAGES.map}
+                  bucket="images"
+                  alt={`Where ${pkg.locationName} sits in the Maldives`}
+                  ratio="1 / 1"
+                  radius="xl"
+                  className="min-w-0 shrink grow basis-[240px] max-h-[320px]"
+                  sizes="(max-width: 768px) 100vw, 320px"
+                />
+                <div className="min-w-0 shrink grow-[2] basis-[300px]">
+                  <StepRows
+                    steps={[
+                      {
+                        label: "Step 01",
+                        body: "Land at Velana International, Male'. Someone meets you past customs with your name on a board.",
+                      },
+                      {
+                        label: "Step 02",
+                        body: pkg.transfer
+                          ? `Straight to the ${pkg.transfer.split(",")[0].toLowerCase()} — the wait is usually short, and there is somewhere to sit.`
+                          : "Straight to your transfer — the wait is usually short, and there is somewhere to sit.",
+                      },
+                      {
+                        label: "Step 03",
+                        body: `${pkg.transfer ?? "The transfer"} to the island, which is the best part of the day. Seaplanes fly in daylight only.`,
+                      },
+                    ]}
+                    note="We book the transfer against your actual flight numbers, so an inbound delay moves it rather than losing it."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <FaqRows items={pkg.faqs} />
           </div>
 
-          {/* Right Column - Booking Card */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24">
-              <BookingCard
-                price={pricing?.couplePrice || pricing?.basePrice || 0}
-                currency={currency}
-                minNights={pkg.minNights}
-                maxGuests={pkg.maxGuests}
-                packageSlug={pkg.slug}
-              />
-            </div>
+          <div className="min-w-0 shrink basis-[340px] sticky top-6">
+            <BookingRail
+              packageId={pkg.id}
+              packageName={pkg.name}
+              price={pkg.price}
+              nights={pkg.nights}
+              minNights={pkg.minNights}
+              maxNights={pkg.maxNights}
+              lifecycle={pkg.lifecycle}
+              travel={{ start: pkg.travelWindowStart, end: pkg.travelWindowEnd }}
+              booking={{ start: pkg.bookingWindowStart, end: pkg.bookingWindowEnd }}
+              blackouts={pkg.blackouts}
+            />
           </div>
         </div>
-      </div>
+      </Container>
 
-      {/* Footer */}
+      <Section tone="muted" bordered="top" className="mt-[var(--section-y)]">
+        <Container>
+          {related.length > 0 ? (
+            <>
+              <div className="mb-10 max-w-[620px]">
+                <Label className="mb-4">Also on the shelf</Label>
+                <h2 className="m-0 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+                  If this one isn&rsquo;t it.
+                </h2>
+              </div>
+              <div className="flex flex-wrap gap-6">
+                {related.map((r) => (
+                  <PackageCard key={r.id} pkg={r} form="compact" />
+                ))}
+              </div>
+            </>
+          ) : (
+            // One related card looks like an error, so below two the section
+            // changes job entirely.
+            <ClosingCta
+              framed={false}
+              eyebrow="Still deciding"
+              heading="Send us your dates and we'll confirm what's open."
+              lede="We check availability with the island directly, so you get a real answer rather than a live-inventory guess."
+              primary={{ label: "Check these dates", href: "/contact" }}
+              secondary={{ label: "See all packages", href: "/packages" }}
+            />
+          )}
+        </Container>
+      </Section>
+
       <Footer />
     </main>
   );
