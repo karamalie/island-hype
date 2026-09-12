@@ -59,6 +59,7 @@ export default async function HomePage() {
         height="hero"
         contained={false}
         image={getImageUrl("images", SITE_IMAGES.homeHero)}
+        mobileImage={getImageUrl("images", SITE_IMAGES.homeHeroMobile)}
         imageAlt="Overwater villas on a Maldivian lagoon, seen from the air"
         eyebrow="Maldives · stay, transfers and meals in one price"
         title="The water really is that colour."

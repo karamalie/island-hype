@@ -21,43 +21,54 @@ export function TransferTable({
   if (locations.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-ink-200">
-      <div className="min-w-[640px]">
-        <div
-          className="grid gap-4 border-b border-ink-200 bg-ink-50 px-5 py-3.5"
-          style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
-        >
-          {["Atoll", "Transfer", "Time", "Packages from"].map((h) => (
-            <span key={h} className="font-mono text-label-sm uppercase text-meta">
-              {h}
-            </span>
-          ))}
+    <div className="rounded-lg border border-ink-200">
+      {/* Only the grid scrolls. The footnote below is a sibling, so it wraps to
+          the viewport instead of inheriting the 640px scroll width. */}
+      <div className="overflow-x-auto">
+        <div className="min-w-[640px]">
+          <div
+            className="grid gap-4 border-b border-ink-200 bg-ink-50 px-5 py-3.5"
+            style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
+          >
+            {["Atoll", "Transfer", "Time", "Packages from"].map((h) => (
+              <span
+                key={h}
+                className="font-mono text-label-sm uppercase text-meta"
+              >
+                {h}
+              </span>
+            ))}
+          </div>
+          {locations.map((l) => {
+            const from = fromPrices[l.slug];
+            return (
+              <div
+                key={l.slug}
+                className="grid gap-4 border-b border-ink-200 px-5 py-[18px]"
+                style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
+              >
+                <span className="min-w-0 text-body-s font-medium">
+                  {l.name}
+                </span>
+                <span className="min-w-0 text-body-s text-ink-700">
+                  {l.transferType ? l.transfer?.split(",")[0] : "—"}
+                </span>
+                <span className="min-w-0 text-body-s text-ink-700">
+                  {l.transferMinutes !== null
+                    ? `${l.transferMinutes} min`
+                    : "—"}
+                </span>
+                <span className="min-w-0 text-body-s text-ink-900">
+                  {from !== undefined ? `${formatMoney(from, "USD")} pp` : "—"}
+                </span>
+              </div>
+            );
+          })}
         </div>
-        {locations.map((l) => {
-          const from = fromPrices[l.slug];
-          return (
-            <div
-              key={l.slug}
-              className="grid gap-4 border-b border-ink-200 px-5 py-[18px]"
-              style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
-            >
-              <span className="min-w-0 text-body-s font-medium">{l.name}</span>
-              <span className="min-w-0 text-body-s text-ink-700">
-                {l.transferType ? l.transfer?.split(",")[0] : "—"}
-              </span>
-              <span className="min-w-0 text-body-s text-ink-700">
-                {l.transferMinutes !== null ? `${l.transferMinutes} min` : "—"}
-              </span>
-              <span className="min-w-0 text-body-s text-ink-900">
-                {from !== undefined ? `${formatMoney(from, "USD")} pp` : "—"}
-              </span>
-            </div>
-          );
-        })}
-        <div className="px-5 py-3.5 text-caption leading-5 text-meta">
-          Seaplanes fly in daylight only. Speedboats run to a fixed schedule in the
-          evening.
-        </div>
+      </div>
+      <div className="border-t border-ink-200 px-5 py-3.5 text-caption leading-5 text-meta">
+        Seaplanes fly in daylight only. Speedboats run to a fixed schedule in
+        the evening.
       </div>
     </div>
   );

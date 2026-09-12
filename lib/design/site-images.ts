@@ -9,8 +9,23 @@
 // page files, so there is one place to change.
 
 export const SITE_IMAGES = {
-  /** 16:9, the Home hero. */
-  homeHero: "guide/overwater-villas-aerial.jpg",
+  /**
+   * The desktop Home hero — the frame the site used before the redesign, and the
+   * client's own choice.
+   *
+   * It is the second brightest image in the library (153 mean, 168 in the lower
+   * band). That is fine on a desktop, where the copy sits in the lower third
+   * under the scrim's 0.74 stop, and not fine on a phone — hence the separate
+   * mobile hero below rather than a scrim hack.
+   */
+  homeHero: "hero/maldives-aerial.jpg",
+  /**
+   * The phone hero. Measured, not chosen by eye: in the band where the copy sits,
+   * maldives-aerial reads 168/255 and this one reads 81 — and on a phone the copy
+   * block fills most of the frame, so that band is unavoidable. Same subject, an
+   * island and its reef from the air, so the page still says the same thing.
+   */
+  homeHeroMobile: "guide/island-aerial-heart.jpg",
   /** 4:5 portrait, "why here". */
   homeWhyHere: "guide/atoll-formation.jpg",
   /** 4:5 portrait, "what's included" — a seaplane, since transfers are the point. */

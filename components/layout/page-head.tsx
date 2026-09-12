@@ -23,6 +23,13 @@ export interface PageHeadProps {
   lede?: string;
   /** Already a resolved URL. Null renders the stand-in ground. */
   image?: string | null;
+  /**
+   * Art direction, not just a smaller crop. A hero that reads fine on a desktop,
+   * where the copy sits in the lower third, can be unusable on a phone, where the
+   * same copy is nearly twice as tall and runs through the middle of the frame.
+   * Pass a darker image here and the breakpoint swaps it.
+   */
+  mobileImage?: string | null;
   imageAlt?: string;
   height?: "hero" | "band";
   nav: Omit<NavBarProps, "surface">;
@@ -36,6 +43,7 @@ export function PageHead({
   title,
   lede,
   image,
+  mobileImage,
   imageAlt = "",
   height = "band",
   nav,
@@ -56,7 +64,17 @@ export function PageHead({
           fill
           priority
           sizes="100vw"
-          className="object-cover"
+          className={cn("object-cover", mobileImage && "hidden md:block")}
+        />
+      )}
+      {mobileImage && (
+        <Image
+          src={mobileImage}
+          alt={imageAlt}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover md:hidden"
         />
       )}
 
@@ -71,7 +89,7 @@ export function PageHead({
         <NavBar {...nav} surface="glass" />
       </div>
 
-      <div className="relative mt-auto px-[var(--gutter)] pb-10 pt-16">
+      <div className="relative mt-auto px-[var(--gutter)] pb-10 pt-10">
         <div
           className={cn("mx-auto w-full", contained && "max-w-[var(--container-page)]")}
         >
