@@ -7,6 +7,27 @@ async function main() {
   console.log("🌱 Starting seed...");
 
   // Clean existing data (in correct order due to foreign keys)
+  // This wipes every table before reseeding. That was harmless when the only
+  // data was demo fixtures; it is not harmless now that local development runs
+  // against a clone of production. So it refuses unless you say so explicitly.
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== "1") {
+    console.error(
+      [
+        "",
+        "Refusing to run: this seed deletes every row in every table first.",
+        "",
+        "If you actually want that — a genuinely empty database — run:",
+        "  ALLOW_DESTRUCTIVE_SEED=1 npm run db:seed",
+        "",
+        "If you wanted real content, you almost certainly want one of:",
+        "  npm run db:fix-associations   packages, stays and their links",
+        "  npm run db:seed-locations     island character and season calendars",
+        "",
+      ].join("\n")
+    );
+    process.exit(1);
+  }
+
   await prisma.inquiry.deleteMany();
   await prisma.packageImage.deleteMany();
   await prisma.packageActivity.deleteMany();
