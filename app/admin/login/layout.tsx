@@ -1,5 +1,6 @@
+// Just the page name. The admin layout's template adds "| Admin | Island Hype".
 export const metadata = {
-  title: "Login | Admin | Island Hype",
+  title: "Login",
 };
 
 export default function LoginLayout({
