@@ -81,9 +81,17 @@ export function EmptyState({
       )}
     >
       <Label className="mb-5">{eyebrow}</Label>
+      {/* mt-0/mb-4 rather than the `m-0` shorthand, and that is load-bearing.
+          `cn()` runs tailwind-merge, which treats `m-0` as covering the same
+          property group as `mx-auto` — so "mx-auto m-0" silently dropped the
+          mx-auto, leaving a 22em block flush against the left edge of a centred
+          panel with its text centred inside it. The heading looked off-centre
+          while the eyebrow and buttons around it were fine. Second time a merge
+          collision has eaten a class in this file's neighbourhood; the rule is
+          never to pair a shorthand with a single-axis utility. */}
       <h2
         className={cn(
-          "mx-auto m-0 mb-4 max-w-[22em] font-medium tracking-[-0.02em]",
+          "mx-auto mt-0 mb-4 max-w-[22em] font-medium tracking-[-0.02em]",
           band
             ? "text-[clamp(24px,3vw,36px)] leading-[1.16]"
             : "text-[clamp(20px,2.2vw,26px)] leading-[1.2]"
@@ -91,7 +99,10 @@ export function EmptyState({
       >
         {title}
       </h2>
-      <p className="mx-auto m-0 max-w-[32em] text-body-l text-ink-700">{body}</p>
+      {/* Same fix. This one is a plain string rather than cn(), so tailwind-merge
+          is not involved — but `m-0` and `mx-auto` still both apply and which
+          wins depends on stylesheet order, which is not something to rely on. */}
+      <p className="mx-auto my-0 max-w-[32em] text-body-l text-ink-700">{body}</p>
 
       {(primary || secondary) && (
         <div className="mt-8 flex flex-wrap justify-center gap-3">
