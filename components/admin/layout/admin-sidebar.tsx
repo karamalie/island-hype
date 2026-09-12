@@ -8,6 +8,7 @@ import {
   MapPin,
   Building2,
   Activity,
+  Filter,
   Tag,
   MessageSquare,
   Settings,
@@ -46,6 +47,11 @@ const navItems = [
     label: "Offers",
     href: "/admin/offers",
     icon: Tag,
+  },
+  {
+    label: "Filter categories",
+    href: "/admin/categories",
+    icon: Filter,
   },
   { type: "divider" as const, label: "Management" },
   {

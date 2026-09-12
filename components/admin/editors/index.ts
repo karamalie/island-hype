@@ -6,3 +6,4 @@ export * from "./package-display-editor";
 export * from "./season-editor";
 export * from "./stay-types-editor";
 export * from "./tag-picker";
+export * from "./category-manager";

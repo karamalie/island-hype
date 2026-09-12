@@ -10,6 +10,7 @@
 // predictable confusion, so the panel says it up front and tells you the count.
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Check } from "lucide-react";
 import { EmptyNote, SavePanel } from "@/components/admin/ui/save-panel";
 import { updatePackageTags } from "@/lib/actions/editorial";
@@ -62,8 +63,16 @@ export function TagPicker({
     >
       {allTags.length === 0 ? (
         <EmptyNote>
-          No categories exist yet. They are shared across all packages, so they are
-          created once and reused — ask a developer to add the first few.
+          No categories exist yet. They are shared across all packages, so you
+          create each one once and then tick it wherever it applies — add the
+          first few under{" "}
+          <Link
+            href="/admin/categories"
+            className="font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900"
+          >
+            Filter categories
+          </Link>
+          .
         </EmptyNote>
       ) : (
         <div className="flex flex-wrap gap-2">
@@ -94,6 +103,19 @@ export function TagPicker({
         <p className="mt-3 text-xs text-slate-400">
           Not in any category. The package still appears in the full list — it just
           will not show up when someone filters.
+        </p>
+      )}
+
+      {allTags.length > 0 && (
+        <p className="mt-3 text-xs text-slate-400">
+          Need a category that isn&rsquo;t here? Add, rename or reorder them under{" "}
+          <Link
+            href="/admin/categories"
+            className="font-medium text-slate-600 underline underline-offset-2 hover:text-slate-900"
+          >
+            Filter categories
+          </Link>
+          .
         </p>
       )}
     </SavePanel>
