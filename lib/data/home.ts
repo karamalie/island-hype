@@ -11,11 +11,6 @@ export async function getFeaturedPackages() {
       location: true,
       accommodation: true,
       pricing: true,
-      experiences: {
-        include: {
-          experience: true,
-        },
-      },
     },
     take: 5,
   });
@@ -34,25 +29,10 @@ export async function getAllPackages() {
   });
 }
 
-export async function getExperiences() {
-  return prisma.experience.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  });
-}
-
 export async function getLocations() {
   return prisma.location.findMany({
     where: {
       isFeatured: true,
-    },
-    include: {
-      experiences: {
-        include: {
-          experience: true,
-        },
-      },
     },
   });
 }
@@ -79,7 +59,6 @@ export async function getActivities() {
 export type FeaturedPackage = Awaited<
   ReturnType<typeof getFeaturedPackages>
 >[number];
-export type Experience = Awaited<ReturnType<typeof getExperiences>>[number];
 export type Location = Awaited<ReturnType<typeof getLocations>>[number];
 export type Accommodation = Awaited<
   ReturnType<typeof getAccommodations>

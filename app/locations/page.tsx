@@ -1,307 +1,283 @@
 // app/locations/page.tsx
-import Image from "next/image";
+//
+// Choosing an atoll.
+//
+// The brief put the transfer comparison table first, before any imagery, on the
+// argument that distance is the thing that really shapes a trip. The client
+// overruled that on review, and the reasoning holds: leading with a table of
+// journey times makes six genuinely different islands look like six rows of
+// travel admin, and the page's actual job is to show that they are not
+// interchangeable.
+//
+// So the islands lead, each carrying what distinguishes it — region, what it is
+// known for, when to come, what we run there — and the comparison table follows
+// as supporting detail. Distance is still on the page, still comparable side by
+// side, and still on every island row. It is just no longer the headline.
+
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Container } from "@/components/ui/container";
-import { Section } from "@/components/ui/section";
-import { Badge } from "@/components/ui/badge";
-import { getImageUrl } from "@/lib/image-urls";
-import { PageHero } from "@/components/layout/page-hero";
-import { Footer } from "@/components/layout/footer";
+import { getLocationCards, locationsArePhotoRich } from "@/lib/data/locations";
+import { getPackageCards } from "@/lib/data/packages";
+import { locationsLayout } from "@/lib/design/density";
 import {
-  MapPin,
-  Compass,
-  Waves,
-  Hotel,
-  Plane,
-  Ship,
-  Clock,
-} from "lucide-react";
-import { getLocations, getLocationFilterOptions } from "@/lib/data/locations";
-import { LocationFilters } from "@/components/locations/location-filters";
+  locationsEmptyCopy,
+  locationsHeading,
+  locationsLede,
+} from "@/lib/design/inventory";
+import { SITE_IMAGES } from "@/lib/design/site-images";
+import { getImageUrl } from "@/lib/image-urls";
+import { Container, Label, Section } from "@/components/ui";
+import { Footer } from "@/components/layout/footer";
+import { PageHead } from "@/components/layout/page-head";
+import {
+  ClosingCta,
+  EmptyState,
+  PhotoFrame,
+  SectionHeading,
+  SpecSheet,
+  TransferTable,
+} from "@/components/patterns";
 
-// Icon mapping for transfer types
-const transferIcons = {
-  SPEEDBOAT: Ship,
-  SEAPLANE: Plane,
-  DOMESTIC_FLIGHT: Plane,
-  FERRY: Ship,
-  YACHT: Ship,
-};
-
-interface PageProps {
-  searchParams: Promise<{
-    atoll?: string;
-    transferType?: string;
-    search?: string;
-  }>;
-}
-
-// Rendered at request time on the server (DB is local; not built off-server).
 export const dynamic = "force-dynamic";
 
-export default async function LocationsPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const [locations, filterOptions] = await Promise.all([
-    getLocations({
-      atoll: params.atoll,
-      transferType: params.transferType,
-      search: params.search,
-      hasPackages: true,
-    }),
-    getLocationFilterOptions(),
+export const metadata: Metadata = {
+  title: "Locations",
+  description:
+    "Where you go decides what you see, how long you travel to get there, and roughly what it costs. Here is where we work, and why.",
+};
+
+export default async function LocationsPage() {
+  const [locations, packages] = await Promise.all([
+    getLocationCards(),
+    getPackageCards({ includeEnded: false }),
   ]);
 
+  // Cheapest per-person price per island, for the table's last column.
+  const fromPrices: Record<string, number | undefined> = {};
+  for (const p of packages) {
+    if (!p.price) continue;
+    const current = fromPrices[p.locationSlug];
+    if (current === undefined || p.price.perPerson < current) {
+      fromPrices[p.locationSlug] = p.price.perPerson;
+    }
+  }
+
+  const layout = locationsLayout({
+    count: locations.length,
+    photoRich: locationsArePhotoRich(locations),
+    tilesMin: 5,
+  });
+
   return (
-    <main className="min-h-screen bg-white">
-      <PageHero
-        backgroundSrc={getImageUrl("images", "hero/maldives-aerial.jpg")}
-        backgroundAlt="Maldives locations"
-        overlayTone="strong"
-        minHeightClassName="min-h-[clamp(24rem,52vh,36rem)]"
-        badge={
-          <Badge variant="glass" size="lg" className="text-white border-white/20 mb-6 gap-2">
-            <Compass className="w-4 h-4" />
-            Explore the Maldives
-          </Badge>
-        }
-        title={
-          <>
-            <span className="font-light">Discover</span>
-            <br />
-            <span className="font-display italic">Paradise Islands</span>
-          </>
-        }
-        subtitle="From vibrant local islands to secluded resort paradises. Each atoll offers unique experiences, dive sites, and unforgettable moments in crystal-clear waters."
+    <main>
+      <PageHead
+        image={getImageUrl("images", SITE_IMAGES.locationsHead)}
+        imageAlt="A Maldivian atoll from the air, reef shelving into deep water"
+        eyebrow="Locations"
+        title="Twenty-six atolls. They are not interchangeable."
+        lede="Where you go decides what you see, how long you travel to get there, and roughly what it costs. Here is where we work, and why."
+        nav={{ active: "locations", cta: { label: "Book now", href: "/contact", arrow: true } }}
       />
 
-      {/* Filter Section */}
-      <Section spacing="sm" surface="plain" className="border-b border-gray-200">
+      <Section flush className="pt-20">
         <Container>
-          <LocationFilters
-            atolls={filterOptions.atolls}
-            transferTypes={filterOptions.transferTypes}
-            currentAtoll={params.atoll}
-            currentTransferType={params.transferType}
-          />
-        </Container>
-      </Section>
+          {/* The heading is derived, not written. It said "Six islands" as a
+              literal, which would have started lying the moment staff added a
+              seventh or deactivated one — inventory.ts exists precisely so that
+              no count on the site is hardcoded.
 
-      {/* Bento Box Grid */}
-      <Section spacing="md" surface="plain">
-        <Container>
-          <div className="mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-              {params.atoll ? `${params.atoll} Locations` : "All Locations"}
-            </h2>
-            <p className="text-gray-600">
-              {locations.length === 0
-                ? "No locations found"
-                : `Explore ${locations.length} unique ${
-                    locations.length === 1 ? "destination" : "destinations"
-                  } across the Maldives`}
-            </p>
-          </div>
+              With nothing to list, the heading is dropped rather than stacked on
+              top of the empty panel: the panel already carries an eyebrow, the
+              same sentence and the actions, so keeping both said "More islands
+              are on the way." twice in a row. */}
+          {locations.length > 0 && (
+            <SectionHeading
+              eyebrow="Where we work"
+              title={locationsHeading(locations.length)}
+              lede={locationsLede(locations.length)}
+            />
+          )}
 
-          {locations.length > 0 ? (
-            <div className="grid grid-cols-12 gap-4 md:gap-5">
-              {locations.map((location, index) => {
-                // Bento box pattern - repeating every 8 items
-                const pattern = index % 8;
-
-                let colSpan = "col-span-12 md:col-span-4";
-                let height = "h-[220px] md:h-[240px]";
-
-                switch (pattern) {
-                  case 0: // Large hero
-                    colSpan = "col-span-12 md:col-span-8";
-                    height = "h-[260px] md:h-[460px]";
-                    break;
-                  case 1: // Tall right
-                    colSpan = "col-span-12 md:col-span-4";
-                    height = "h-[260px] md:h-[460px]";
-                    break;
-                  case 2: // Medium left
-                    colSpan = "col-span-12 md:col-span-5";
-                    height = "h-[220px] md:h-[240px]";
-                    break;
-                  case 3: // Medium right
-                    colSpan = "col-span-12 md:col-span-7";
-                    height = "h-[220px] md:h-[240px]";
-                    break;
-                  case 4: // Small left
-                    colSpan = "col-span-6 md:col-span-3";
-                    height = "h-[200px] md:h-[210px]";
-                    break;
-                  case 5: // Small center-left
-                    colSpan = "col-span-6 md:col-span-3";
-                    height = "h-[200px] md:h-[210px]";
-                    break;
-                  case 6: // Medium center-right
-                    colSpan = "col-span-12 md:col-span-6";
-                    height = "h-[210px] md:h-[220px]";
-                    break;
-                  case 7: // Wide bottom
-                    colSpan = "col-span-12";
-                    height = "h-[210px] md:h-[220px]";
-                    break;
-                }
-
-                const isLarge = pattern === 0;
-                const isTall = pattern === 1;
-                const isSmall = pattern === 4 || pattern === 5;
-
-                const TransferIcon = location.transferType
-                  ? transferIcons[location.transferType]
-                  : Ship;
-
-                return (
+          {locations.length === 0 ? (
+            <EmptyState {...locationsEmptyCopy()} />
+          ) : layout === "tiles" ? (
+            <>
+              <div className="flex flex-wrap gap-6">
+                {locations.map((l) => (
                   <Link
-                    key={location.id}
-                    href={`/locations/${location.slug}`}
-                    className={`group relative rounded-2xl md:rounded-3xl overflow-hidden ${colSpan} ${height}`}
+                    key={l.slug}
+                    href={`/locations/${l.slug}`}
+                    className="group flex min-w-0 shrink grow basis-[260px] max-w-[360px] flex-col overflow-hidden rounded-lg border border-ink-200 bg-white transition-[box-shadow,transform] duration-[220ms] ease-[var(--ease-standard)] hover:-translate-y-0.5 hover:shadow-card-hover"
                   >
-                    <div className="absolute inset-0">
-                      <div className="absolute inset-0 overflow-hidden">
-                        <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-110">
-                          <Image
-                            src={getImageUrl(
-                              "locations",
-                              location.coverImage || "placeholder.jpg"
-                            )}
-                            alt={location.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          />
-                        </div>
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    </div>
-
-                    <div
-                      className={`absolute inset-0 flex flex-col justify-end ${
-                        isSmall ? "p-4" : "p-6 md:p-8"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-2 md:mb-3">
-                        <Badge
-                          className={`bg-white/90 text-gray-900 border-0 ${
-                            isSmall ? "text-xs px-2 py-0.5" : ""
-                          }`}
-                        >
-                          {location.atoll}
-                        </Badge>
-                        {location.transferType && !isSmall && (
-                          <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 gap-1.5 text-xs">
-                            <TransferIcon className="w-3 h-3" />
-                            {location.transferTime
-                              ? `${location.transferTime}min`
-                              : location.transferType.toLowerCase()}
-                          </Badge>
-                        )}
-                      </div>
-
-                      <h3
-                        className={`font-bold text-white mb-2 group-hover:text-teal-300 transition-colors ${
-                          isLarge
-                            ? "text-3xl md:text-5xl lg:text-6xl"
-                            : isTall
-                              ? "text-2xl md:text-4xl"
-                              : isSmall
-                                ? "text-lg md:text-xl"
-                                : "text-xl md:text-3xl"
-                        }`}
-                      >
-                        {location.name}
-                      </h3>
-
-                      {(isLarge || isTall) && location.shortDesc && (
-                        <p className="text-white/80 text-sm md:text-base mb-3 md:mb-4 line-clamp-2">
-                          {location.shortDesc}
+                    <PhotoFrame
+                      src={l.coverImage}
+                      bucket="locations"
+                      alt={l.name}
+                      ratio="4 / 3"
+                      sizes="(max-width: 768px) 100vw, 360px"
+                      zoom
+                    />
+                    <div className="flex flex-1 flex-col p-5">
+                      {l.region && <Label className="mb-2">{l.region}</Label>}
+                      <div className="mb-2.5 text-card-title">{l.name}</div>
+                      {l.blurb && (
+                        <p className="m-0 mb-[18px] min-h-[63px] text-body-xs leading-[21px] text-ink-700">
+                          {l.blurb}
                         </p>
                       )}
-
-                      {!isSmall && (
-                        <div className="flex items-center gap-3 md:gap-4 text-white/80 text-xs md:text-sm">
-                          {location._count.accommodations > 0 && (
-                            <span className="flex items-center gap-1 md:gap-1.5">
-                              <Hotel className="w-3 h-3 md:w-4 md:h-4" />
-                              {location._count.accommodations}
-                            </span>
-                          )}
-                          {location._count.packages > 0 && (
-                            <span className="flex items-center gap-1 md:gap-1.5">
-                              <Compass className="w-3 h-3 md:w-4 md:h-4" />
-                              {location._count.packages}
-                            </span>
-                          )}
-                          {location.transferTime && (
-                            <span className="flex items-center gap-1 md:gap-1.5">
-                              <Clock className="w-3 h-3 md:w-4 md:h-4" />
-                              {location.transferTime}min
-                            </span>
-                          )}
+                      <div className="mt-auto border-t border-ink-200 pt-4">
+                        {l.knownFor && (
+                          <div className="mb-2 font-mono text-label-sm uppercase text-teal-deep">
+                            {l.knownFor}
+                          </div>
+                        )}
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-caption text-meta">{l.transfer ?? "—"}</span>
+                          <span className="text-caption font-medium text-teal-deep">
+                            {l.meta} →
+                          </span>
                         </div>
-                      )}
-                    </div>
-
-                    {!isSmall && (
-                      <div className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <svg
-                          className="w-5 h-5 md:w-6 md:h-6 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 8l4 4m0 0l-4 4m4-4H3"
-                          />
-                        </svg>
                       </div>
-                    )}
+                    </div>
                   </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full surface-maldives-empty mb-6">
-                <MapPin className="w-10 h-10 text-gray-400" />
+                ))}
               </div>
-              <h3 className="text-2xl font-bold mb-2 text-gray-900">
-                No locations found
-              </h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Try adjusting your filters to discover more destinations.
-              </p>
+            </>
+          ) : (
+            // Big alternating rows. Two atolls fill the page properly this way;
+            // two photo tiles would read as a gap.
+            <div className="flex flex-col gap-16">
+              {locations.map((l, i) => (
+                <div
+                  key={l.slug}
+                  className="flex flex-wrap items-center gap-12"
+                >
+                  <PhotoFrame
+                    src={l.coverImage}
+                    bucket="locations"
+                    alt={l.name}
+                    ratio="4 / 3"
+                    radius="xl"
+                    className={`min-w-0 shrink grow basis-[300px] max-h-[420px] ${
+                      i % 2 === 1 ? "order-2" : ""
+                    }`}
+                    sizes="(max-width: 768px) 100vw, 560px"
+                  />
+                  <div className="min-w-0 shrink grow basis-[340px]">
+                    {l.region && <Label className="mb-3.5">{l.region}</Label>}
+                    <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+                      {l.name}
+                    </h2>
+                    {l.blurb && (
+                      <p className="m-0 mb-6 max-w-[34em] text-[17px] leading-[27px] text-ink-700">
+                        {l.blurb}
+                      </p>
+                    )}
+                    <div
+                      className="mb-7 grid gap-x-6"
+                      style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}
+                    >
+                      {[
+                        { label: "Transfer", value: l.transfer },
+                        { label: "Best months", value: l.bestMonths },
+                        { label: "Known for", value: l.knownFor },
+                        { label: "We run", value: l.meta },
+                      ]
+                        .filter((c) => c.value)
+                        .map((c) => (
+                          <div key={c.label} className="border-t border-ink-200 py-3">
+                            <div className="mb-0.5 font-mono text-label-sm uppercase text-meta">
+                              {c.label}
+                            </div>
+                            <div className="text-body-xs">{c.value}</div>
+                          </div>
+                        ))}
+                    </div>
+                    <Link
+                      href={`/locations/${l.slug}`}
+                      className="inline-flex h-11 items-center rounded-full border border-ink-200 bg-white px-[22px] text-body-xs font-medium text-ink-900 hover:bg-ink-50"
+                    >
+                      See {l.name} packages →
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </Container>
       </Section>
 
-      {/* CTA Section */}
-      <Section
-        spacing="lg"
-        surface="soft"
-        className="text-gray-900"
-      >
+      {/* No inventory needed — the questions that matter more than photographs */}
+      <Section className="mt-[var(--section-y)] border-t border-ink-200">
         <Container>
-          <div className="max-w-3xl mx-auto text-center">
-            <Badge variant="primary" size="lg" className="mb-6">
-              Signature Island Discovery
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
-              Ready to Explore Paradise?
+          <div className="mb-10 max-w-[620px]">
+            <Label className="mb-4">If you&rsquo;re undecided</Label>
+            <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+              Pick the atoll by what you want to do.
             </h2>
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              Let us help you discover the perfect Maldivian island for your
-              dream vacation. Each location offers unique experiences waiting to
-              be explored.
+            <p className="m-0 text-body-l text-ink-700">
+              Nearly everyone chooses on photographs. These are the questions that
+              matter more.
             </p>
           </div>
+          <div className="flex flex-wrap gap-6">
+            {[
+              {
+                eyebrow: "Short on time",
+                title: "Stay close to Male'",
+                body: "North and South Male' are a twenty-minute speedboat. On a four-night trip, a ninety-minute transfer each way costs you most of a day.",
+              },
+              {
+                eyebrow: "Here for the water",
+                title: "Go further out",
+                body: "The best diving is in the channels and the far south. The extra flight is worth it if the water is why you came.",
+              },
+              {
+                eyebrow: "Watching the budget",
+                title: "Local islands, speedboat transfers",
+                body: "A seaplane is several hundred dollars a head before you have slept anywhere. The nearer local islands avoid it entirely.",
+              },
+            ].map((c) => (
+              <div
+                key={c.title}
+                className="min-w-0 shrink grow basis-[240px] max-w-[380px] rounded-lg border border-ink-200 bg-white p-6"
+              >
+                <div className="mb-4 font-mono text-label uppercase text-teal-deep">
+                  {c.eyebrow}
+                </div>
+                <div className="mb-2 text-heading-s">{c.title}</div>
+                <p className="m-0 text-body-s text-ink-700">{c.body}</p>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      <Section tone="muted" bordered="top">
+        <Container>
+          <div className="mb-8 max-w-[620px]">
+            <Label className="mb-4">The journey, side by side</Label>
+            <h2 className="m-0 mb-4 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.14] tracking-[-0.02em]">
+              And how far you&rsquo;d travel.
+            </h2>
+            <p className="m-0 text-body-l text-ink-700">
+              Not the reason to choose an island, but worth knowing before you do:
+              the transfer is a real cost in money and in hours, and on a short
+              trip a ninety-minute crossing each way takes most of a day.
+            </p>
+          </div>
+          <TransferTable locations={locations} fromPrices={fromPrices} />
+        </Container>
+      </Section>
+
+      <Section>
+        <Container>
+          <ClosingCta
+            heading="Not sure which of these suits you?"
+            lede="Tell us what you want out of the week and we'll point you at the right atoll — same day, from Male'."
+            primary={{ label: "See all packages", href: "/packages" }}
+            secondary={{ label: "Ask us", href: "/contact" }}
+          />
         </Container>
       </Section>
 

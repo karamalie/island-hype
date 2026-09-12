@@ -7,8 +7,8 @@ import {
   Package,
   MapPin,
   Building2,
-  Compass,
   Activity,
+  Filter,
   Tag,
   MessageSquare,
   Settings,
@@ -39,11 +39,6 @@ const navItems = [
     icon: Building2,
   },
   {
-    label: "Experiences",
-    href: "/admin/experiences",
-    icon: Compass,
-  },
-  {
     label: "Activities",
     href: "/admin/activities",
     icon: Activity,
@@ -52,6 +47,11 @@ const navItems = [
     label: "Offers",
     href: "/admin/offers",
     icon: Tag,
+  },
+  {
+    label: "Filter categories",
+    href: "/admin/categories",
+    icon: Filter,
   },
   { type: "divider" as const, label: "Management" },
   {

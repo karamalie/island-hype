@@ -1,5 +1,6 @@
 import { getActivities } from "@/lib/actions/activities";
 import { PageHeader } from "@/components/admin/ui/page-header";
+import { TableEmptyRow } from "@/components/admin/ui/table-empty";
 import { StatusBadge } from "@/components/admin/ui/status-badge";
 import Link from "next/link";
 
@@ -55,11 +56,12 @@ export default async function ActivitiesPage() {
               </tr>
             ))}
             {activities.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                  No activities found. Create your first one.
-                </td>
-              </tr>
+              <TableEmptyRow
+                colSpan={7}
+                title="No activities yet."
+                body="Activities are the optional extras you attach to a package — diving, sandbank trips, fishing. They are genuinely optional: a package with none simply does not show that section on its page."
+                action={{ label: "New activity", href: "/admin/activities/new" }}
+              />
             )}
           </tbody>
         </table>

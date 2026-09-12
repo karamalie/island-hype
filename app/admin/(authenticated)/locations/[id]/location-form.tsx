@@ -4,9 +4,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
+import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
+import { locationDeleteImpact } from "@/lib/actions/delete-impact";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { ImageGallery } from "@/components/admin/shared/image-gallery";
+import {
+  FaqEditor,
+  LocationCharacterEditor,
+  SeasonEditor,
+  StayTypesEditor,
+  type LocationCharacterFields,
+  type StayTypeOption,
+  type StayTypeSelection,
+} from "@/components/admin/editors";
+import type { SeasonState } from "@prisma/client";
 import { CoverImageUpload } from "@/components/admin/shared/cover-image-upload";
 import {
   createLocation,
@@ -15,7 +27,6 @@ import {
   uploadLocationImage,
   deleteLocationImage,
   uploadLocationCoverImage,
-  updateLocationExperiences,
 } from "@/lib/actions/locations";
 import { generateSlug } from "@/lib/utils";
 
@@ -44,15 +55,24 @@ interface LocationFormProps {
     sortOrder: number;
   };
   images?: { id: string; url: string; alt: string | null }[];
-  allExperiences: { id: string; name: string }[];
-  linkedExperienceIds?: string[];
+  /** Each of these blocks saves on its own, below the main details form. */
+  character?: LocationCharacterFields;
+  season?: Record<number, SeasonState>;
+  seasonLabel?: string;
+  allStayTypes?: StayTypeOption[];
+  stayTypes?: StayTypeSelection[];
+  faqs?: { question: string; answer: string }[];
 }
 
 export function LocationForm({
   location,
   images = [],
-  allExperiences,
-  linkedExperienceIds = [],
+  character,
+  season = {},
+  seasonLabel = "",
+  allStayTypes = [],
+  stayTypes = [],
+  faqs = [],
 }: LocationFormProps) {
   const router = useRouter();
   const isEdit = !!location;
@@ -71,10 +91,8 @@ export function LocationForm({
   const [isFeatured, setIsFeatured] = useState(location?.isFeatured ?? false);
   const [isActive, setIsActive] = useState(location?.isActive ?? true);
   const [sortOrder, setSortOrder] = useState(location?.sortOrder || 0);
-  const [selectedExperiences, setSelectedExperiences] = useState<string[]>(linkedExperienceIds);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [savingExperiences, setSavingExperiences] = useState(false);
 
   function handleNameChange(value: string) {
     setName(value);
@@ -119,16 +137,6 @@ export function LocationForm({
     }
   }
 
-  async function handleDelete() {
-    if (!location || !confirm("Delete this location?")) return;
-    const result = await deleteLocation(location.id);
-    if (result.success) {
-      toast.success("Location deleted");
-      router.push("/admin/locations");
-    } else {
-      toast.error(result.error || "Failed to delete");
-    }
-  }
 
   async function handleCoverUpload(file: File) {
     if (!location) return { success: false, error: "Save the location first" };
@@ -150,24 +158,6 @@ export function LocationForm({
 
   async function handleImageDelete(imageId: string) {
     return deleteLocationImage(imageId);
-  }
-
-  async function handleSaveExperiences() {
-    if (!location) return;
-    setSavingExperiences(true);
-    const result = await updateLocationExperiences(location.id, selectedExperiences);
-    setSavingExperiences(false);
-    if (result.success) {
-      toast.success("Experiences updated");
-    } else {
-      toast.error(result.error || "Failed to update");
-    }
-  }
-
-  function toggleExperience(id: string) {
-    setSelectedExperiences((prev) =>
-      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
-    );
   }
 
   return (
@@ -264,12 +254,17 @@ export function LocationForm({
           <div className="flex gap-3">
             <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Location"}</SubmitButton>
             {isEdit && (
-              <SubmitButton type="button" variant="danger" onClick={handleDelete}>Delete</SubmitButton>
+              <DeleteWithImpact
+                noun="island"
+                getImpact={() => locationDeleteImpact(location!.id)}
+                onDelete={() => deleteLocation(location!.id)}
+                redirectTo="/admin/locations"
+              />
             )}
           </div>
         </form>
 
-        {isEdit && (
+        {isEdit && location && (
           <>
             <ImageGallery
               images={images}
@@ -277,28 +272,37 @@ export function LocationForm({
               onDelete={handleImageDelete}
             />
 
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="text-base font-semibold text-slate-900 mb-4">Linked Experiences</h2>
-              <div className="space-y-2 mb-4">
-                {allExperiences.map((exp) => (
-                  <label key={exp.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedExperiences.includes(exp.id)}
-                      onChange={() => toggleExperience(exp.id)}
-                      className="rounded border-slate-300"
-                    />
-                    <span className="text-sm text-slate-700">{exp.name}</span>
-                  </label>
-                ))}
-                {allExperiences.length === 0 && (
-                  <p className="text-sm text-slate-500">No experiences available.</p>
-                )}
-              </div>
-              <SubmitButton type="button" loading={savingExperiences} onClick={handleSaveExperiences}>
-                Save Experiences
-              </SubmitButton>
-            </div>
+            {/* Each block below saves independently. They are separate from the
+                details form above because they are the parts that actually
+                differentiate one island from another, and they are edited far
+                more often than a slug or a latitude. */}
+            {character && (
+              <LocationCharacterEditor
+                locationId={location.id}
+                locationName={location.name}
+                initial={character}
+              />
+            )}
+
+            <SeasonEditor
+              locationId={location.id}
+              locationName={location.name}
+              initialMonths={season}
+              initialLabel={seasonLabel}
+            />
+
+            <StayTypesEditor
+              locationId={location.id}
+              locationName={location.name}
+              allStayTypes={allStayTypes}
+              initial={stayTypes}
+            />
+
+            <FaqEditor
+              owner={{ locationId: location.id }}
+              initial={faqs}
+              what="island"
+            />
           </>
         )}
       </div>

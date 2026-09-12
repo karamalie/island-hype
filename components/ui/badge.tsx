@@ -1,63 +1,63 @@
 // components/ui/badge.tsx
-import { cva, type VariantProps } from "class-variance-authority";
+//
+// The small mono marker: a package's badge, a stay's type, a mono tag beside a
+// suggestion. 12px radius, 24px tall, uppercase mono.
+//
+// Two grounds, because the badge sits on a photograph in one place and on white
+// in another — and on the photograph it needs to be the solid one.
+
+import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
 
-const badgeVariants = cva(
-  "inline-flex items-center gap-2 rounded-full font-medium transition-colors",
-  {
-    variants: {
-      variant: {
-        default: "bg-gray-100 text-gray-800",
-        primary: "bg-teal-500 text-white",
-        secondary: "bg-gray-800 text-white",
-        outline: "border border-gray-300 text-gray-700 bg-transparent",
-        // White badge for dark backgrounds (glass/hero sections)
-        white: "bg-white/10 backdrop-blur-sm border border-white/20 text-white",
-        // Light badge for light backgrounds - USE THIS ON WHITE BACKGROUNDS
-        light: "bg-gray-100 text-gray-700 border border-gray-200",
-        glass: "bg-white/10 backdrop-blur-sm border border-white/20 text-white",
-        success: "bg-green-100 text-green-800",
-        warning: "bg-amber-100 text-amber-800",
-        error: "bg-red-100 text-red-800",
-      },
-      size: {
-        sm: "px-2 py-0.5 text-xs",
-        md: "px-3 py-1 text-sm",
-        lg: "px-4 py-1.5 text-sm",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "md",
-    },
-  }
-);
+export type BadgeTone = "on-photo" | "tint" | "quiet" | "offer";
 
-export interface BadgeProps
-  extends
-    React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof badgeVariants> {
-  icon?: ReactNode;
+export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+  tone?: BadgeTone;
 }
 
-function Badge({
-  className,
-  variant,
-  size,
-  icon,
-  children,
-  ...props
-}: BadgeProps) {
+const tones: Record<BadgeTone, string> = {
+  "on-photo": "bg-white text-teal-deep",
+  tint: "bg-teal-tint text-teal-deep",
+  quiet: "bg-ink-50 border border-ink-200 text-meta",
+  // An offer has to out-rank the package's own badge, which sits next to it on
+  // the same photograph, so it takes the solid fill. teal-deep is the only teal
+  // in the palette permitted to carry white text.
+  offer: "bg-teal-deep text-white",
+};
+
+export function Badge({ className, tone = "tint", ...props }: BadgeProps) {
   return (
     <span
-      className={cn(badgeVariants({ variant, size }), className)}
+      className={cn(
+        "inline-flex h-6 shrink-0 items-center rounded-md px-2.5",
+        "font-mono text-label-sm uppercase",
+        tones[tone],
+        className
+      )}
       {...props}
-    >
-      {icon && <span className="flex-shrink-0">{icon}</span>}
-      {children}
-    </span>
+    />
   );
 }
 
-export { Badge, badgeVariants };
+/** The mono eyebrow above a heading, and the label in a spec sheet. */
+export function Label({
+  className,
+  as: Tag = "div",
+  ...props
+}: HTMLAttributes<HTMLElement> & { as?: "div" | "span" | "dt" }) {
+  return (
+    <Tag
+      className={cn("font-mono text-label uppercase text-meta", className)}
+      {...props}
+    />
+  );
+}
+
+/** The ✦ mark. A text glyph, not an SVG — the brief is explicit about that. */
+export function Mark({ className }: { className?: string }) {
+  return (
+    <span aria-hidden="true" className={cn("shrink-0 text-teal-bright", className)}>
+      ✦
+    </span>
+  );
+}

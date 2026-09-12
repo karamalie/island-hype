@@ -1,56 +1,53 @@
 // components/ui/pill.tsx
-import { cva, type VariantProps } from "class-variance-authority";
+//
+// Filter affordances. Heights match the button scale (36 / 44) so a filter row
+// lines up with a CTA beside it rather than sitting a few pixels off.
+//
+// `selected` is the one place in the system where teal fills a surface.
+
+import { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-const pillVariants = cva(
-  "inline-flex items-center justify-center rounded-full font-medium transition-all duration-200 cursor-pointer select-none",
-  {
-    variants: {
-      variant: {
-        filled: "bg-gray-900 text-white hover:bg-gray-800",
-        outline:
-          "border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:border-gray-400 hover:text-gray-900",
-        ghost: "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-        // For dark backgrounds
-        "outline-light": "border border-white/30 text-white hover:bg-white/10",
-      },
-      size: {
-        sm: "px-3 py-1 text-xs",
-        md: "px-4 py-2 text-sm",
-        lg: "px-6 py-2.5 text-base",
-      },
-    },
-    defaultVariants: {
-      variant: "outline",
-      size: "md",
-    },
-  }
-);
+export type PillVariant = "solid" | "outline" | "selected";
+export type PillSize = "sm" | "md";
 
-export interface PillProps
-  extends
-    React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof pillVariants> {}
+export interface PillProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: PillVariant;
+  size?: PillSize;
+}
 
-function Pill({ className, variant, size, ...props }: PillProps) {
+const variants: Record<PillVariant, string> = {
+  solid: "bg-ink-900 text-white font-medium",
+  outline: "bg-white border border-ink-200 text-ink-700 hover:bg-ink-50 hover:border-meta-inverse",
+  selected: "bg-teal-tint border border-teal-bright text-teal-deep font-medium",
+};
+
+const sizes: Record<PillSize, string> = {
+  sm: "h-9 px-4 text-body-xs",
+  md: "h-11 px-5 text-body-xs",
+};
+
+const Pill = forwardRef<HTMLButtonElement, PillProps>(function Pill(
+  { className, variant = "outline", size = "sm", ...props },
+  ref
+) {
   return (
     <button
-      className={cn(pillVariants({ variant, size }), className)}
+      ref={ref}
+      className={cn(
+        "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full",
+        "transition-colors duration-[220ms] ease-[var(--ease-standard)]",
+        variants[variant],
+        sizes[size],
+        className
+      )}
       {...props}
     />
   );
+});
+
+function PillRow({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex flex-wrap items-center gap-2", className)} {...props} />;
 }
 
-function PillGroup({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("flex flex-wrap gap-2", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
-export { Pill, PillGroup, pillVariants };
+export { Pill, PillRow };

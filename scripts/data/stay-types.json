@@ -1,0 +1,129 @@
+{
+  "exportedFrom": "local development database",
+  "stayTypes": [
+    {
+      "name": "Water villa",
+      "slug": "water-villa",
+      "band": "Over the reef",
+      "blurb": "Steps straight into the lagoon, and a glass panel in the floor you'll photograph once and never look at again.",
+      "nightlyFrom": 420,
+      "sortOrder": 0,
+      "isActive": true
+    },
+    {
+      "name": "Beach villa",
+      "slug": "beach-villa",
+      "band": "On the sand",
+      "blurb": "More room, more shade, and the reef is a ninety-second walk rather than a ladder.",
+      "nightlyFrom": 280,
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "name": "Guesthouse",
+      "slug": "guesthouse",
+      "band": "Local island",
+      "blurb": "Family-run, breakfast included, and you eat where the island eats. Far and away the best value here.",
+      "nightlyFrom": 65,
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "name": "Dive lodge",
+      "slug": "dive-lodge",
+      "band": "Built for divers",
+      "blurb": "Rinse tanks, drying racks and 6am briefings. Nobody minds that you're wet in the dining room.",
+      "nightlyFrom": 110,
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "name": "Liveaboard",
+      "slug": "liveaboard",
+      "band": "No fixed address",
+      "blurb": "Wake up somewhere new, three dives before lunch, and atolls you simply cannot reach from land.",
+      "nightlyFrom": 190,
+      "sortOrder": 4,
+      "isActive": true
+    }
+  ],
+  "links": [
+    {
+      "locationSlug": "maafushi",
+      "stayTypeSlug": "guesthouse",
+      "blurb": null,
+      "nightlyFrom": 95,
+      "sortOrder": 0
+    },
+    {
+      "locationSlug": "maafushi",
+      "stayTypeSlug": "beach-villa",
+      "blurb": null,
+      "nightlyFrom": null,
+      "sortOrder": 1
+    },
+    {
+      "locationSlug": "thulusdhoo",
+      "stayTypeSlug": "guesthouse",
+      "blurb": null,
+      "nightlyFrom": 65,
+      "sortOrder": 0
+    },
+    {
+      "locationSlug": "dhigurah",
+      "stayTypeSlug": "guesthouse",
+      "blurb": null,
+      "nightlyFrom": 80,
+      "sortOrder": 0
+    },
+    {
+      "locationSlug": "dhigurah",
+      "stayTypeSlug": "dive-lodge",
+      "blurb": null,
+      "nightlyFrom": null,
+      "sortOrder": 1
+    },
+    {
+      "locationSlug": "fulidhoo",
+      "stayTypeSlug": "guesthouse",
+      "blurb": null,
+      "nightlyFrom": 70,
+      "sortOrder": 0
+    },
+    {
+      "locationSlug": "fulidhoo",
+      "stayTypeSlug": "dive-lodge",
+      "blurb": null,
+      "nightlyFrom": null,
+      "sortOrder": 1
+    },
+    {
+      "locationSlug": "baros",
+      "stayTypeSlug": "water-villa",
+      "blurb": null,
+      "nightlyFrom": null,
+      "sortOrder": 0
+    },
+    {
+      "locationSlug": "baros",
+      "stayTypeSlug": "beach-villa",
+      "blurb": null,
+      "nightlyFrom": null,
+      "sortOrder": 1
+    },
+    {
+      "locationSlug": "soneva-fushi",
+      "stayTypeSlug": "water-villa",
+      "blurb": null,
+      "nightlyFrom": 950,
+      "sortOrder": 0
+    },
+    {
+      "locationSlug": "soneva-fushi",
+      "stayTypeSlug": "beach-villa",
+      "blurb": null,
+      "nightlyFrom": 700,
+      "sortOrder": 1
+    }
+  ]
+}

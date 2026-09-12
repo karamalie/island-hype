@@ -4,7 +4,9 @@ import { Market as PrismaMarket } from "@prisma/client";
 
 export type Market = PrismaMarket;
 
-// Exchange rate - you might want to fetch this dynamically in production
+// A hardcoded rate. Fine while every price on the site is quoted in USD; if the
+// Maldivian market is ever switched on, this needs a real source, because a stale
+// rate quietly misprices every package for local buyers.
 const MVR_TO_USD_RATE = 15.42; // 1 USD = 15.42 MVR (approximate)
 
 /**
@@ -77,10 +79,13 @@ export function convertToUSD(mvrAmount: number): number {
 export function getBaseUrl(market: Market): string {
   if (market === "LOCAL") {
     return (
-      process.env.NEXT_PUBLIC_LOCAL_SITE_URL || "https://mv.islandhype.com"
+      process.env.NEXT_PUBLIC_LOCAL_SITE_URL ||
+      "https://mv.islandhypemaldives.com"
     );
   }
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://islandhype.com";
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.islandhypemaldives.com"
+  );
 }
 
 /**

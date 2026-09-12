@@ -4,17 +4,25 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
+import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
+import { packageDeleteImpact } from "@/lib/actions/delete-impact";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { Tabs } from "@/components/admin/ui/tabs";
+import {
+  AvailabilityEditor,
+  FaqEditor,
+  PackageDisplayEditor,
+  TagPicker,
+  type BlackoutRow,
+  type PackageDisplayFields,
+} from "@/components/admin/editors";
 import {
   createPackage,
   updatePackage,
   deletePackage,
   updatePackagePricing,
   updatePackageInclusions,
-  updatePackageItinerary,
-  updatePackageExperiences,
   updatePackageActivities,
   uploadPackageImage,
   deletePackageImage,
@@ -53,15 +61,11 @@ interface InclusionRow {
   details: string;
 }
 
-interface ItineraryDay {
-  dayNumber: number;
-  title: string;
-  description: string;
-}
-
 interface ActivitySelection {
   activityId: string;
   isIncluded: boolean;
+  /** Optional package-specific line, shown on the site instead of the activity's own blurb. */
+  note: string;
 }
 
 interface PackageFormProps {
@@ -105,14 +109,23 @@ interface PackageFormProps {
       notes: string | null;
     }[];
     inclusions: { category: InclusionCategory; item: string; details: string | null; sortOrder: number }[];
-    itinerary: { dayNumber: number; title: string; description: string }[];
-    experiences: { experience: { id: string; name: string } }[];
-    activities: { activity: { id: string; name: string }; isIncluded: boolean }[];
+    activities: {
+      activity: { id: string; name: string };
+      isIncluded: boolean;
+      note: string | null;
+    }[];
   };
   locations: { id: string; name: string }[];
   accommodations: { id: string; name: string; locationId: string }[];
-  allExperiences?: { id: string; name: string }[];
   allActivities?: { id: string; name: string; locationId: string }[];
+  /** Card copy, dates, categories and questions — each saved on its own tab. */
+  display?: PackageDisplayFields;
+  blackouts?: BlackoutRow[];
+  allTags?: { id: string; name: string }[];
+  tagIds?: string[];
+  faqs?: { question: string; answer: string }[];
+  /** Drives the note explaining whether filters are visible on the site yet. */
+  livePackageCount?: number;
 }
 
 function dateStr(d: Date | string | null): string {
@@ -152,8 +165,13 @@ export function PackageForm({
   pkg,
   locations,
   accommodations,
-  allExperiences = [],
   allActivities = [],
+  display,
+  blackouts = [],
+  allTags = [],
+  tagIds = [],
+  faqs = [],
+  livePackageCount = 0,
 }: PackageFormProps) {
   const router = useRouter();
   const isEdit = !!pkg;
@@ -184,17 +202,13 @@ export function PackageForm({
     pkg?.inclusions.map((i) => ({ category: i.category, item: i.item, details: i.details || "" })) || []
   );
 
-  // Itinerary
-  const [itinerary, setItinerary] = useState<ItineraryDay[]>(
-    pkg?.itinerary || []
-  );
-
-  // Experiences & Activities
-  const [selectedExperiences, setSelectedExperiences] = useState<string[]>(
-    pkg?.experiences.map((e) => e.experience.id) || []
-  );
+  // Activities — what a guest can do here; isIncluded separates price-inclusive from add-ons
   const [selectedActivities, setSelectedActivities] = useState<ActivitySelection[]>(
-    pkg?.activities.map((a) => ({ activityId: a.activity.id, isIncluded: a.isIncluded })) || []
+    pkg?.activities.map((a) => ({
+      activityId: a.activity.id,
+      isIncluded: a.isIncluded,
+      note: a.note ?? "",
+    })) || []
   );
 
   // Cover image (create mode)
@@ -212,7 +226,6 @@ export function PackageForm({
   const [loading, setLoading] = useState(false);
   const [savingPricing, setSavingPricing] = useState<string | null>(null);
   const [savingInclusions, setSavingInclusions] = useState(false);
-  const [savingItinerary, setSavingItinerary] = useState(false);
   const [savingExpAct, setSavingExpAct] = useState(false);
   const [savingTerms, setSavingTerms] = useState(false);
 
@@ -223,15 +236,18 @@ export function PackageForm({
 
   const tabs = isEdit
     ? [
-        { id: "basic", label: "Basic Info" },
+        { id: "basic", label: "Basic info" },
+        { id: "card", label: "What the card says" },
         { id: "pricing", label: "Pricing" },
+        { id: "dates", label: "Dates & availability" },
         { id: "inclusions", label: "Inclusions" },
-        { id: "itinerary", label: "Itinerary" },
-        { id: "expact", label: "Experiences & Activities" },
+        { id: "expact", label: "Activities" },
+        { id: "faqs", label: "Questions" },
+        { id: "categories", label: "Categories" },
         { id: "images", label: "Images" },
         { id: "terms", label: "Terms" },
       ]
-    : [{ id: "basic", label: "Basic Info" }];
+    : [{ id: "basic", label: "Basic info" }];
 
   // Filtered accommodations by selected location
   const filteredAccommodations = locationId
@@ -321,22 +337,12 @@ export function PackageForm({
     else toast.error(result.error || "Failed to save");
   }
 
-  async function handleSaveItinerary() {
-    if (!pkg) return;
-    setSavingItinerary(true);
-    const result = await updatePackageItinerary(pkg.id, itinerary);
-    setSavingItinerary(false);
-    if (result.success) toast.success("Itinerary saved");
-    else toast.error(result.error || "Failed to save");
-  }
-
-  async function handleSaveExperiencesActivities() {
+  async function handleSaveActivities() {
     if (!pkg) return;
     setSavingExpAct(true);
-    await updatePackageExperiences(pkg.id, selectedExperiences);
     await updatePackageActivities(pkg.id, selectedActivities);
     setSavingExpAct(false);
-    toast.success("Experiences & activities saved");
+    toast.success("Activities saved");
   }
 
   async function handleSaveTerms() {
@@ -361,16 +367,6 @@ export function PackageForm({
     toast.success("Terms saved");
   }
 
-  async function handleDelete() {
-    if (!pkg || !confirm("Delete this package?")) return;
-    const result = await deletePackage(pkg.id);
-    if (result.success) {
-      toast.success("Package deleted");
-      router.push("/admin/packages");
-    } else {
-      toast.error(result.error || "Failed to delete");
-    }
-  }
 
   async function handleCoverUpload(file: File) {
     if (!pkg) return { success: false, error: "Save the package first" };
@@ -405,8 +401,14 @@ export function PackageForm({
     setSelectedActivities((prev) => {
       const exists = prev.find((a) => a.activityId === activityId);
       if (exists) return prev.filter((a) => a.activityId !== activityId);
-      return [...prev, { activityId, isIncluded: true }];
+      return [...prev, { activityId, isIncluded: true, note: "" }];
     });
+  }
+
+  function setActivityNote(activityId: string, note: string) {
+    setSelectedActivities((prev) =>
+      prev.map((a) => (a.activityId === activityId ? { ...a, note } : a))
+    );
   }
 
   function toggleActivityIncluded(activityId: string) {
@@ -597,7 +599,12 @@ export function PackageForm({
             <div className="flex gap-3">
               <SubmitButton loading={loading}>{isEdit ? "Save Basic Info" : "Create Package"}</SubmitButton>
               {isEdit && (
-                <SubmitButton type="button" variant="danger" onClick={handleDelete}>Delete Package</SubmitButton>
+                <DeleteWithImpact
+                noun="package"
+                getImpact={() => packageDeleteImpact(pkg!.id)}
+                onDelete={() => deletePackage(pkg!.id)}
+                redirectTo="/admin/packages"
+              />
               )}
             </div>
           </form>
@@ -637,50 +644,9 @@ export function PackageForm({
           </div>
         )}
 
-        {/* ITINERARY TAB */}
-        {activeTab === "itinerary" && isEdit && (
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-base font-semibold text-slate-900">Itinerary</h3>
-              <button type="button" onClick={() => setItinerary([...itinerary, { dayNumber: itinerary.length + 1, title: "", description: "" }])} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
-                <Plus className="w-4 h-4" /> Add Day
-              </button>
-            </div>
-            {itinerary.map((day, i) => (
-              <div key={i} className="border border-slate-200 rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-700">Day {day.dayNumber}</span>
-                  <button type="button" onClick={() => {
-                    const updated = itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, dayNumber: idx + 1 }));
-                    setItinerary(updated);
-                  }} className="text-slate-400 hover:text-red-500">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <input value={day.title} onChange={(e) => { const updated = [...itinerary]; updated[i].title = e.target.value; setItinerary(updated); }} placeholder="Day title..." className={inputClass} />
-                <textarea value={day.description} onChange={(e) => { const updated = [...itinerary]; updated[i].description = e.target.value; setItinerary(updated); }} placeholder="Day description..." rows={3} className={inputClass} />
-              </div>
-            ))}
-            {itinerary.length === 0 && <p className="text-sm text-slate-500">No itinerary days yet.</p>}
-            <SubmitButton type="button" loading={savingItinerary} onClick={handleSaveItinerary}>Save Itinerary</SubmitButton>
-          </div>
-        )}
-
-        {/* EXPERIENCES & ACTIVITIES TAB */}
+        {/* ACTIVITIES TAB */}
         {activeTab === "expact" && isEdit && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-base font-semibold text-slate-900 mb-4">Experiences</h3>
-              <div className="space-y-2">
-                {allExperiences.map((exp) => (
-                  <label key={exp.id} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={selectedExperiences.includes(exp.id)} onChange={() => setSelectedExperiences((prev) => prev.includes(exp.id) ? prev.filter((e) => e !== exp.id) : [...prev, exp.id])} className="rounded border-slate-300" />
-                    <span className="text-sm text-slate-700">{exp.name}</span>
-                  </label>
-                ))}
-                {allExperiences.length === 0 && <p className="text-sm text-slate-500">No experiences available.</p>}
-              </div>
-            </div>
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-base font-semibold text-slate-900 mb-4">Activities</h3>
               <div className="space-y-2">
@@ -693,10 +659,18 @@ export function PackageForm({
                         <span className="text-sm text-slate-700">{act.name}</span>
                       </label>
                       {sel && (
-                        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+                        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer whitespace-nowrap">
                           <input type="checkbox" checked={sel.isIncluded} onChange={() => toggleActivityIncluded(act.id)} className="rounded border-slate-300" />
                           Included in price
                         </label>
+                      )}
+                      {sel && (
+                        <input
+                          value={sel.note}
+                          onChange={(e) => setActivityNote(act.id, e.target.value)}
+                          placeholder="Optional note for this package…"
+                          className="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded"
+                        />
                       )}
                     </div>
                   );
@@ -704,13 +678,43 @@ export function PackageForm({
                 {allActivities.length === 0 && <p className="text-sm text-slate-500">No activities available.</p>}
               </div>
             </div>
-            <SubmitButton type="button" loading={savingExpAct} onClick={handleSaveExperiencesActivities}>
-              Save Experiences & Activities
+            <SubmitButton type="button" loading={savingExpAct} onClick={handleSaveActivities}>
+              Save Activities
             </SubmitButton>
           </div>
         )}
 
         {/* IMAGES TAB */}
+        {activeTab === "card" && isEdit && display && (
+          <PackageDisplayEditor packageId={pkg!.id} initial={display} />
+        )}
+
+        {activeTab === "dates" && isEdit && (
+          <AvailabilityEditor
+            packageId={pkg!.id}
+            initialWindows={{
+              travelStart: dateStr(pkg!.travelWindowStart),
+              travelEnd: dateStr(pkg!.travelWindowEnd),
+              bookingStart: dateStr(pkg!.bookingWindowStart),
+              bookingEnd: dateStr(pkg!.bookingWindowEnd),
+            }}
+            initialBlackouts={blackouts}
+          />
+        )}
+
+        {activeTab === "faqs" && isEdit && (
+          <FaqEditor owner={{ packageId: pkg!.id }} initial={faqs} what="package" />
+        )}
+
+        {activeTab === "categories" && isEdit && (
+          <TagPicker
+            packageId={pkg!.id}
+            allTags={allTags}
+            initialTagIds={tagIds}
+            livePackageCount={livePackageCount}
+          />
+        )}
+
         {activeTab === "images" && isEdit && (
           <ImageGallery
             images={currentImages}

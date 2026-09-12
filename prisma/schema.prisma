@@ -19,13 +19,19 @@ model Location {
   description String  @db.Text
   shortDesc   String? @db.VarChar(300)
 
-  atoll     String
-  island    String?
-  latitude  Float?
-  longitude Float?
+  atoll  String
+  island String?
+
+  // Display fields the redesign reads. All nullable — admin decides what to publish.
+  region               String? @db.VarChar(120) // "North-west · UNESCO biosphere"
+  knownFor             String? @db.VarChar(120) // "Mantas, house reefs"
+  bestMonths           String? @db.VarChar(80) // "January to April"
+  seasonHighlightLabel String? @db.VarChar(40) // names the middle season band, e.g. "Mantas"
+  latitude             Float?
+  longitude            Float?
 
   // Transfer info
-  transferTime Int?          // Duration in minutes
+  transferTime Int? // Duration in minutes
   transferType TransferType? // Primary transfer type
   transferInfo String?       @db.Text // Additional transfer details
 
@@ -33,13 +39,15 @@ model Location {
   coverImage String?
 
   accommodations Accommodation[]
-  experiences    LocationExperience[]
   activities     Activity[]
   packages       Package[]
+  faqs           FaqItem[]
+  seasonMonths   SeasonMonth[]
+  stayTypes      LocationStayType[]
 
-  isFeatured Boolean @default(false)
-  isActive   Boolean @default(true)
-  sortOrder  Int     @default(0)
+  isFeatured Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -75,17 +83,24 @@ model Accommodation {
   shortDesc   String?           @db.VarChar(300)
   description String            @db.Text
 
-  starRating Int?     @db.SmallInt
-  // Stored as JSON arrays of strings (MySQL has no scalar-list type).
-  roomTypes  Json     @default("[]")
-  amenities  Json     @default("[]")
+  starRating Int? @db.SmallInt
+
+  // Display fields the redesign reads. Nullable; the front end drops the row when absent.
+  houseReef    String? @db.VarChar(160) // "Yes — 9m from the villa ladder"
+  suits        String? @db.VarChar(160) // "Couples, snorkellers, divers"
+  boardOptions String? @db.VarChar(160) // "Half-board or full-board"
+  absentNote   String? @db.Text // what is NOT here: "No kids' club, patchy villa wifi"
 
   images     AccommodationImage[]
   coverImage String?
 
   locationId String
-  location   Location  @relation(fields: [locationId], references: [id])
+  location   Location        @relation(fields: [locationId], references: [id])
   packages   Package[]
+  roomTypes  RoomType[]
+  facilities Facility[]
+  faqs       FaqItem[]
+  blackouts  BlackoutRange[]
 
   contactEmail String?
   contactPhone String?
@@ -118,52 +133,6 @@ enum AccommodationType {
   LIVEABOARD
 }
 
-model Experience {
-  id          String  @id @default(cuid())
-  name        String
-  slug        String  @unique
-  shortDesc   String? @db.VarChar(300)
-  description String  @db.Text
-  icon        String?
-
-  images     ExperienceImage[]
-  coverImage String?
-
-  locations LocationExperience[]
-  packages  PackageExperience[]
-
-  isActive  Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive])
-}
-
-model ExperienceImage {
-  id           String     @id @default(cuid())
-  url          String
-  alt          String?
-  sortOrder    Int        @default(0)
-  experienceId String
-  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-
-  @@index([experienceId])
-}
-
-model LocationExperience {
-  id           String     @id @default(cuid())
-  locationId   String
-  location     Location   @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  experienceId String
-  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-  description  String?    @db.Text
-
-  @@unique([locationId, experienceId])
-  @@index([locationId])
-  @@index([experienceId])
-}
-
 model Activity {
   id          String           @id @default(cuid())
   name        String
@@ -171,7 +140,7 @@ model Activity {
   shortDesc   String?          @db.VarChar(300)
   description String           @db.Text
   category    ActivityCategory
-  duration    Int?             // Duration in minutes
+  duration    Int? // Duration in minutes
 
   images     ActivityImage[]
   coverImage String?
@@ -220,17 +189,26 @@ enum ActivityCategory {
 // ============ PACKAGES ============
 
 model Package {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  slug        String   @unique
-  shortDesc   String?  @db.VarChar(300)
-  description String   @db.Text
+  slug        String  @unique
+  shortDesc   String? @db.VarChar(300)
+  description String  @db.Text
   // Stored as a JSON array of strings (MySQL has no scalar-list type).
-  highlights  Json     @default("[]")
+  highlights  Json    @default("[]")
 
+  // minNights is the sold length (the designs show a single "4 nights"); maxNights is
+  // the extendable ceiling. The data layer exposes minNights as `nights`.
   minNights Int  @default(1)
   maxNights Int?
   maxGuests Int?
+
+  // Display fields the redesign reads. All nullable — a null drops its spec row.
+  mealPlan   String?     @db.VarChar(160) // "Half-board, one à-la-carte night"
+  boardBasis BoardBasis? // structured form of the above, for filtering
+  badge      String?     @db.VarChar(40) // card pill: "All-inclusive", "Best value"
+  bestMonths String?     @db.VarChar(80) // "January to April"
+  longBlurb  String?     @db.Text // detail overview; falls back to description
 
   // Travel windows
   bookingWindowStart DateTime?
@@ -251,17 +229,18 @@ model Package {
   accommodationId String
   accommodation   Accommodation @relation(fields: [accommodationId], references: [id])
 
-  pricing     PackagePricing[]
-  inclusions  PackageInclusion[]
-  itinerary   PackageItinerary[]
-  experiences PackageExperience[]
-  activities  PackageActivity[]
-  offers      Offer[]
-  inquiries   Inquiry[]
+  pricing    PackagePricing[]
+  inclusions PackageInclusion[]
+  activities PackageActivity[]
+  offers     Offer[]
+  inquiries  Inquiry[]
+  faqs       FaqItem[]
+  blackouts  BlackoutRange[]
+  tags       PackageTag[]
 
-  isFeatured Boolean @default(false)
-  isActive   Boolean @default(true)
-  sortOrder  Int     @default(0)
+  isFeatured Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -283,14 +262,14 @@ model PackageImage {
 }
 
 model PackagePricing {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   packageId String
   package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
   market    Market
 
-  // Base prices (per person for the package duration)
-  basePrice       Float  // Single person base price
-  couplePrice     Float  // Price for 2 people
+  // WHOLE-PACKAGE totals, not nightly rates and not per person.
+  basePrice       Float // total for single occupancy, whole package
+  couplePrice     Float // total for two, whole package. Per-person display = couplePrice / 2.
   extraAdultPrice Float? // Additional adult
   childPrice      Float? // Child (typically 2-11)
   infantPrice     Float? // Infant (typically 0-2)
@@ -310,7 +289,7 @@ model PackagePricing {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([packageId, market])
+  @@index([packageId, market])
   @@index([packageId])
 }
 
@@ -324,8 +303,8 @@ model PackageInclusion {
   packageId String
   package   Package           @relation(fields: [packageId], references: [id], onDelete: Cascade)
   category  InclusionCategory
-  item      String            // What's included
-  details   String?           // Additional details
+  item      String // What's included
+  details   String? // Additional details
   sortOrder Int               @default(0)
 
   @@index([packageId])
@@ -340,30 +319,6 @@ enum InclusionCategory {
   SERVICE
 }
 
-model PackageItinerary {
-  id          String  @id @default(cuid())
-  packageId   String
-  package     Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  dayNumber   Int
-  title       String
-  description String  @db.Text
-
-  @@unique([packageId, dayNumber])
-  @@index([packageId])
-}
-
-model PackageExperience {
-  id           String     @id @default(cuid())
-  packageId    String
-  package      Package    @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  experienceId String
-  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-
-  @@unique([packageId, experienceId])
-  @@index([packageId])
-  @@index([experienceId])
-}
-
 model PackageActivity {
   id         String   @id @default(cuid())
   packageId  String
@@ -371,6 +326,9 @@ model PackageActivity {
   activityId String
   activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   isIncluded Boolean  @default(true) // true = included in price, false = optional add-on
+  // Optional package-specific line, shown instead of activity.shortDesc when set.
+  note       String?  @db.Text
+  sortOrder  Int      @default(0)
 
   @@unique([packageId, activityId])
   @@index([packageId])
@@ -380,17 +338,17 @@ model PackageActivity {
 // ============ OFFERS ============
 
 model Offer {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  slug        String   @unique
-  description String?  @db.Text
-  badge       String?  // Display badge like "15% OFF", "HONEYMOON"
+  slug        String  @unique
+  description String? @db.Text
+  badge       String? // Display badge like "15% OFF", "HONEYMOON"
 
   discountType  DiscountType
-  discountValue Float        // Percentage or fixed amount
-  code          String?      // Promo code if applicable
+  discountValue Float // Percentage or fixed amount
+  code          String? // Promo code if applicable
 
-  validFrom DateTime
+  validFrom  DateTime
   validUntil DateTime
 
   // Conditions
@@ -428,7 +386,7 @@ model Inquiry {
 
   packageId   String?
   package     Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
-  packageName String?  // Store name in case package is deleted
+  packageName String? // Store name in case package is deleted
 
   checkIn  DateTime?
   checkOut DateTime?
@@ -479,4 +437,165 @@ model SiteSetting {
   key       String   @unique
   value     String   @db.Text
   updatedAt DateTime @updatedAt
+}
+
+// ============ AVAILABILITY ============
+
+/// Closures and sold-out stretches. Attach to a package or an accommodation.
+/// Availability is windows + blackouts only — there is deliberately no per-date
+/// capacity, because we confirm with the island rather than run live inventory.
+model BlackoutRange {
+  id        String   @id @default(cuid())
+  startDate DateTime
+  endDate   DateTime
+  reason    String?  @db.VarChar(160)
+
+  packageId       String?
+  package         Package?       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  accommodationId String?
+  accommodation   Accommodation? @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([packageId])
+  @@index([accommodationId])
+  @@index([startDate, endDate])
+}
+
+// ============ EDITORIAL ============
+
+/// "Worth knowing" question/answer rows. Written once, attached where it belongs.
+model FaqItem {
+  id        String @id @default(cuid())
+  question  String @db.VarChar(300)
+  answer    String @db.Text
+  sortOrder Int    @default(0)
+
+  packageId       String?
+  package         Package?       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  accommodationId String?
+  accommodation   Accommodation? @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+  locationId      String?
+  location        Location?      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@index([packageId])
+  @@index([accommodationId])
+  @@index([locationId])
+}
+
+/// Replaces the old flat `Accommodation.roomTypes` JSON array of strings.
+model RoomType {
+  id              String        @id @default(cuid())
+  accommodationId String
+  accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+
+  name        String  @db.VarChar(120)
+  blurb       String? @db.Text
+  nightlyFrom Float?
+  size        String? @db.VarChar(40) // "78 m²"
+  sleeps      String? @db.VarChar(60) // "2 adults + 1 child"
+  access      String? @db.VarChar(60) // "Ladder to lagoon"
+  sortOrder   Int     @default(0)
+
+  @@index([accommodationId])
+}
+
+/// Replaces the old flat `Accommodation.amenities` JSON array. Grouped, because the
+/// design shows two labelled columns rather than one undifferentiated list.
+model Facility {
+  id              String        @id @default(cuid())
+  accommodationId String
+  accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+
+  group     String @db.VarChar(60) // "Eating and drinking", "In the water"
+  item      String @db.VarChar(160)
+  sortOrder Int    @default(0)
+
+  @@index([accommodationId])
+}
+
+// ============ SEASONS ============
+
+model SeasonMonth {
+  id         String      @id @default(cuid())
+  locationId String
+  location   Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  month      Int         @db.SmallInt // 1-12
+  state      SeasonState
+
+  @@unique([locationId, month])
+  @@index([locationId])
+}
+
+enum SeasonState {
+  BEST
+  HIGHLIGHT // the location-specific band, labelled by Location.seasonHighlightLabel
+  WETTER
+}
+
+// ============ STAY TYPES ============
+
+/// The five kinds of night. Reference content — never sliced by density, because
+/// these sections carry the page when the catalogue is thin.
+model StayType {
+  id          String  @id @default(cuid())
+  name        String  @db.VarChar(80) // "Water villa"
+  slug        String  @unique
+  band        String  @db.VarChar(80) // "Over the reef"
+  blurb       String  @db.Text
+  nightlyFrom Float?
+  sortOrder   Int     @default(0)
+  isActive    Boolean @default(true)
+
+  locations LocationStayType[]
+}
+
+/// Per-location overrides — Baa's guesthouses start at $95, not the global $65.
+model LocationStayType {
+  id         String   @id @default(cuid())
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  stayTypeId String
+  stayType   StayType @relation(fields: [stayTypeId], references: [id], onDelete: Cascade)
+
+  blurb       String? @db.Text
+  nightlyFrom Float?
+  sortOrder   Int     @default(0)
+
+  @@unique([locationId, stayTypeId])
+  @@index([locationId])
+  @@index([stayTypeId])
+}
+
+// ============ TAGS ============
+
+/// Filter pills on the listings. Distinct from `Package.badge`, which is the single
+/// card pill — the designs use the two for different jobs.
+model Tag {
+  id        String @id @default(cuid())
+  name      String @db.VarChar(60) // "Diving", "Honeymoon", "Family"
+  slug      String @unique
+  sortOrder Int    @default(0)
+
+  packages PackageTag[]
+}
+
+model PackageTag {
+  id        String  @id @default(cuid())
+  packageId String
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, tagId])
+  @@index([packageId])
+  @@index([tagId])
+}
+
+enum BoardBasis {
+  ROOM_ONLY
+  BED_AND_BREAKFAST
+  HALF_BOARD
+  FULL_BOARD
+  ALL_INCLUSIVE
 }

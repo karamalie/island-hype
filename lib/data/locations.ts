@@ -8,9 +8,12 @@ import type {
   Accommodation,
   Package,
   PackagePricing,
-  Experience,
   Activity,
+  SeasonState,
 } from "@prisma/client";
+import { isAggregatePhotoRich } from "@/lib/design/density";
+import { locationMeta } from "@/lib/design/inventory";
+import { transferSummary } from "@/lib/design/labels";
 
 // Type for location with relations (list view)
 export type LocationWithRelations = Location & {
@@ -46,15 +49,8 @@ export type LocationDetails = Location & {
     Package & {
       accommodation: Pick<Accommodation, "id" | "name" | "type">;
       pricing: PackagePricing[];
-      experiences: Array<{
-        experience: Pick<Experience, "id" | "name" | "slug" | "icon">;
-      }>;
     }
   >;
-  experiences: Array<{
-    experience: Experience;
-    description: string | null;
-  }>;
   activities: Array<
     Activity & {
       images: Array<{
@@ -315,24 +311,6 @@ export async function getLocationBySlug(
               market: "INTERNATIONAL",
             },
           },
-          experiences: {
-            include: {
-              experience: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  icon: true,
-                },
-              },
-            },
-            take: 3,
-          },
-        },
-      },
-      experiences: {
-        include: {
-          experience: true,
         },
       },
       activities: {
@@ -474,4 +452,124 @@ export async function searchLocations(
   });
 
   return locations as LocationWithRelations[];
+}
+
+// ============================================================================
+// Redesign loaders. See the note in lib/data/packages.ts.
+// ============================================================================
+
+export interface LocationCard {
+  id: string;
+  slug: string;
+  name: string;
+  region: string | null;
+  blurb: string | null;
+  knownFor: string | null;
+  bestMonths: string | null;
+  /** "Speedboat, 30 min", or null so the table cell drops. */
+  transfer: string | null;
+  transferType: string | null;
+  transferMinutes: number | null;
+  /** Derived from real counts, so no two numbers on a page disagree. */
+  meta: string;
+  packageCount: number;
+  stayCount: number;
+  coverImage: string | null;
+}
+
+export async function getLocationCards(): Promise<LocationCard[]> {
+  const rows = await prisma.location.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      region: true,
+      shortDesc: true,
+      knownFor: true,
+      bestMonths: true,
+      transferType: true,
+      transferTime: true,
+      coverImage: true,
+      sortOrder: true,
+      _count: { select: { packages: true, accommodations: true } },
+    },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+  });
+
+  return rows.map((l) => ({
+    id: l.id,
+    slug: l.slug,
+    name: l.name,
+    region: l.region,
+    blurb: l.shortDesc,
+    knownFor: l.knownFor,
+    bestMonths: l.bestMonths,
+    transfer: transferSummary(l.transferType, l.transferTime),
+    transferType: l.transferType,
+    transferMinutes: l.transferTime,
+    meta: locationMeta({
+      packages: l._count.packages,
+      accommodations: l._count.accommodations,
+    }),
+    packageCount: l._count.packages,
+    stayCount: l._count.accommodations,
+    coverImage: l.coverImage,
+  }));
+}
+
+/** Whether the tile grid is allowed to render at all. Aggregate, not per-item. */
+export function locationsArePhotoRich(cards: LocationCard[]): boolean {
+  return isAggregatePhotoRich(cards);
+}
+
+export interface LocationDetailData extends LocationCard {
+  description: string;
+  transferInfo: string | null;
+  seasonHighlightLabel: string | null;
+  /** Twelve entries at most. Empty means the calendar does not render. */
+  season: { month: number; state: SeasonState }[];
+  images: { id: string; url: string; alt: string | null }[];
+  faqs: { id: string; question: string; answer: string }[];
+}
+
+export async function getLocationDetail(
+  slug: string
+): Promise<LocationDetailData | null> {
+  const row = await prisma.location.findUnique({
+    where: { slug },
+    include: {
+      images: { orderBy: { sortOrder: "asc" } },
+      seasonMonths: { orderBy: { month: "asc" } },
+      faqs: { orderBy: { sortOrder: "asc" } },
+      _count: { select: { packages: true, accommodations: true } },
+    },
+  });
+  if (!row || !row.isActive) return null;
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    region: row.region,
+    blurb: row.shortDesc,
+    knownFor: row.knownFor,
+    bestMonths: row.bestMonths,
+    transfer: transferSummary(row.transferType, row.transferTime),
+    transferType: row.transferType,
+    transferMinutes: row.transferTime,
+    meta: locationMeta({
+      packages: row._count.packages,
+      accommodations: row._count.accommodations,
+    }),
+    packageCount: row._count.packages,
+    stayCount: row._count.accommodations,
+    coverImage: row.coverImage,
+    description: row.description,
+    transferInfo: row.transferInfo,
+    seasonHighlightLabel: row.seasonHighlightLabel,
+    season: row.seasonMonths.map((m) => ({ month: m.month, state: m.state })),
+    images: row.images.map((i) => ({ id: i.id, url: i.url, alt: i.alt })),
+    faqs: row.faqs.map((f) => ({ id: f.id, question: f.question, answer: f.answer })),
+  };
 }

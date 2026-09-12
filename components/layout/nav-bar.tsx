@@ -1,215 +1,167 @@
-// components/layout/navbar.tsx
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+// components/layout/nav-bar.tsx
+//
+// Three forms of one nav, chosen by what is behind it:
+//
+//   glass  — over a photograph (Home and the three page heads)
+//   solid  — over white (the detail pages, the guide, contact)
+//
+// Two things the previous nav got wrong and this one cannot:
+//
+//   1. Text on glass is full-opacity white. Never white/70. Contrast comes from
+//      the blur and the scrim, not from dimming the type — dimmed white on a
+//      bright reef photograph is unreadable however much blur sits under it.
+//   2. The scrim is not this component's job to remember. It ships inside
+//      PageHead, so a nav can never end up over an unscrimmed image.
+//
+// The label is "Stays" while the route stays /accommodations: the word people
+// recognise is not always the word the URL was built with.
+
 import { useState } from "react";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface NavbarProps {
-  variant?: "overlay" | "solid";
-  showLogo?: boolean;
+export type NavSurface = "glass" | "solid";
+export type NavKey = "home" | "packages" | "locations" | "stays" | "guide";
+
+export interface NavCta {
+  label: string;
+  href: string;
+  /** The ↗ glyph, teal, on the page-head CTAs. */
+  arrow?: boolean;
 }
 
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/packages", label: "Packages" },
-  { href: "/locations", label: "Locations" },
-  { href: "/accommodations", label: "Accommodations" },
-  { href: "/guide", label: "Guide" },
-  { href: "/contact", label: "Contact" },
+export interface NavBarProps {
+  surface: NavSurface;
+  active?: NavKey;
+  cta?: NavCta;
+}
+
+const ITEMS: { key: NavKey; label: string; href: string }[] = [
+  { key: "home", label: "Home", href: "/" },
+  { key: "packages", label: "Packages", href: "/packages" },
+  { key: "locations", label: "Locations", href: "/locations" },
+  { key: "stays", label: "Stays", href: "/accommodations" },
+  { key: "guide", label: "Guide", href: "/guide" },
 ];
 
-export function Navbar({ variant = "solid", showLogo = false }: NavbarProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-  const isOverlay = variant === "overlay";
-
-  const navShellClass = isOverlay
-    ? "glass rounded-full px-2 py-2"
-    : "bg-white/95 rounded-full px-2 py-2 border border-gray-200 shadow-md backdrop-blur-sm";
-
-  const desktopInactiveLinkClass = isOverlay
-    ? "text-white hover:bg-white/20"
-    : "text-gray-700 hover:bg-gray-100";
-
-  const bookNowClass = isOverlay
-    ? "text-white gap-2"
-    : "text-gray-900 gap-2 border-gray-300 bg-white hover:bg-gray-100";
-
-  const logoClass = isOverlay
-    ? "text-white hover:text-white/80"
-    : "text-gray-900 hover:text-gray-700";
-
-  const mobileMenuButtonClass = isOverlay
-    ? "glass text-white hover:bg-white/20"
-    : "bg-white text-gray-900 border border-gray-200 shadow-md hover:bg-gray-100";
-
-  const mobilePanelClass = isOverlay
-    ? "glass-dark rounded-xl p-5 shadow-2xl border border-white/10"
-    : "bg-white rounded-xl p-5 shadow-2xl border border-gray-200";
-
-  const mobileInactiveLinkClass = isOverlay
-    ? "text-white hover:bg-white/15 active:bg-white/20"
-    : "text-gray-700 hover:bg-gray-100 active:bg-gray-200";
-
-  const mobileActiveLinkClass = isOverlay
-    ? "bg-white text-black shadow-sm"
-    : "bg-gray-900 text-white shadow-sm";
-
-  const isActive = (href: string) => {
-    if (href === "/") {
-      return pathname === "/";
-    }
-    return pathname.startsWith(href);
-  };
+export function NavBar({ surface, active, cta }: NavBarProps) {
+  const [open, setOpen] = useState(false);
+  const onImage = surface === "glass";
 
   return (
-    <>
-      {/* Logo - Only show if specified */}
-      {showLogo && (
-        <div className="absolute top-6 left-8 z-40">
-          <Link href="/">
-            <h1 className={cn("text-2xl font-display italic transition-colors", logoClass)}>
-              Island Hype
-            </h1>
-          </Link>
-        </div>
+    <div
+      className={cn(
+        "relative flex flex-wrap items-center justify-between gap-6 px-[var(--gutter)] py-6",
+        !onImage && "border-b border-ink-200 bg-white"
       )}
+    >
+      <Link
+        href="/"
+        className={cn(
+          "font-display text-[24px] italic leading-[30px]",
+          onImage ? "text-white" : "text-ink-900"
+        )}
+      >
+        Island Hype
+      </Link>
 
-      {/* Desktop Navigation - Hidden on mobile, visible on md+ (768px+) */}
-      <nav className="hidden md:block absolute top-6 left-1/2 -translate-x-1/2 z-40">
-        <div className={cn("flex items-center gap-1", navShellClass)}>
-          {NAV_LINKS.map((link) => {
-            const active = isActive(link.href);
-
-            return (
-              <Link key={link.href} href={link.href}>
-                <Button
-                  variant={active ? (isOverlay ? "white" : "dark") : "ghost"}
-                  size="sm"
-                  className={cn(
-                    "rounded-full",
-                    !active && desktopInactiveLinkClass
-                  )}
-                >
-                  {link.label}
-                </Button>
-              </Link>
-            );
-          })}
-        </div>
+      {/* Desktop pill */}
+      <nav
+        aria-label="Main"
+        className={cn(
+          "hidden items-center gap-1 rounded-full p-1.5 md:flex",
+          onImage ? "glass-light" : "border border-ink-200 bg-ink-50"
+        )}
+      >
+        {ITEMS.map((item) => {
+          const isActive = item.key === active;
+          return (
+            <Link
+              key={item.key}
+              href={item.href}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "inline-flex h-9 items-center rounded-full px-4 text-body-xs transition-colors duration-[140ms]",
+                isActive && onImage && "bg-white font-medium text-ink-900",
+                isActive && !onImage && "bg-ink-900 font-medium text-white",
+                !isActive && onImage && "text-white hover:bg-white/15",
+                !isActive && !onImage && "text-ink-700 hover:bg-white"
+              )}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* Book Now Button - Desktop - Hidden on mobile, flex on md+ (768px+) */}
-      <div className="hidden md:flex absolute top-6 right-8 z-40 items-center gap-2">
-        <Link href="/packages">
-          <Button variant={isOverlay ? "glass" : "outline"} className={bookNowClass}>
-            Book Now
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 17L17 7M17 7H7M17 7V17"
-              />
-            </svg>
-          </Button>
-        </Link>
+      <div className="flex items-center gap-3">
+        {cta && (
+          <Link
+            href={cta.href}
+            className={cn(
+              "inline-flex h-11 items-center gap-2 rounded-full px-[22px] text-body-xs font-medium transition-colors duration-[220ms]",
+              onImage
+                ? "bg-white text-ink-900 hover:bg-white/90"
+                : "bg-ink-900 text-white hover:bg-ink-800"
+            )}
+          >
+            {cta.label}
+            {cta.arrow && (
+              <span aria-hidden="true" className={onImage ? "text-teal-deep" : "text-teal-bright"}>
+                ↗
+              </span>
+            )}
+          </Link>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={open ? "Close menu" : "Open menu"}
+          className={cn(
+            "inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full md:hidden",
+            onImage ? "glass-light text-white" : "border border-ink-200 bg-white text-ink-900"
+          )}
+        >
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </div>
 
-      {/* Mobile Menu Button - Visible on mobile, hidden on md+ (768px+) */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "md:hidden absolute top-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all active:scale-95",
-          mobileMenuButtonClass
-        )}
-        aria-label="Toggle menu"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-
-      {/* Mobile Menu Overlay - Visible on mobile, hidden on md+ (768px+) */}
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="md:hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-md"
-            onClick={() => setIsOpen(false)}
-          />
-
-          {/* Menu Content */}
-          <div className="md:hidden fixed top-20 left-4 right-4 z-50 rounded-full">
-            <div className="max-w-md mx-auto">
-                <div className={mobilePanelClass}>
-                  {/* Navigation Links */}
-                  <div className="flex flex-col gap-2.5">
-                  {NAV_LINKS.map((link) => {
-                    const active = isActive(link.href);
-
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <button
-                          className={cn(
-                            "w-full text-left px-6 py-3.5 h-12 rounded-full text-base font-medium transition-all",
-                            active
-                              ? mobileActiveLinkClass
-                              : mobileInactiveLinkClass
-                          )}
-                        >
-                          {link.label}
-                        </button>
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                {/* Divider */}
-                <div className={cn("my-4 h-px", isOverlay ? "bg-white/10" : "bg-gray-200")} />
-
-                {/* Book Now Button */}
-                <Link href="/packages" onClick={() => setIsOpen(false)}>
-                  <button
-                    className={cn(
-                      "w-full px-6 py-3.5 h-12 rounded-full text-base font-medium shadow-sm transition-all flex items-center justify-center gap-2",
-                      isOverlay
-                        ? "bg-white text-black hover:bg-white/90 active:bg-white/80"
-                        : "bg-gray-900 text-white hover:bg-gray-800 active:bg-gray-950"
-                    )}
-                  >
-                    Book Now
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 17L17 7M17 7H7M17 7V17"
-                      />
-                    </svg>
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </>
+      {/* Mobile panel — glass-dark is the only other place glass appears. */}
+      {open && (
+        <nav
+          aria-label="Main"
+          className={cn(
+            "absolute inset-x-[var(--gutter)] top-full z-50 flex flex-col rounded-xl p-2 md:hidden",
+            onImage ? "glass-dark" : "border border-ink-200 bg-white shadow-overlay"
+          )}
+        >
+          {ITEMS.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              aria-current={item.key === active ? "page" : undefined}
+              className={cn(
+                "rounded-md px-4 py-3 text-body-s",
+                item.key === active
+                  ? onImage
+                    ? "bg-white/15 font-medium text-white"
+                    : "bg-ink-50 font-medium text-ink-900"
+                  : onImage
+                    ? "text-white"
+                    : "text-ink-700"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       )}
-    </>
+    </div>
   );
 }

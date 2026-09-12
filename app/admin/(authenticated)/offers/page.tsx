@@ -1,5 +1,6 @@
 import { getOffers } from "@/lib/actions/offers";
 import { PageHeader } from "@/components/admin/ui/page-header";
+import { TableEmptyRow } from "@/components/admin/ui/table-empty";
 import { StatusBadge } from "@/components/admin/ui/status-badge";
 import Link from "next/link";
 
@@ -46,7 +47,12 @@ export default async function OffersPage() {
                     {new Date(offer.validUntil).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={offer.isActive ? "active" : "inactive"} />
+                    {/* Not offer.isActive on its own. An offer whose dates have
+                        passed is invisible on the site while isActive is still
+                        true, so a plain "Active" badge told staff the opposite of
+                        what a guest sees. The verdict below is the same one the
+                        public pages derive. */}
+                    <OfferStatus offer={offer} />
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link
@@ -60,15 +66,78 @@ export default async function OffersPage() {
               );
             })}
             {offers.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                  No offers found. Create your first one.
-                </td>
-              </tr>
+              <TableEmptyRow
+                colSpan={7}
+                title="No offers yet."
+                body="An offer shows as a badge on its package's card and as a panel on the package page, with its conditions and end date. It appears only while today falls inside its dates."
+                action={{ label: "New offer", href: "/admin/offers/new" }}
+              />
             )}
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+/**
+ * What a guest actually sees for this offer, in the same words the site uses.
+ *
+ * Four states, and the two middle ones are the reason this exists: an offer can
+ * be switched on and still be invisible because its window has not opened yet or
+ * has already closed. Two of the four offers in the database were in that state.
+ */
+function OfferStatus({
+  offer,
+}: {
+  offer: { isActive: boolean; validFrom: Date; validUntil: Date };
+}) {
+  if (!offer.isActive) {
+    return (
+      <span className="inline-flex flex-col">
+        <StatusBadge status="inactive" />
+        <span className="mt-1 text-xs text-slate-400">Switched off</span>
+      </span>
+    );
+  }
+
+  const day = (d: Date) => {
+    const c = new Date(d);
+    c.setHours(0, 0, 0, 0);
+    return c.getTime();
+  };
+  const today = day(new Date());
+  const fmt = (d: Date) =>
+    new Date(d).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
+  if (today < day(offer.validFrom)) {
+    return (
+      <span className="inline-flex flex-col">
+        <StatusBadge status="draft" />
+        <span className="mt-1 text-xs text-slate-400">
+          Starts {fmt(offer.validFrom)}
+        </span>
+      </span>
+    );
+  }
+
+  if (today > day(offer.validUntil)) {
+    return (
+      <span className="inline-flex flex-col">
+        <StatusBadge status="inactive" />
+        <span className="mt-1 text-xs text-amber-600">
+          Ended {fmt(offer.validUntil)} — not on the site
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex flex-col">
+      <StatusBadge status="active" />
+      <span className="mt-1 text-xs text-slate-400">
+        Showing until {fmt(offer.validUntil)}
+      </span>
+    </span>
   );
 }

@@ -1,5 +1,6 @@
 import { getPackages } from "@/lib/actions/packages";
 import { PageHeader } from "@/components/admin/ui/page-header";
+import { TableEmptyRow } from "@/components/admin/ui/table-empty";
 import { StatusBadge } from "@/components/admin/ui/status-badge";
 import Link from "next/link";
 
@@ -58,11 +59,12 @@ export default async function PackagesPage() {
               </tr>
             ))}
             {packages.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                  No packages found. Create your first one.
-                </td>
-              </tr>
+              <TableEmptyRow
+                colSpan={7}
+                title="No packages yet."
+                body="Packages are what guests browse and enquire about. Add one and it goes live on the site as soon as you tick Active — until then it stays hidden while you work on it."
+                action={{ label: "New package", href: "/admin/packages/new" }}
+              />
             )}
           </tbody>
         </table>

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
+import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
+import { accommodationDeleteImpact } from "@/lib/actions/delete-impact";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { ImageGallery } from "@/components/admin/shared/image-gallery";
@@ -15,14 +17,38 @@ import {
   uploadAccommodationImage,
   deleteAccommodationImage,
   uploadAccommodationCoverImage,
+  updateAccommodationRooms,
+  updateAccommodationFacilities,
 } from "@/lib/actions/accommodations";
 import { generateSlug } from "@/lib/utils";
+import { FaqEditor } from "@/components/admin/editors";
 import { X, Plus } from "lucide-react";
 
 const inputClass =
   "w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors";
 
 const TYPES = ["RESORT", "GUESTHOUSE", "HOTEL", "LIVEABOARD"] as const;
+
+/** The groups the design's two facility columns use. Free text, these are a hint. */
+const FACILITY_GROUPS = ["Eating and drinking", "In the water", "On the island"];
+
+interface RoomRow {
+  name: string;
+  blurb: string;
+  nightlyFrom: string;
+  size: string;
+  sleeps: string;
+  access: string;
+}
+
+interface FacilityRow {
+  group: string;
+  item: string;
+}
+
+const emptyRoom = (): RoomRow => ({
+  name: "", blurb: "", nightlyFrom: "", size: "", sleeps: "", access: "",
+});
 
 interface AccommodationFormProps {
   accommodation?: {
@@ -33,9 +59,11 @@ interface AccommodationFormProps {
     shortDesc: string | null;
     description: string;
     starRating: number | null;
-    roomTypes: string[];
-    amenities: string[];
     locationId: string;
+    houseReef: string | null;
+    suits: string | null;
+    boardOptions: string | null;
+    absentNote: string | null;
     coverImage: string | null;
     contactEmail: string | null;
     contactPhone: string | null;
@@ -44,9 +72,19 @@ interface AccommodationFormProps {
   };
   images?: { id: string; url: string; alt: string | null }[];
   locations: { id: string; name: string }[];
+  rooms?: RoomRow[];
+  facilities?: FacilityRow[];
+  faqs?: { question: string; answer: string }[];
 }
 
-export function AccommodationForm({ accommodation, images = [], locations }: AccommodationFormProps) {
+export function AccommodationForm({
+  accommodation,
+  images = [],
+  locations,
+  rooms: initialRooms = [],
+  facilities: initialFacilities = [],
+  faqs = [],
+}: AccommodationFormProps) {
   const router = useRouter();
   const isEdit = !!accommodation;
 
@@ -57,10 +95,15 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
   const [description, setDescription] = useState(accommodation?.description || "");
   const [starRating, setStarRating] = useState(accommodation?.starRating?.toString() || "");
   const [locationId, setLocationId] = useState(accommodation?.locationId || "");
-  const [roomTypes, setRoomTypes] = useState<string[]>(accommodation?.roomTypes || []);
-  const [amenities, setAmenities] = useState<string[]>(accommodation?.amenities || []);
-  const [newRoomType, setNewRoomType] = useState("");
-  const [newAmenity, setNewAmenity] = useState("");
+  const [rooms, setRooms] = useState<RoomRow[]>(initialRooms);
+  const [facilities, setFacilities] = useState<FacilityRow[]>(initialFacilities);
+  const [savingRooms, setSavingRooms] = useState(false);
+  const [savingFacilities, setSavingFacilities] = useState(false);
+  // Display fields the redesign reads. Nullable — a blank drops the row on the site.
+  const [houseReef, setHouseReef] = useState(accommodation?.houseReef || "");
+  const [suits, setSuits] = useState(accommodation?.suits || "");
+  const [boardOptions, setBoardOptions] = useState(accommodation?.boardOptions || "");
+  const [absentNote, setAbsentNote] = useState(accommodation?.absentNote || "");
   const [contactEmail, setContactEmail] = useState(accommodation?.contactEmail || "");
   const [contactPhone, setContactPhone] = useState(accommodation?.contactPhone || "");
   const [isActive, setIsActive] = useState(accommodation?.isActive ?? true);
@@ -71,20 +114,6 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
   function handleNameChange(value: string) {
     setName(value);
     if (!isEdit) setSlug(generateSlug(value));
-  }
-
-  function addRoomType() {
-    if (newRoomType.trim() && !roomTypes.includes(newRoomType.trim())) {
-      setRoomTypes([...roomTypes, newRoomType.trim()]);
-      setNewRoomType("");
-    }
-  }
-
-  function addAmenity() {
-    if (newAmenity.trim() && !amenities.includes(newAmenity.trim())) {
-      setAmenities([...amenities, newAmenity.trim()]);
-      setNewAmenity("");
-    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -99,8 +128,10 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
     formData.set("description", description);
     if (starRating) formData.set("starRating", starRating);
     formData.set("locationId", locationId);
-    formData.set("roomTypes", roomTypes.join(","));
-    formData.set("amenities", amenities.join(","));
+    formData.set("houseReef", houseReef);
+    formData.set("suits", suits);
+    formData.set("boardOptions", boardOptions);
+    formData.set("absentNote", absentNote);
     formData.set("contactEmail", contactEmail);
     formData.set("contactPhone", contactPhone);
     formData.set("isActive", String(isActive));
@@ -124,16 +155,6 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
     }
   }
 
-  async function handleDelete() {
-    if (!accommodation || !confirm("Delete this accommodation?")) return;
-    const result = await deleteAccommodation(accommodation.id);
-    if (result.success) {
-      toast.success("Accommodation deleted");
-      router.push("/admin/accommodations");
-    } else {
-      toast.error(result.error || "Failed to delete");
-    }
-  }
 
   async function handleCoverUpload(file: File) {
     if (!accommodation) return { success: false, error: "Save the accommodation first" };
@@ -220,59 +241,155 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} required rows={4} className={inputClass} />
             </div>
 
-            {/* Room Types */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Room Types</label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  value={newRoomType}
-                  onChange={(e) => setNewRoomType(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addRoomType())}
-                  placeholder="Add room type..."
-                  className={inputClass}
-                />
-                <button type="button" onClick={addRoomType} className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
-                  <Plus className="w-4 h-4" />
-                </button>
+            {/* Display fields the redesign reads — all optional */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">House reef</label>
+                <input value={houseReef} onChange={(e) => setHouseReef(e.target.value)} placeholder="Yes — 9m from the villa ladder" className={inputClass} />
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {roomTypes.map((rt) => (
-                  <span key={rt} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-sm text-slate-700">
-                    {rt}
-                    <button type="button" onClick={() => setRoomTypes(roomTypes.filter((r) => r !== rt))} className="text-slate-400 hover:text-slate-600">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Suits</label>
+                <input value={suits} onChange={(e) => setSuits(e.target.value)} placeholder="Couples, snorkellers, divers" className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Board options</label>
+                <input value={boardOptions} onChange={(e) => setBoardOptions(e.target.value)} placeholder="Half-board or full-board" className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  What&apos;s absent
+                  <span className="ml-1 font-normal text-slate-400">shown under the facilities</span>
+                </label>
+                <input value={absentNote} onChange={(e) => setAbsentNote(e.target.value)} placeholder="No kids' club, patchy villa wifi" className={inputClass} />
               </div>
             </div>
 
-            {/* Amenities */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Amenities</label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  value={newAmenity}
-                  onChange={(e) => setNewAmenity(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addAmenity())}
-                  placeholder="Add amenity..."
-                  className={inputClass}
-                />
-                <button type="button" onClick={addAmenity} className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {amenities.map((am) => (
-                  <span key={am} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-sm text-slate-700">
-                    {am}
-                    <button type="button" onClick={() => setAmenities(amenities.filter((a) => a !== am))} className="text-slate-400 hover:text-slate-600">
-                      <X className="w-3 h-3" />
+            {isEdit && (
+              <>
+                {/* Rooms */}
+                <div className="pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">Rooms</h3>
+                      <p className="text-xs text-slate-500">Only the name is required. Blank cells are hidden on the site.</p>
+                    </div>
+                    <button type="button" onClick={() => setRooms([...rooms, emptyRoom()])} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+                      <Plus className="w-4 h-4" /> Add room
                     </button>
-                  </span>
-                ))}
-              </div>
-            </div>
+                  </div>
+                  <div className="space-y-3">
+                    {rooms.map((r, i) => (
+                      <div key={i} className="border border-slate-200 rounded-lg p-3 space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            value={r.name}
+                            onChange={(e) => { const u = [...rooms]; u[i] = { ...u[i], name: e.target.value }; setRooms(u); }}
+                            placeholder="Water villa"
+                            className={inputClass}
+                          />
+                          <button type="button" onClick={() => setRooms(rooms.filter((_, idx) => idx !== i))} className="px-2 text-slate-400 hover:text-red-500">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <textarea
+                          value={r.blurb}
+                          onChange={(e) => { const u = [...rooms]; u[i] = { ...u[i], blurb: e.target.value }; setRooms(u); }}
+                          placeholder="What makes this room worth having…"
+                          rows={2}
+                          className={inputClass}
+                        />
+                        <div className="grid grid-cols-4 gap-2">
+                          <input value={r.nightlyFrom} onChange={(e) => { const u = [...rooms]; u[i] = { ...u[i], nightlyFrom: e.target.value }; setRooms(u); }} placeholder="From / night" className={inputClass} />
+                          <input value={r.size} onChange={(e) => { const u = [...rooms]; u[i] = { ...u[i], size: e.target.value }; setRooms(u); }} placeholder="78 m²" className={inputClass} />
+                          <input value={r.sleeps} onChange={(e) => { const u = [...rooms]; u[i] = { ...u[i], sleeps: e.target.value }; setRooms(u); }} placeholder="2 adults" className={inputClass} />
+                          <input value={r.access} onChange={(e) => { const u = [...rooms]; u[i] = { ...u[i], access: e.target.value }; setRooms(u); }} placeholder="Ladder to lagoon" className={inputClass} />
+                        </div>
+                      </div>
+                    ))}
+                    {rooms.length === 0 && <p className="text-sm text-slate-500">No rooms yet. The room section is hidden on the site until you add one.</p>}
+                  </div>
+                  <div className="mt-3">
+                    <SubmitButton
+                      type="button"
+                      loading={savingRooms}
+                      onClick={async () => {
+                        setSavingRooms(true);
+                        const result = await updateAccommodationRooms(
+                          accommodation!.id,
+                          rooms.map((r) => ({
+                            name: r.name,
+                            blurb: r.blurb,
+                            nightlyFrom: r.nightlyFrom ? Number(r.nightlyFrom) : null,
+                            size: r.size,
+                            sleeps: r.sleeps,
+                            access: r.access,
+                          }))
+                        );
+                        setSavingRooms(false);
+                        if (result.success) toast.success("Rooms saved");
+                        else toast.error(result.error || "Failed to save rooms");
+                      }}
+                    >
+                      Save rooms
+                    </SubmitButton>
+                  </div>
+                </div>
+
+                {/* Facilities */}
+                <div className="pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">Facilities</h3>
+                      <p className="text-xs text-slate-500">Grouped — the site renders one column per group.</p>
+                    </div>
+                    <button type="button" onClick={() => setFacilities([...facilities, { group: FACILITY_GROUPS[0], item: "" }])} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+                      <Plus className="w-4 h-4" /> Add facility
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {facilities.map((f, i) => (
+                      <div key={i} className="flex gap-2">
+                        <input
+                          list="facility-groups"
+                          value={f.group}
+                          onChange={(e) => { const u = [...facilities]; u[i] = { ...u[i], group: e.target.value }; setFacilities(u); }}
+                          placeholder="Group"
+                          className={inputClass}
+                        />
+                        <input
+                          value={f.item}
+                          onChange={(e) => { const u = [...facilities]; u[i] = { ...u[i], item: e.target.value }; setFacilities(u); }}
+                          placeholder="PADI dive centre, nitrox available"
+                          className={inputClass}
+                        />
+                        <button type="button" onClick={() => setFacilities(facilities.filter((_, idx) => idx !== i))} className="px-2 text-slate-400 hover:text-red-500">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <datalist id="facility-groups">
+                      {FACILITY_GROUPS.map((g) => <option key={g} value={g} />)}
+                    </datalist>
+                    {facilities.length === 0 && <p className="text-sm text-slate-500">No facilities yet. The section is hidden on the site until you add one.</p>}
+                  </div>
+                  <div className="mt-3">
+                    <SubmitButton
+                      type="button"
+                      loading={savingFacilities}
+                      onClick={async () => {
+                        setSavingFacilities(true);
+                        const result = await updateAccommodationFacilities(accommodation!.id, facilities);
+                        setSavingFacilities(false);
+                        if (result.success) toast.success("Facilities saved");
+                        else toast.error(result.error || "Failed to save facilities");
+                      }}
+                    >
+                      Save facilities
+                    </SubmitButton>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -298,17 +415,30 @@ export function AccommodationForm({ accommodation, images = [], locations }: Acc
           <div className="flex gap-3">
             <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Accommodation"}</SubmitButton>
             {isEdit && (
-              <SubmitButton type="button" variant="danger" onClick={handleDelete}>Delete</SubmitButton>
+              <DeleteWithImpact
+                noun="place to stay"
+                getImpact={() => accommodationDeleteImpact(accommodation!.id)}
+                onDelete={() => deleteAccommodation(accommodation!.id)}
+                redirectTo="/admin/accommodations"
+              />
             )}
           </div>
         </form>
 
-        {isEdit && (
-          <ImageGallery
-            images={images}
-            onUpload={handleImageUpload}
-            onDelete={handleImageDelete}
-          />
+        {isEdit && accommodation && (
+          <>
+            <ImageGallery
+              images={images}
+              onUpload={handleImageUpload}
+              onDelete={handleImageDelete}
+            />
+
+            <FaqEditor
+              owner={{ accommodationId: accommodation.id }}
+              initial={faqs}
+              what="stay"
+            />
+          </>
         )}
       </div>
     </div>

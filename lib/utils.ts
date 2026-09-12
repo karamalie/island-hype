@@ -1,7 +1,43 @@
 // lib/utils.ts
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
 import slugify from "slugify";
+
+/**
+ * The design system's type scale, declared as `--text-*` tokens in globals.css.
+ *
+ * tailwind-merge has to be told about these. It resolves conflicts by class
+ * group, and `text-*` is ambiguous — it covers both font-size and text-colour.
+ * Without this list, tailwind-merge reads `text-display-xl` as a colour and
+ * silently drops any `text-white` that precedes it, which renders white-on-photo
+ * headings in near-black. Nothing errors; the page is just wrong.
+ */
+const FONT_SIZES = [
+  "display-xl",
+  "display-l",
+  "display-m",
+  "heading-l",
+  "heading-m",
+  "heading-s",
+  "card-title",
+  "body-l",
+  "body-m",
+  "body-s",
+  "body-xs",
+  "caption",
+  "label",
+  "label-sm",
+  "price",
+  "price-lg",
+];
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [{ text: FONT_SIZES }],
+    },
+  },
+});
 
 /**
  * Merge Tailwind CSS classes with proper precedence

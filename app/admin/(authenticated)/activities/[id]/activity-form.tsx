@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
+import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
+import { activityDeleteImpact } from "@/lib/actions/delete-impact";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { ImageGallery } from "@/components/admin/shared/image-gallery";
@@ -104,16 +106,6 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
     }
   }
 
-  async function handleDelete() {
-    if (!activity || !confirm("Delete this activity?")) return;
-    const result = await deleteActivity(activity.id);
-    if (result.success) {
-      toast.success("Activity deleted");
-      router.push("/admin/activities");
-    } else {
-      toast.error(result.error || "Failed to delete");
-    }
-  }
 
   async function handleCoverUpload(file: File) {
     if (!activity) return { success: false, error: "Save the activity first" };
@@ -224,7 +216,12 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
           <div className="flex gap-3">
             <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Activity"}</SubmitButton>
             {isEdit && (
-              <SubmitButton type="button" variant="danger" onClick={handleDelete}>Delete</SubmitButton>
+              <DeleteWithImpact
+                noun="activity"
+                getImpact={() => activityDeleteImpact(activity!.id)}
+                onDelete={() => deleteActivity(activity!.id)}
+                redirectTo="/admin/activities"
+              />
             )}
           </div>
         </form>

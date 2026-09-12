@@ -13,12 +13,18 @@ export default async function EditLocationPage({
   const location = await getLocation(id);
   if (!location) notFound();
 
-  const allExperiences = await prisma.experience.findMany({
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
+  const [seasonRows, stayTypeRows, linkedStayTypes, faqRows] = await Promise.all([
+    prisma.seasonMonth.findMany({ where: { locationId: id }, orderBy: { month: "asc" } }),
+    prisma.stayType.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.locationStayType.findMany({
+      where: { locationId: id },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.faqItem.findMany({ where: { locationId: id }, orderBy: { sortOrder: "asc" } }),
+  ]);
 
-  const linkedExperienceIds = location.experiences.map((e) => e.experience.id);
+  const season: Record<number, (typeof seasonRows)[number]["state"]> = {};
+  for (const r of seasonRows) season[r.month] = r.state;
 
   // Resolve coverImage to full URL (seeded data stores bare filenames)
   const resolvedLocation = {
@@ -38,8 +44,26 @@ export default async function EditLocationPage({
     <LocationForm
       location={resolvedLocation}
       images={resolvedImages}
-      allExperiences={allExperiences}
-      linkedExperienceIds={linkedExperienceIds}
+      character={{
+        region: location.region ?? "",
+        knownFor: location.knownFor ?? "",
+        bestMonths: location.bestMonths ?? "",
+      }}
+      season={season}
+      seasonLabel={location.seasonHighlightLabel ?? ""}
+      allStayTypes={stayTypeRows.map((s) => ({
+        id: s.id,
+        name: s.name,
+        band: s.band,
+        blurb: s.blurb,
+        nightlyFrom: s.nightlyFrom,
+      }))}
+      stayTypes={linkedStayTypes.map((l) => ({
+        stayTypeId: l.stayTypeId,
+        blurb: l.blurb ?? "",
+        nightlyFrom: l.nightlyFrom !== null ? String(l.nightlyFrom) : "",
+      }))}
+      faqs={faqRows.map((f) => ({ question: f.question, answer: f.answer }))}
     />
   );
 }

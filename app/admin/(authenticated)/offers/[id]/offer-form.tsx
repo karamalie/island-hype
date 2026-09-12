@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BackButton } from "@/components/admin/ui/back-button";
+import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
+import { offerDeleteImpact } from "@/lib/actions/delete-impact";
 import { SubmitButton } from "@/components/admin/ui/submit-button";
 import { Toggle } from "@/components/admin/ui/toggle";
 import { createOffer, updateOffer, deleteOffer } from "@/lib/actions/offers";
@@ -101,16 +103,6 @@ export function OfferForm({ offer, packages }: OfferFormProps) {
     }
   }
 
-  async function handleDelete() {
-    if (!offer || !confirm("Delete this offer?")) return;
-    const result = await deleteOffer(offer.id);
-    if (result.success) {
-      toast.success("Offer deleted");
-      router.push("/admin/offers");
-    } else {
-      toast.error(result.error || "Failed to delete");
-    }
-  }
 
   return (
     <div>
@@ -209,7 +201,12 @@ export function OfferForm({ offer, packages }: OfferFormProps) {
         <div className="flex gap-3">
           <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Offer"}</SubmitButton>
           {isEdit && (
-            <SubmitButton type="button" variant="danger" onClick={handleDelete}>Delete</SubmitButton>
+            <DeleteWithImpact
+                noun="offer"
+                getImpact={() => offerDeleteImpact(offer!.id)}
+                onDelete={() => deleteOffer(offer!.id)}
+                redirectTo="/admin/offers"
+              />
           )}
         </div>
       </form>
