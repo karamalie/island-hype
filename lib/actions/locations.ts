@@ -22,7 +22,6 @@ export async function getLocation(id: string) {
     where: { id },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
-      experiences: { include: { experience: { select: { id: true, name: true } } } },
     },
   });
 }
@@ -254,24 +253,3 @@ export async function uploadLocationCoverImage(locationId: string, formData: For
   }
 }
 
-export async function updateLocationExperiences(
-  locationId: string,
-  experienceIds: string[]
-) {
-  const session = await getSession();
-  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
-
-  try {
-    await prisma.locationExperience.deleteMany({ where: { locationId } });
-    if (experienceIds.length > 0) {
-      await prisma.locationExperience.createMany({
-        data: experienceIds.map((experienceId) => ({ locationId, experienceId })),
-      });
-    }
-    revalidatePath(`/admin/locations/${locationId}`);
-    revalidatePath("/");
-    return { success: true };
-  } catch {
-    return { success: false, error: "Failed to update experiences" };
-  }
-}

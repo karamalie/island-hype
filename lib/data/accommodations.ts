@@ -10,6 +10,9 @@ import type {
   Package,
   PackagePricing,
 } from "@prisma/client";
+import { isPhotoRich } from "@/lib/design/density";
+import { accommodationTypeLabel, transferSummary } from "@/lib/design/labels";
+import { packagesLine } from "@/lib/design/inventory";
 
 // `roomTypes`/`amenities` are JSON columns (MySQL); expose them as string[].
 type AccommodationBase = Omit<Accommodation, "roomTypes" | "amenities"> & {
@@ -567,4 +570,176 @@ export async function searchAccommodations(
   });
 
   return accommodations as AccommodationWithRelations[];
+}
+
+// ============================================================================
+// Redesign loaders. See the note in lib/data/packages.ts.
+//
+// "Stay" rather than "accommodation" throughout, because that is the word the
+// designs use in the nav and on the page.
+// ============================================================================
+
+export interface StayCard {
+  id: string;
+  slug: string;
+  name: string;
+  blurb: string | null;
+  islandName: string;
+  islandSlug: string;
+  /** "Guesthouse" — the badge pill. */
+  typeLabel: string;
+  type: AccommodationType;
+  rooms: string | null;
+  board: string | null;
+  transfer: string | null;
+  nightlyFrom: number | null;
+  /** "In 1 package" */
+  packagesLine: string;
+  packageCount: number;
+  coverImage: string | null;
+  photoRich: boolean;
+}
+
+export async function getStayCards(opts: { locationSlug?: string } = {}): Promise<StayCard[]> {
+  const rows = await prisma.accommodation.findMany({
+    where: {
+      isActive: true,
+      ...(opts.locationSlug ? { location: { slug: opts.locationSlug } } : {}),
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      shortDesc: true,
+      type: true,
+      boardOptions: true,
+      coverImage: true,
+      sortOrder: true,
+      location: {
+        select: { name: true, slug: true, transferType: true, transferTime: true },
+      },
+      roomTypes: { select: { name: true, nightlyFrom: true }, orderBy: { sortOrder: "asc" } },
+      images: { select: { url: true }, take: 1 },
+      _count: { select: { packages: true } },
+    },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+  });
+
+  return rows.map((a) => {
+    const prices = a.roomTypes
+      .map((r) => r.nightlyFrom)
+      .filter((n): n is number => n !== null);
+
+    return {
+      id: a.id,
+      slug: a.slug,
+      name: a.name,
+      blurb: a.shortDesc,
+      islandName: a.location.name,
+      islandSlug: a.location.slug,
+      typeLabel: accommodationTypeLabel(a.type),
+      type: a.type,
+      // Null when nothing is entered yet, so the spec row drops rather than
+      // printing a label with nothing beside it.
+      rooms: a.roomTypes.length > 0 ? a.roomTypes.map((r) => r.name).join(", ") : null,
+      board: a.boardOptions,
+      transfer: transferSummary(a.location.transferType, a.location.transferTime),
+      nightlyFrom: prices.length > 0 ? Math.min(...prices) : null,
+      packagesLine: packagesLine(a._count.packages),
+      packageCount: a._count.packages,
+      coverImage: a.coverImage,
+      photoRich: isPhotoRich({ coverImage: a.coverImage, images: a.images }),
+    };
+  });
+}
+
+export interface StayDetailData extends StayCard {
+  description: string;
+  starRating: number | null;
+  houseReef: string | null;
+  suits: string | null;
+  absentNote: string | null;
+  images: { id: string; url: string; alt: string | null }[];
+  roomTypes: {
+    id: string;
+    name: string;
+    blurb: string | null;
+    nightlyFrom: number | null;
+    size: string | null;
+    sleeps: string | null;
+    access: string | null;
+  }[];
+  /** Grouped in insertion order; the design renders one column per group. */
+  facilityGroups: { group: string; items: string[] }[];
+  faqs: { id: string; question: string; answer: string }[];
+  packageSlug: string | null;
+}
+
+export async function getStayDetail(slug: string): Promise<StayDetailData | null> {
+  const row = await prisma.accommodation.findUnique({
+    where: { slug },
+    include: {
+      location: true,
+      images: { orderBy: { sortOrder: "asc" } },
+      roomTypes: { orderBy: { sortOrder: "asc" } },
+      facilities: { orderBy: { sortOrder: "asc" } },
+      faqs: { orderBy: { sortOrder: "asc" } },
+      packages: {
+        where: { isActive: true },
+        select: { slug: true },
+        orderBy: { sortOrder: "asc" },
+        take: 1,
+      },
+      _count: { select: { packages: true } },
+    },
+  });
+  if (!row || !row.isActive) return null;
+
+  const prices = row.roomTypes
+    .map((r) => r.nightlyFrom)
+    .filter((n): n is number => n !== null);
+
+  const groups: { group: string; items: string[] }[] = [];
+  for (const f of row.facilities) {
+    const existing = groups.find((g) => g.group === f.group);
+    if (existing) existing.items.push(f.item);
+    else groups.push({ group: f.group, items: [f.item] });
+  }
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    blurb: row.shortDesc,
+    islandName: row.location.name,
+    islandSlug: row.location.slug,
+    typeLabel: accommodationTypeLabel(row.type),
+    type: row.type,
+    rooms: row.roomTypes.length > 0 ? row.roomTypes.map((r) => r.name).join(", ") : null,
+    board: row.boardOptions,
+    transfer: transferSummary(row.location.transferType, row.location.transferTime),
+    nightlyFrom: prices.length > 0 ? Math.min(...prices) : null,
+    packagesLine: packagesLine(row._count.packages),
+    packageCount: row._count.packages,
+    coverImage: row.coverImage,
+    photoRich: isPhotoRich({ coverImage: row.coverImage, images: row.images }),
+    description: row.description,
+    starRating: row.starRating,
+    houseReef: row.houseReef,
+    suits: row.suits,
+    absentNote: row.absentNote,
+    images: row.images.map((i) => ({ id: i.id, url: i.url, alt: i.alt })),
+    roomTypes: row.roomTypes.map((r) => ({
+      id: r.id,
+      name: r.name,
+      blurb: r.blurb,
+      nightlyFrom: r.nightlyFrom,
+      size: r.size,
+      sleeps: r.sleeps,
+      access: r.access,
+    })),
+    facilityGroups: groups,
+    faqs: row.faqs.map((f) => ({ id: f.id, question: f.question, answer: f.answer })),
+    packageSlug: row.packages[0]?.slug ?? null,
+  };
 }

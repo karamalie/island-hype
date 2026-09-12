@@ -38,16 +38,10 @@ export async function createAccommodation(formData: FormData) {
     ? parseInt(formData.get("starRating") as string)
     : null;
   const locationId = formData.get("locationId") as string;
-  const roomTypesStr = (formData.get("roomTypes") as string) || "";
-  const roomTypes = roomTypesStr
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const amenitiesStr = (formData.get("amenities") as string) || "";
-  const amenities = amenitiesStr
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const houseReef = ((formData.get("houseReef") as string) || "").trim() || null;
+  const suits = ((formData.get("suits") as string) || "").trim() || null;
+  const boardOptions = ((formData.get("boardOptions") as string) || "").trim() || null;
+  const absentNote = ((formData.get("absentNote") as string) || "").trim() || null;
   const contactEmail = (formData.get("contactEmail") as string) || null;
   const contactPhone = (formData.get("contactPhone") as string) || null;
   const isActive = formData.get("isActive") === "true";
@@ -70,7 +64,8 @@ export async function createAccommodation(formData: FormData) {
     const accommodation = await prisma.accommodation.create({
       data: {
         name, slug, shortDesc, description, type, starRating,
-        locationId, roomTypes, amenities, contactEmail, contactPhone,
+        locationId, houseReef, suits, boardOptions, absentNote,
+        contactEmail, contactPhone,
         isActive, sortOrder, coverImage,
       },
     });
@@ -95,16 +90,10 @@ export async function updateAccommodation(id: string, formData: FormData) {
     ? parseInt(formData.get("starRating") as string)
     : null;
   const locationId = formData.get("locationId") as string;
-  const roomTypesStr = (formData.get("roomTypes") as string) || "";
-  const roomTypes = roomTypesStr
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const amenitiesStr = (formData.get("amenities") as string) || "";
-  const amenities = amenitiesStr
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const houseReef = ((formData.get("houseReef") as string) || "").trim() || null;
+  const suits = ((formData.get("suits") as string) || "").trim() || null;
+  const boardOptions = ((formData.get("boardOptions") as string) || "").trim() || null;
+  const absentNote = ((formData.get("absentNote") as string) || "").trim() || null;
   const contactEmail = (formData.get("contactEmail") as string) || null;
   const contactPhone = (formData.get("contactPhone") as string) || null;
   const isActive = formData.get("isActive") === "true";
@@ -115,7 +104,8 @@ export async function updateAccommodation(id: string, formData: FormData) {
       where: { id },
       data: {
         name, slug, shortDesc, description, type, starRating,
-        locationId, roomTypes, amenities, contactEmail, contactPhone,
+        locationId, houseReef, suits, boardOptions, absentNote,
+        contactEmail, contactPhone,
         isActive, sortOrder,
       },
     });
@@ -247,5 +237,82 @@ export async function setAccommodationCoverImage(
     return { success: true };
   } catch {
     return { success: false, error: "Failed to set cover image" };
+  }
+}
+
+/**
+ * Replaces the old flat `roomTypes` JSON array. The designs need a real row per
+ * room: price, size, sleeps and how you get into the water.
+ */
+export async function updateAccommodationRooms(
+  accommodationId: string,
+  rooms: Array<{
+    name: string;
+    blurb?: string | null;
+    nightlyFrom?: number | null;
+    size?: string | null;
+    sleeps?: string | null;
+    access?: string | null;
+  }>
+) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.$transaction([
+      prisma.roomType.deleteMany({ where: { accommodationId } }),
+      prisma.roomType.createMany({
+        data: rooms
+          .filter((r) => r.name.trim())
+          .map((r, i) => ({
+            accommodationId,
+            name: r.name.trim(),
+            blurb: r.blurb?.trim() || null,
+            nightlyFrom: r.nightlyFrom ?? null,
+            size: r.size?.trim() || null,
+            sleeps: r.sleeps?.trim() || null,
+            access: r.access?.trim() || null,
+            sortOrder: i,
+          })),
+      }),
+    ]);
+    revalidatePath(`/admin/accommodations/${accommodationId}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to update rooms" };
+  }
+}
+
+/**
+ * Replaces the old flat `amenities` JSON array. Grouped, because the design shows
+ * two labelled columns rather than one undifferentiated list.
+ */
+export async function updateAccommodationFacilities(
+  accommodationId: string,
+  facilities: Array<{ group: string; item: string }>
+) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.$transaction([
+      prisma.facility.deleteMany({ where: { accommodationId } }),
+      prisma.facility.createMany({
+        data: facilities
+          .filter((f) => f.group.trim() && f.item.trim())
+          .map((f, i) => ({
+            accommodationId,
+            group: f.group.trim(),
+            item: f.item.trim(),
+            sortOrder: i,
+          })),
+      }),
+    ]);
+    revalidatePath(`/admin/accommodations/${accommodationId}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to update facilities" };
   }
 }

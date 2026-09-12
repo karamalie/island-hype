@@ -42,3 +42,6 @@ next-env.d.ts
 
 # migration working files (local only)
 /_migration
+
+# local dev media (pulled from prod, not committed)
+/public/storage

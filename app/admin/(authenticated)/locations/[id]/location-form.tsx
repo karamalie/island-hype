@@ -15,7 +15,6 @@ import {
   uploadLocationImage,
   deleteLocationImage,
   uploadLocationCoverImage,
-  updateLocationExperiences,
 } from "@/lib/actions/locations";
 import { generateSlug } from "@/lib/utils";
 
@@ -44,15 +43,11 @@ interface LocationFormProps {
     sortOrder: number;
   };
   images?: { id: string; url: string; alt: string | null }[];
-  allExperiences: { id: string; name: string }[];
-  linkedExperienceIds?: string[];
 }
 
 export function LocationForm({
   location,
   images = [],
-  allExperiences,
-  linkedExperienceIds = [],
 }: LocationFormProps) {
   const router = useRouter();
   const isEdit = !!location;
@@ -71,10 +66,8 @@ export function LocationForm({
   const [isFeatured, setIsFeatured] = useState(location?.isFeatured ?? false);
   const [isActive, setIsActive] = useState(location?.isActive ?? true);
   const [sortOrder, setSortOrder] = useState(location?.sortOrder || 0);
-  const [selectedExperiences, setSelectedExperiences] = useState<string[]>(linkedExperienceIds);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [savingExperiences, setSavingExperiences] = useState(false);
 
   function handleNameChange(value: string) {
     setName(value);
@@ -150,24 +143,6 @@ export function LocationForm({
 
   async function handleImageDelete(imageId: string) {
     return deleteLocationImage(imageId);
-  }
-
-  async function handleSaveExperiences() {
-    if (!location) return;
-    setSavingExperiences(true);
-    const result = await updateLocationExperiences(location.id, selectedExperiences);
-    setSavingExperiences(false);
-    if (result.success) {
-      toast.success("Experiences updated");
-    } else {
-      toast.error(result.error || "Failed to update");
-    }
-  }
-
-  function toggleExperience(id: string) {
-    setSelectedExperiences((prev) =>
-      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
-    );
   }
 
   return (
@@ -277,28 +252,6 @@ export function LocationForm({
               onDelete={handleImageDelete}
             />
 
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="text-base font-semibold text-slate-900 mb-4">Linked Experiences</h2>
-              <div className="space-y-2 mb-4">
-                {allExperiences.map((exp) => (
-                  <label key={exp.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedExperiences.includes(exp.id)}
-                      onChange={() => toggleExperience(exp.id)}
-                      className="rounded border-slate-300"
-                    />
-                    <span className="text-sm text-slate-700">{exp.name}</span>
-                  </label>
-                ))}
-                {allExperiences.length === 0 && (
-                  <p className="text-sm text-slate-500">No experiences available.</p>
-                )}
-              </div>
-              <SubmitButton type="button" loading={savingExperiences} onClick={handleSaveExperiences}>
-                Save Experiences
-              </SubmitButton>
-            </div>
           </>
         )}
       </div>

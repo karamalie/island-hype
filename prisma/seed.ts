@@ -10,17 +10,12 @@ async function main() {
   await prisma.inquiry.deleteMany();
   await prisma.packageImage.deleteMany();
   await prisma.packageActivity.deleteMany();
-  await prisma.packageExperience.deleteMany();
-  await prisma.packageItinerary.deleteMany();
   await prisma.packageInclusion.deleteMany();
   await prisma.packagePricing.deleteMany();
   await prisma.offer.deleteMany();
   await prisma.package.deleteMany();
   await prisma.activityImage.deleteMany();
   await prisma.activity.deleteMany();
-  await prisma.experienceImage.deleteMany();
-  await prisma.locationExperience.deleteMany();
-  await prisma.experience.deleteMany();
   await prisma.accommodationImage.deleteMany();
   await prisma.accommodation.deleteMany();
   await prisma.locationImage.deleteMany();
@@ -31,107 +26,7 @@ async function main() {
   // ============================================
   // EXPERIENCES
   // ============================================
-  // Images go in: experiences bucket
-  const experiences = await Promise.all([
-    prisma.experience.create({
-      data: {
-        name: "Diving",
-        slug: "diving",
-        shortDesc:
-          "Explore vibrant coral reefs and encounter manta rays, whale sharks, and tropical fish.",
-        description:
-          "The Maldives offers world-class diving with crystal-clear waters, vibrant coral reefs, and an incredible diversity of marine life. From beginner-friendly house reefs to advanced channel dives, there's something for every diver.",
-        icon: "🤿",
-        coverImage: "diving.jpg",
-      },
-    }),
-    prisma.experience.create({
-      data: {
-        name: "Snorkeling",
-        slug: "snorkeling",
-        shortDesc:
-          "Swim alongside sea turtles, reef sharks, and colorful fish in pristine lagoons.",
-        description:
-          "No certification needed! The Maldives' shallow lagoons and house reefs offer spectacular snorkeling right off the beach. Encounter sea turtles, reef sharks, and thousands of tropical fish.",
-        icon: "🐠",
-        coverImage: "snorkeling.jpg",
-      },
-    }),
-    prisma.experience.create({
-      data: {
-        name: "Honeymoon",
-        slug: "honeymoon",
-        shortDesc:
-          "Celebrate love in paradise with romantic dinners, spa treatments, and private moments.",
-        description:
-          "The Maldives is the ultimate honeymoon destination. Enjoy private water villas, candlelit beach dinners, couples spa treatments, and unforgettable sunset cruises.",
-        icon: "💑",
-        coverImage: "honeymoon.jpg",
-      },
-    }),
-    prisma.experience.create({
-      data: {
-        name: "Family",
-        slug: "family",
-        shortDesc:
-          "Create lasting memories with kid-friendly resorts and activities for all ages.",
-        description:
-          "Family-friendly resorts in the Maldives offer kids clubs, family villas, and activities that both children and adults will love. From dolphin cruises to sandbank picnics.",
-        icon: "👨‍👩‍👧‍👦",
-        coverImage: "family.jpg",
-      },
-    }),
-    prisma.experience.create({
-      data: {
-        name: "Water Sports",
-        slug: "water-sports",
-        shortDesc:
-          "Jet skiing, parasailing, kayaking, and more adventures on the water.",
-        description:
-          "Get your adrenaline pumping with jet skis, parasailing, wakeboarding, and water skiing. Or take it easy with kayaking and stand-up paddleboarding.",
-        icon: "🚤",
-        coverImage: "water-sports.jpg",
-      },
-    }),
-    prisma.experience.create({
-      data: {
-        name: "Wellness & Spa",
-        slug: "wellness-spa",
-        shortDesc:
-          "Rejuvenate with overwater spa treatments and holistic wellness programs.",
-        description:
-          "Indulge in world-class spa treatments in stunning overwater pavilions. From traditional Maldivian treatments to yoga and meditation retreats.",
-        icon: "🧘",
-        coverImage: "wellness.jpg",
-      },
-    }),
-    prisma.experience.create({
-      data: {
-        name: "Local Culture",
-        slug: "local-culture",
-        shortDesc:
-          "Discover authentic Maldivian traditions, cuisine, and island life.",
-        description:
-          "Experience the real Maldives with island hopping to local communities, traditional fishing trips, Maldivian cooking classes, and cultural performances.",
-        icon: "🏝️",
-        coverImage: "culture.jpg",
-      },
-    }),
-    prisma.experience.create({
-      data: {
-        name: "Sunset Cruise",
-        slug: "sunset-cruise",
-        shortDesc:
-          "Sail into golden sunsets with dolphins playing alongside your boat.",
-        description:
-          "There's no better way to end a day in the Maldives than on a sunset cruise. Watch dolphins leap as the sky turns orange and pink over the Indian Ocean.",
-        icon: "🌅",
-        coverImage: "sunset-cruise.jpg",
-      },
-    }),
-  ]);
 
-  console.log(`✅ Created ${experiences.length} experiences`);
 
   // ============================================
   // LOCATIONS
@@ -153,14 +48,6 @@ async function main() {
         transferTime: 30,
         transferType: "SPEEDBOAT",
         isFeatured: true,
-        experiences: {
-          create: [
-            { experience: { connect: { id: experiences[0].id } } },
-            { experience: { connect: { id: experiences[1].id } } },
-            { experience: { connect: { id: experiences[4].id } } },
-            { experience: { connect: { id: experiences[6].id } } },
-          ],
-        },
       },
     }),
     prisma.location.create({
@@ -178,13 +65,6 @@ async function main() {
         transferTime: 45,
         transferType: "SPEEDBOAT",
         isFeatured: false,
-        experiences: {
-          create: [
-            { experience: { connect: { id: experiences[4].id } } },
-            { experience: { connect: { id: experiences[6].id } } },
-            { experience: { connect: { id: experiences[1].id } } },
-          ],
-        },
       },
     }),
     prisma.location.create({
@@ -201,13 +81,6 @@ async function main() {
         transferTime: 90,
         transferType: "SPEEDBOAT",
         isFeatured: true,
-        experiences: {
-          create: [
-            { experience: { connect: { id: experiences[0].id } } },
-            { experience: { connect: { id: experiences[1].id } } },
-            { experience: { connect: { id: experiences[6].id } } },
-          ],
-        },
       },
     }),
     prisma.location.create({
@@ -224,13 +97,6 @@ async function main() {
         transferTime: 120,
         transferType: "SPEEDBOAT",
         isFeatured: true,
-        experiences: {
-          create: [
-            { experience: { connect: { id: experiences[0].id } } },
-            { experience: { connect: { id: experiences[1].id } } },
-            { experience: { connect: { id: experiences[7].id } } },
-          ],
-        },
       },
     }),
     prisma.location.create({
@@ -247,14 +113,6 @@ async function main() {
         transferTime: 25,
         transferType: "SPEEDBOAT",
         isFeatured: true,
-        experiences: {
-          create: [
-            { experience: { connect: { id: experiences[2].id } } },
-            { experience: { connect: { id: experiences[0].id } } },
-            { experience: { connect: { id: experiences[1].id } } },
-            { experience: { connect: { id: experiences[5].id } } },
-          ],
-        },
       },
     }),
     prisma.location.create({
@@ -271,14 +129,6 @@ async function main() {
         transferTime: 30,
         transferType: "SEAPLANE",
         isFeatured: true,
-        experiences: {
-          create: [
-            { experience: { connect: { id: experiences[2].id } } },
-            { experience: { connect: { id: experiences[3].id } } },
-            { experience: { connect: { id: experiences[0].id } } },
-            { experience: { connect: { id: experiences[5].id } } },
-          ],
-        },
       },
     }),
   ]);
@@ -591,46 +441,6 @@ async function main() {
           { category: "ACTIVITY", item: "Snorkeling equipment", sortOrder: 6 },
         ],
       },
-      itinerary: {
-        create: [
-          {
-            dayNumber: 1,
-            title: "Arrival & Beach Time",
-            description:
-              "Speedboat transfer to Maafushi (30 mins). Check in and enjoy the beach. Evening: Welcome dinner at local restaurant.",
-          },
-          {
-            dayNumber: 2,
-            title: "Dolphin Cruise & Water Sports",
-            description:
-              "Morning free for water sports. Afternoon: Sunset dolphin cruise with refreshments.",
-          },
-          {
-            dayNumber: 3,
-            title: "Sandbank Excursion",
-            description:
-              "Full day sandbank picnic with BBQ lunch, snorkeling, and swimming.",
-          },
-          {
-            dayNumber: 4,
-            title: "Island Exploration",
-            description:
-              "Free morning to explore the island or try optional activities. Evening sunset from bikini beach.",
-          },
-          {
-            dayNumber: 5,
-            title: "Departure",
-            description: "Breakfast and transfer back to Malé airport.",
-          },
-        ],
-      },
-      experiences: {
-        create: [
-          { experience: { connect: { id: experiences[1].id } } },
-          { experience: { connect: { id: experiences[4].id } } },
-          { experience: { connect: { id: experiences[7].id } } },
-        ],
-      },
       activities: {
         create: [
           { activity: { connect: { id: activities[1].id } }, isIncluded: true },
@@ -718,51 +528,6 @@ async function main() {
             item: "Snorkeling equipment throughout stay",
             sortOrder: 7,
           },
-        ],
-      },
-      itinerary: {
-        create: [
-          {
-            dayNumber: 1,
-            title: "Journey to Dhigurah",
-            description:
-              "Speedboat transfer through the atolls (2 hours). Check in and beach orientation. Evening sunset walk on the 3km beach.",
-          },
-          {
-            dayNumber: 2,
-            title: "Whale Shark Day",
-            description:
-              "Morning whale shark excursion with marine biologist guide. Afternoon free. Evening sunset cruise.",
-          },
-          {
-            dayNumber: 3,
-            title: "Manta Point Adventure",
-            description:
-              "Morning trip to manta cleaning station for snorkeling with manta rays. Afternoon beach time.",
-          },
-          {
-            dayNumber: 4,
-            title: "Second Whale Shark Excursion",
-            description:
-              "Another chance to swim with whale sharks. Different sites explored. Optional diving available.",
-          },
-          {
-            dayNumber: 5,
-            title: "Beach Day",
-            description:
-              "Free day to enjoy the beach, house reef snorkeling, or optional activities.",
-          },
-          {
-            dayNumber: 6,
-            title: "Farewell",
-            description: "Final breakfast and transfer back to Malé.",
-          },
-        ],
-      },
-      experiences: {
-        create: [
-          { experience: { connect: { id: experiences[0].id } } },
-          { experience: { connect: { id: experiences[1].id } } },
         ],
       },
       activities: {
@@ -857,13 +622,6 @@ async function main() {
           },
         ],
       },
-      experiences: {
-        create: [
-          { experience: { connect: { id: experiences[2].id } } },
-          { experience: { connect: { id: experiences[0].id } } },
-          { experience: { connect: { id: experiences[5].id } } },
-        ],
-      },
     },
   });
 
@@ -949,13 +707,6 @@ async function main() {
           },
         ],
       },
-      experiences: {
-        create: [
-          { experience: { connect: { id: experiences[3].id } } },
-          { experience: { connect: { id: experiences[1].id } } },
-          { experience: { connect: { id: experiences[5].id } } },
-        ],
-      },
     },
   });
 
@@ -1019,12 +770,6 @@ async function main() {
           },
           { category: "ACTIVITY", item: "Sunset fishing trip", sortOrder: 5 },
           { category: "EQUIPMENT", item: "Snorkeling equipment", sortOrder: 6 },
-        ],
-      },
-      experiences: {
-        create: [
-          { experience: { connect: { id: experiences[1].id } } },
-          { experience: { connect: { id: experiences[6].id } } },
         ],
       },
     },
@@ -1106,7 +851,6 @@ async function main() {
   console.log("🎉 Seed completed successfully!");
   console.log("");
   console.log("Summary:");
-  console.log(`   - ${experiences.length} Experiences`);
   console.log(`   - ${locations.length} Locations`);
   console.log(`   - ${accommodations.length} Accommodations`);
   console.log(`   - ${activities.length} Activities`);

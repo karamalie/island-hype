@@ -13,13 +13,12 @@ export default async function EditPackagePage({
   const pkg = await getPackage(id);
   if (!pkg) notFound();
 
-  const [locations, accommodations, allExperiences, allActivities] = await Promise.all([
+  const [locations, accommodations, allActivities] = await Promise.all([
     prisma.location.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.accommodation.findMany({
       select: { id: true, name: true, locationId: true },
       orderBy: { name: "asc" },
     }),
-    prisma.experience.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.activity.findMany({
       select: { id: true, name: true, locationId: true },
       orderBy: { name: "asc" },
@@ -47,7 +46,6 @@ export default async function EditPackagePage({
       pkg={resolvedPkg}
       locations={locations}
       accommodations={accommodations}
-      allExperiences={allExperiences}
       allActivities={allActivities}
     />
   );

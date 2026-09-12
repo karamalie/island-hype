@@ -179,24 +179,6 @@ export function PackageCard({ package: pkg, currency }: PackageCardProps) {
                 transitionDelay: panelDelay,
               }}
             >
-              {/* Experiences */}
-              {pkg.experiences.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {pkg.experiences.slice(0, 3).map(({ experience }) => (
-                    <Badge
-                      key={experience.id}
-                      variant="outline"
-                      className="text-white border-white/40 text-xs backdrop-blur-sm bg-white/10"
-                    >
-                      {experience.icon && (
-                        <span className="mr-1">{experience.icon}</span>
-                      )}
-                      {experience.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
               {/* Quick Info */}
               <div className="flex items-center gap-4 text-white/90 text-sm">
                 <div className="flex items-center gap-1.5">

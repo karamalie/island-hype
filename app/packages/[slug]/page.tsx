@@ -17,7 +17,6 @@ import type { Market } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { BookingCard } from "@/components/packages/booking-card";
 import { PackageGallery } from "@/components/packages/package-gallery";
-import { ItineraryDay } from "@/components/packages/itinerary-day";
 import { Footer } from "@/components/layout/footer";
 
 interface PageProps {
@@ -214,22 +213,6 @@ export default async function PackageDetailsPage({ params }: PageProps) {
                 ))}
               </div>
             </section>
-
-            {/* Itinerary */}
-            {pkg.itinerary.length > 0 && (
-              <section>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  Day by Day Itinerary
-                </h2>
-                <div className="space-y-4">
-                  {pkg.itinerary
-                    .sort((a, b) => a.dayNumber - b.dayNumber)
-                    .map((day) => (
-                      <ItineraryDay key={day.id} day={day} />
-                    ))}
-                </div>
-              </section>
-            )}
 
             {/* Optional Activities */}
             {optionalActivities.length > 0 && (

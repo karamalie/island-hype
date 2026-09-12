@@ -13,8 +13,6 @@ import {
   deletePackage,
   updatePackagePricing,
   updatePackageInclusions,
-  updatePackageItinerary,
-  updatePackageExperiences,
   updatePackageActivities,
   uploadPackageImage,
   deletePackageImage,
@@ -53,15 +51,11 @@ interface InclusionRow {
   details: string;
 }
 
-interface ItineraryDay {
-  dayNumber: number;
-  title: string;
-  description: string;
-}
-
 interface ActivitySelection {
   activityId: string;
   isIncluded: boolean;
+  /** Optional package-specific line, shown on the site instead of the activity's own blurb. */
+  note: string;
 }
 
 interface PackageFormProps {
@@ -105,13 +99,14 @@ interface PackageFormProps {
       notes: string | null;
     }[];
     inclusions: { category: InclusionCategory; item: string; details: string | null; sortOrder: number }[];
-    itinerary: { dayNumber: number; title: string; description: string }[];
-    experiences: { experience: { id: string; name: string } }[];
-    activities: { activity: { id: string; name: string }; isIncluded: boolean }[];
+    activities: {
+      activity: { id: string; name: string };
+      isIncluded: boolean;
+      note: string | null;
+    }[];
   };
   locations: { id: string; name: string }[];
   accommodations: { id: string; name: string; locationId: string }[];
-  allExperiences?: { id: string; name: string }[];
   allActivities?: { id: string; name: string; locationId: string }[];
 }
 
@@ -152,7 +147,6 @@ export function PackageForm({
   pkg,
   locations,
   accommodations,
-  allExperiences = [],
   allActivities = [],
 }: PackageFormProps) {
   const router = useRouter();
@@ -184,17 +178,13 @@ export function PackageForm({
     pkg?.inclusions.map((i) => ({ category: i.category, item: i.item, details: i.details || "" })) || []
   );
 
-  // Itinerary
-  const [itinerary, setItinerary] = useState<ItineraryDay[]>(
-    pkg?.itinerary || []
-  );
-
-  // Experiences & Activities
-  const [selectedExperiences, setSelectedExperiences] = useState<string[]>(
-    pkg?.experiences.map((e) => e.experience.id) || []
-  );
+  // Activities — what a guest can do here; isIncluded separates price-inclusive from add-ons
   const [selectedActivities, setSelectedActivities] = useState<ActivitySelection[]>(
-    pkg?.activities.map((a) => ({ activityId: a.activity.id, isIncluded: a.isIncluded })) || []
+    pkg?.activities.map((a) => ({
+      activityId: a.activity.id,
+      isIncluded: a.isIncluded,
+      note: a.note ?? "",
+    })) || []
   );
 
   // Cover image (create mode)
@@ -212,7 +202,6 @@ export function PackageForm({
   const [loading, setLoading] = useState(false);
   const [savingPricing, setSavingPricing] = useState<string | null>(null);
   const [savingInclusions, setSavingInclusions] = useState(false);
-  const [savingItinerary, setSavingItinerary] = useState(false);
   const [savingExpAct, setSavingExpAct] = useState(false);
   const [savingTerms, setSavingTerms] = useState(false);
 
@@ -226,8 +215,7 @@ export function PackageForm({
         { id: "basic", label: "Basic Info" },
         { id: "pricing", label: "Pricing" },
         { id: "inclusions", label: "Inclusions" },
-        { id: "itinerary", label: "Itinerary" },
-        { id: "expact", label: "Experiences & Activities" },
+        { id: "expact", label: "Activities" },
         { id: "images", label: "Images" },
         { id: "terms", label: "Terms" },
       ]
@@ -321,22 +309,12 @@ export function PackageForm({
     else toast.error(result.error || "Failed to save");
   }
 
-  async function handleSaveItinerary() {
-    if (!pkg) return;
-    setSavingItinerary(true);
-    const result = await updatePackageItinerary(pkg.id, itinerary);
-    setSavingItinerary(false);
-    if (result.success) toast.success("Itinerary saved");
-    else toast.error(result.error || "Failed to save");
-  }
-
-  async function handleSaveExperiencesActivities() {
+  async function handleSaveActivities() {
     if (!pkg) return;
     setSavingExpAct(true);
-    await updatePackageExperiences(pkg.id, selectedExperiences);
     await updatePackageActivities(pkg.id, selectedActivities);
     setSavingExpAct(false);
-    toast.success("Experiences & activities saved");
+    toast.success("Activities saved");
   }
 
   async function handleSaveTerms() {
@@ -405,8 +383,14 @@ export function PackageForm({
     setSelectedActivities((prev) => {
       const exists = prev.find((a) => a.activityId === activityId);
       if (exists) return prev.filter((a) => a.activityId !== activityId);
-      return [...prev, { activityId, isIncluded: true }];
+      return [...prev, { activityId, isIncluded: true, note: "" }];
     });
+  }
+
+  function setActivityNote(activityId: string, note: string) {
+    setSelectedActivities((prev) =>
+      prev.map((a) => (a.activityId === activityId ? { ...a, note } : a))
+    );
   }
 
   function toggleActivityIncluded(activityId: string) {
@@ -637,50 +621,9 @@ export function PackageForm({
           </div>
         )}
 
-        {/* ITINERARY TAB */}
-        {activeTab === "itinerary" && isEdit && (
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-base font-semibold text-slate-900">Itinerary</h3>
-              <button type="button" onClick={() => setItinerary([...itinerary, { dayNumber: itinerary.length + 1, title: "", description: "" }])} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
-                <Plus className="w-4 h-4" /> Add Day
-              </button>
-            </div>
-            {itinerary.map((day, i) => (
-              <div key={i} className="border border-slate-200 rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-700">Day {day.dayNumber}</span>
-                  <button type="button" onClick={() => {
-                    const updated = itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, dayNumber: idx + 1 }));
-                    setItinerary(updated);
-                  }} className="text-slate-400 hover:text-red-500">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <input value={day.title} onChange={(e) => { const updated = [...itinerary]; updated[i].title = e.target.value; setItinerary(updated); }} placeholder="Day title..." className={inputClass} />
-                <textarea value={day.description} onChange={(e) => { const updated = [...itinerary]; updated[i].description = e.target.value; setItinerary(updated); }} placeholder="Day description..." rows={3} className={inputClass} />
-              </div>
-            ))}
-            {itinerary.length === 0 && <p className="text-sm text-slate-500">No itinerary days yet.</p>}
-            <SubmitButton type="button" loading={savingItinerary} onClick={handleSaveItinerary}>Save Itinerary</SubmitButton>
-          </div>
-        )}
-
-        {/* EXPERIENCES & ACTIVITIES TAB */}
+        {/* ACTIVITIES TAB */}
         {activeTab === "expact" && isEdit && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-base font-semibold text-slate-900 mb-4">Experiences</h3>
-              <div className="space-y-2">
-                {allExperiences.map((exp) => (
-                  <label key={exp.id} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={selectedExperiences.includes(exp.id)} onChange={() => setSelectedExperiences((prev) => prev.includes(exp.id) ? prev.filter((e) => e !== exp.id) : [...prev, exp.id])} className="rounded border-slate-300" />
-                    <span className="text-sm text-slate-700">{exp.name}</span>
-                  </label>
-                ))}
-                {allExperiences.length === 0 && <p className="text-sm text-slate-500">No experiences available.</p>}
-              </div>
-            </div>
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-base font-semibold text-slate-900 mb-4">Activities</h3>
               <div className="space-y-2">
@@ -693,10 +636,18 @@ export function PackageForm({
                         <span className="text-sm text-slate-700">{act.name}</span>
                       </label>
                       {sel && (
-                        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+                        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer whitespace-nowrap">
                           <input type="checkbox" checked={sel.isIncluded} onChange={() => toggleActivityIncluded(act.id)} className="rounded border-slate-300" />
                           Included in price
                         </label>
+                      )}
+                      {sel && (
+                        <input
+                          value={sel.note}
+                          onChange={(e) => setActivityNote(act.id, e.target.value)}
+                          placeholder="Optional note for this package…"
+                          className="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded"
+                        />
                       )}
                     </div>
                   );
@@ -704,8 +655,8 @@ export function PackageForm({
                 {allActivities.length === 0 && <p className="text-sm text-slate-500">No activities available.</p>}
               </div>
             </div>
-            <SubmitButton type="button" loading={savingExpAct} onClick={handleSaveExperiencesActivities}>
-              Save Experiences & Activities
+            <SubmitButton type="button" loading={savingExpAct} onClick={handleSaveActivities}>
+              Save Activities
             </SubmitButton>
           </div>
         )}

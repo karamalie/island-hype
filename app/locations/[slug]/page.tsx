@@ -193,42 +193,6 @@ export default async function LocationDetailsPage({ params }: PageProps) {
           )}
         </section>
 
-        {/* Experiences Section */}
-        {location.experiences.length > 0 && (
-          <section className="mb-20">
-            <div className="mb-8">
-              <h2 className="text-4xl font-bold text-gray-900 mb-3">
-                What You Can Experience Here
-              </h2>
-              <p className="text-gray-600 text-lg">
-                Unique activities and adventures available at this location
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {location.experiences.map(({ experience, description }) => (
-                <Card
-                  key={experience.id}
-                  className="border-0 shadow-sm hover:shadow-xl transition-all duration-300"
-                >
-                  <div className="p-6">
-                    {experience.icon && (
-                      <div className="w-14 h-14 rounded-full bg-teal-100 flex items-center justify-center mb-4">
-                        <span className="text-2xl">{experience.icon}</span>
-                      </div>
-                    )}
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {experience.name}
-                    </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      {description || experience.shortDesc}
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Accommodations Section */}
         {location.accommodations.length > 0 && (
@@ -326,23 +290,6 @@ export default async function LocationDetailsPage({ params }: PageProps) {
                       <div className="p-6">
                         <div className="flex items-start justify-between gap-4 mb-4">
                           <div className="flex-1">
-                            {/* Experience Badges */}
-                            {pkg.experiences.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mb-3">
-                                {pkg.experiences
-                                  .slice(0, 3)
-                                  .map(({ experience }) => (
-                                    <Badge
-                                      key={experience.id}
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {experience.name}
-                                    </Badge>
-                                  ))}
-                              </div>
-                            )}
-
                             <h3 className="text-2xl font-semibold text-gray-900 mb-2 hover:text-teal-600 transition-colors">
                               {pkg.name}
                             </h3>

@@ -3,10 +3,8 @@ import type {
   Package,
   PackagePricing,
   PackageInclusion,
-  PackageItinerary,
   Location,
   Accommodation,
-  Experience,
   Activity,
   Offer,
   Market,
@@ -34,10 +32,6 @@ export type PackageWithRelations = Omit<Package, "highlights"> & {
   accommodation: Accommodation;
   pricing: PackagePricing[];
   inclusions: PackageInclusion[];
-  itinerary: PackageItinerary[];
-  experiences: {
-    experience: Experience;
-  }[];
   activities: {
     activity: Activity;
     isIncluded: boolean;
@@ -64,9 +58,6 @@ export type PackageCardData = Pick<
   location: Pick<Location, "name" | "atoll">;
   accommodation: Pick<Accommodation, "name" | "type">;
   pricing: PackagePricing[];
-  experiences: {
-    experience: Pick<Experience, "id" | "name" | "icon">;
-  }[];
   offers: Pick<Offer, "badge" | "discountType" | "discountValue">[];
 };
 
@@ -76,9 +67,6 @@ export type PackageListItem = PackageCardData;
 
 export type LocationWithRelations = Location & {
   accommodations: Accommodation[];
-  experiences: {
-    experience: Experience;
-  }[];
   activities: Activity[];
   packages: Package[];
   images: {
@@ -96,32 +84,6 @@ export type LocationCardData = Pick<
   _count: {
     packages: number;
     accommodations: number;
-  };
-};
-
-// ============ Experience Types ============
-
-export type ExperienceWithRelations = Experience & {
-  locations: {
-    location: Location;
-  }[];
-  packages: {
-    package: Package;
-  }[];
-  images: {
-    id: string;
-    url: string;
-    alt: string | null;
-    sortOrder: number;
-  }[];
-};
-
-export type ExperienceCardData = Pick<
-  Experience,
-  "id" | "slug" | "name" | "shortDesc" | "icon" | "coverImage"
-> & {
-  _count: {
-    packages: number;
   };
 };
 

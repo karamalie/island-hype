@@ -7,7 +7,6 @@ import {
   Package,
   MapPin,
   Building2,
-  Compass,
   Activity,
   Tag,
   MessageSquare,
@@ -37,11 +36,6 @@ const navItems = [
     label: "Accommodations",
     href: "/admin/accommodations",
     icon: Building2,
-  },
-  {
-    label: "Experiences",
-    href: "/admin/experiences",
-    icon: Compass,
   },
   {
     label: "Activities",

@@ -27,9 +27,10 @@ export async function getPackage(id: string) {
       images: { orderBy: { sortOrder: "asc" } },
       pricing: true,
       inclusions: { orderBy: { sortOrder: "asc" } },
-      itinerary: { orderBy: { dayNumber: "asc" } },
-      experiences: { include: { experience: { select: { id: true, name: true } } } },
-      activities: { include: { activity: { select: { id: true, name: true } } } },
+      activities: {
+        include: { activity: { select: { id: true, name: true } } },
+        orderBy: { sortOrder: "asc" },
+      },
       location: { select: { id: true, name: true } },
       accommodation: { select: { id: true, name: true } },
     },
@@ -201,8 +202,6 @@ export async function duplicatePackage(id: string) {
       include: {
         pricing: true,
         inclusions: true,
-        itinerary: true,
-        experiences: true,
         activities: true,
       },
     });
@@ -249,22 +248,12 @@ export async function duplicatePackage(id: string) {
             sortOrder: i.sortOrder,
           })),
         },
-        itinerary: {
-          create: pkg.itinerary.map((it) => ({
-            dayNumber: it.dayNumber,
-            title: it.title,
-            description: it.description,
-          })),
-        },
-        experiences: {
-          create: pkg.experiences.map((e) => ({
-            experienceId: e.experienceId,
-          })),
-        },
         activities: {
           create: pkg.activities.map((a) => ({
             activityId: a.activityId,
             isIncluded: a.isIncluded,
+            note: a.note,
+            sortOrder: a.sortOrder,
           })),
         },
       },
@@ -298,8 +287,15 @@ export async function updatePackagePricing(
   if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
 
   try {
+    // The packageId+market unique was dropped so seasonal, date-scoped rows are
+    // possible. Admin still edits the single undated "default" row per market.
+    const existing = await prisma.packagePricing.findFirst({
+      where: { packageId, market, validFrom: null, validUntil: null },
+      select: { id: true },
+    });
+
     await prisma.packagePricing.upsert({
-      where: { packageId_market: { packageId, market } },
+      where: { id: existing?.id ?? "__none__" },
       create: {
         packageId,
         market,
@@ -370,58 +366,14 @@ export async function updatePackageInclusions(
   }
 }
 
-export async function updatePackageItinerary(
-  packageId: string,
-  days: Array<{ dayNumber: number; title: string; description: string }>
-) {
-  const session = await getSession();
-  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
-
-  try {
-    await prisma.$transaction([
-      prisma.packageItinerary.deleteMany({ where: { packageId } }),
-      prisma.packageItinerary.createMany({
-        data: days.map((d) => ({
-          packageId,
-          dayNumber: d.dayNumber,
-          title: d.title,
-          description: d.description,
-        })),
-      }),
-    ]);
-    revalidatePath(`/admin/packages/${packageId}`);
-    revalidatePath("/");
-    return { success: true };
-  } catch {
-    return { success: false, error: "Failed to update itinerary" };
-  }
-}
-
-export async function updatePackageExperiences(
-  packageId: string,
-  experienceIds: string[]
-) {
-  const session = await getSession();
-  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
-
-  try {
-    await prisma.$transaction([
-      prisma.packageExperience.deleteMany({ where: { packageId } }),
-      prisma.packageExperience.createMany({
-        data: experienceIds.map((experienceId) => ({ packageId, experienceId })),
-      }),
-    ]);
-    revalidatePath(`/admin/packages/${packageId}`);
-    revalidatePath("/");
-    return { success: true };
-  } catch {
-    return { success: false, error: "Failed to update experiences" };
-  }
-}
-
 export async function updatePackageActivities(
   packageId: string,
-  activities: Array<{ activityId: string; isIncluded: boolean }>
+  activities: Array<{
+    activityId: string;
+    isIncluded: boolean;
+    note?: string | null;
+    sortOrder?: number;
+  }>
 ) {
   const session = await getSession();
   if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
@@ -430,10 +382,12 @@ export async function updatePackageActivities(
     await prisma.$transaction([
       prisma.packageActivity.deleteMany({ where: { packageId } }),
       prisma.packageActivity.createMany({
-        data: activities.map((a) => ({
+        data: activities.map((a, i) => ({
           packageId,
           activityId: a.activityId,
           isIncluded: a.isIncluded,
+          note: a.note ?? null,
+          sortOrder: a.sortOrder ?? i,
         })),
       }),
     ]);

@@ -13,21 +13,26 @@ export default async function EditAccommodationPage({
   const accommodation = await getAccommodation(id);
   if (!accommodation) notFound();
 
-  const locations = await prisma.location.findMany({
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
+  const [locations, roomRows, facilityRows] = await Promise.all([
+    prisma.location.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.roomType.findMany({ where: { accommodationId: id }, orderBy: { sortOrder: "asc" } }),
+    prisma.facility.findMany({ where: { accommodationId: id }, orderBy: { sortOrder: "asc" } }),
+  ]);
+
+  // The form edits strings; nulls become empty inputs and blanks become nulls again.
+  const rooms = roomRows.map((r) => ({
+    name: r.name,
+    blurb: r.blurb ?? "",
+    nightlyFrom: r.nightlyFrom !== null ? String(r.nightlyFrom) : "",
+    size: r.size ?? "",
+    sleeps: r.sleeps ?? "",
+    access: r.access ?? "",
+  }));
+  const facilities = facilityRows.map((f) => ({ group: f.group, item: f.item }));
 
   // Resolve coverImage to full URL (seeded data stores bare filenames)
   const resolvedAccommodation = {
     ...accommodation,
-    // JSON columns -> string[] for the form
-    roomTypes: Array.isArray(accommodation.roomTypes)
-      ? (accommodation.roomTypes as string[])
-      : [],
-    amenities: Array.isArray(accommodation.amenities)
-      ? (accommodation.amenities as string[])
-      : [],
     coverImage: accommodation.coverImage
       ? getImageUrl("accommodations", accommodation.coverImage)
       : null,
@@ -44,6 +49,8 @@ export default async function EditAccommodationPage({
       accommodation={resolvedAccommodation}
       images={resolvedImages}
       locations={locations}
+      rooms={rooms}
+      facilities={facilities}
     />
   );
 }
