@@ -19,6 +19,78 @@ Prior decisions and local setup: `docs/superpowers/specs/2026-06-10-island-hype-
 
 ---
 
+## Status — 2026-09-12
+
+**Tasks 2–27 are done and committed on `feat/public-site-revamp`. Task 28 (ship
+to production) has not been started and is the only remaining work.**
+
+The step checkboxes below were never ticked as work progressed, so they record
+the plan rather than the state. This section is the state. Where the two
+disagree, this section is right.
+
+### Decisions taken during execution that changed the plan
+
+- **Task 1 (Vitest) was skipped**, on instruction: "You can skip writing tests
+  and test harnesses for this project." Every `lib/design/` module was instead
+  verified against the real database by query. Nothing else in Phase 0 shipped.
+- **Experiences were removed entirely**, front end and admin, on instruction.
+- **The day-by-day itinerary became one optional free-text "suggestions" field.**
+  The business does not write itineraries; guests do. It drops out when empty.
+- **Couple pricing is the whole-package total for two**, not per night. The
+  per-night reading made Maafushi $1,798pp for a week, roughly 20x market.
+- **Packages now always have an accommodation and a location.** The data was
+  fixed rather than the layout, on instruction, via
+  `scripts/fix-catalogue-associations.ts` — tracked, not in `_migration/`,
+  because production has the same gaps.
+- **Heroes are art-directed per breakpoint**: the overwater jetty on mobile, the
+  client's original aerial on iPad and desktop.
+- **The Locations page was rebalanced** away from travel distance toward what
+  makes each island different, with distance retained but no longer the lede.
+- **The three real contacts are wired** (`info@islandhypemaldives.com`,
+  `+971503507644`, `@islandhypemaldives`), in `SiteSetting` so staff can change
+  them without a deploy.
+
+### Task 25 diverged the most
+
+The plan's four image assignments were replaced. Every hero was chosen by
+measuring the file rather than by name, and the assignments are recorded with
+their widths in `lib/design/site-images.ts`.
+
+The plan did not anticipate the real problem: `images: { unoptimized: true }` is
+deliberate for a 1 GB box, so every page shipped its full-size original.
+`scripts/build-image-derivatives.ts` now pre-generates WebP derivatives at five
+widths with a committed manifest (19.2 MB of sources to 9.9 MB of derivatives),
+and the app emits a `srcset`. `/locations` measured 1382 KB to 451 KB for its
+hero on desktop, 110 KB on a phone.
+
+Also, **eleven** files had an extension that lied about their contents, not the
+two the plan names — the earlier count came from checking only two folders.
+
+### Work done that the plan does not contain
+
+- **Error, not-found and global-error boundaries.** The app had none, so any
+  failed query showed Next's "Application error" screen to visitors and to
+  staff. Four boundaries now, verified against a production build.
+- **Admin editors rebuilt around a single `SavePanel`** with explicit dirty
+  state, in-place outcomes, unsaved-work warnings and copy that explains
+  consequences rather than naming fields.
+- **Admin pages are `noindex`**, and the tab titles no longer double the site
+  name.
+- **Fourteen** unused dependencies dropped, not the twelve the plan lists.
+
+### Known issues, unresolved
+
+- **Admin accounts are hardcoded bcrypt hashes in `lib/auth/config.ts`.** Staff
+  cannot add, remove or change a user without a developer and a deploy. This is
+  the largest remaining gap in "production ready" for the panel and needs a
+  decision: a `User` table, or accept it.
+- **The phone number is +971 (UAE) while the opening hours say Maldives time
+  (GMT+5).** UAE is GMT+4. One of the two is wrong; the client should say which.
+- **The Guide's ten sections of factual prose have not been reviewed by the
+  client.** It asserts transfer costs, seasons and island rules as fact.
+
+---
+
 ## Global Constraints
 
 Every task's requirements implicitly include this section. Values are copied verbatim from the spec.
