@@ -34,7 +34,18 @@ export default async function AccommodationsPage() {
                 <td className="px-4 py-3 text-slate-600">{acc.type}</td>
                 <td className="px-4 py-3 text-slate-600">{acc.location.name}</td>
                 <td className="px-4 py-3 text-slate-600">
-                  {acc.location.starRating ? "★".repeat(acc.location.starRating) : "—"}
+                  {/* The stay's own rating where it has one — a guesthouse —
+                      otherwise the island's, greyed to show it is inherited,
+                      which is how a resort's room types get the resort's. */}
+                  {acc.starRating ? (
+                    "★".repeat(acc.starRating)
+                  ) : acc.location.starRating ? (
+                    <span title={`From ${acc.location.name}`} className="text-slate-400">
+                      {"★".repeat(acc.location.starRating)}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={acc.isActive ? "active" : "inactive"} />

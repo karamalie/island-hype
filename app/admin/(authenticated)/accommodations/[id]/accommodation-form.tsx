@@ -59,6 +59,7 @@ interface AccommodationFormProps {
     type: string;
     shortDesc: string | null;
     description: string;
+    starRating: number | null;
     maxAdults: number | null;
     maxChildren: number | null;
     locationId: string;
@@ -99,6 +100,7 @@ export function AccommodationForm({
       type: accommodation?.type || "RESORT",
       shortDesc: accommodation?.shortDesc || "",
       description: accommodation?.description || "",
+      starRating: accommodation?.starRating?.toString() || "",
       maxAdults: accommodation?.maxAdults?.toString() || "",
       maxChildren: accommodation?.maxChildren?.toString() || "",
       locationId: accommodation?.locationId || "",
@@ -119,6 +121,7 @@ export function AccommodationForm({
   const [type, setType] = useState(saved.type);
   const [shortDesc, setShortDesc] = useState(saved.shortDesc);
   const [description, setDescription] = useState(saved.description);
+  const [starRating, setStarRating] = useState(saved.starRating);
   const [maxAdults, setMaxAdults] = useState(saved.maxAdults);
   const [maxChildren, setMaxChildren] = useState(saved.maxChildren);
   const [locationId, setLocationId] = useState(saved.locationId);
@@ -141,7 +144,7 @@ export function AccommodationForm({
   type Values = typeof saved;
 
   const values: Values = {
-    name, slug, type, shortDesc, description, maxAdults, maxChildren, locationId,
+    name, slug, type, shortDesc, description, starRating, maxAdults, maxChildren, locationId,
     houseReef, suits, boardOptions, absentNote, contactEmail, contactPhone,
     isActive, sortOrder,
   };
@@ -152,6 +155,7 @@ export function AccommodationForm({
     setType(v.type);
     setShortDesc(v.shortDesc);
     setDescription(v.description);
+    setStarRating(v.starRating);
     setMaxAdults(v.maxAdults);
     setMaxChildren(v.maxChildren);
     setLocationId(v.locationId);
@@ -198,6 +202,7 @@ export function AccommodationForm({
     formData.set("type", type);
     formData.set("shortDesc", shortDesc);
     formData.set("description", description);
+    if (starRating) formData.set("starRating", starRating);
     if (maxAdults) formData.set("maxAdults", maxAdults);
     if (maxChildren) formData.set("maxChildren", maxChildren);
     formData.set("locationId", locationId);
@@ -292,6 +297,16 @@ export function AccommodationForm({
                 villa that sleeps three and find out only after a reply. Left
                 blank means we have not asked the island yet, and the selector
                 falls back to its old ceiling rather than guessing a limit. */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Star rating</label>
+              <input type="number" min="1" max="5" value={starRating} onChange={(e) => setStarRating(e.target.value)} placeholder="Leave blank for a resort" className={`${inputClass} max-w-[200px]`} />
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                For a guesthouse or hotel with its own rating. Leave blank for a
+                resort&rsquo;s room types — the island&rsquo;s rating is used
+                instead, and a room does not have a star rating of its own.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Max adults</label>

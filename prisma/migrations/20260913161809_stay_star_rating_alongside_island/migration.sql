@@ -1,0 +1,14 @@
+-- A guesthouse's own rating, alongside the island's.
+--
+-- The rating was moved from Accommodation to Location earlier today, which is
+-- right for a resort — a resort IS its island, one rating — and wrong for a
+-- local island, where Maafushi has dozens of guesthouses at different standards
+-- and no star rating of its own.
+--
+-- So both exist, both optional, and the site resolves: the stay's own rating if
+-- it has one, otherwise the island's. A resort's villa types leave it blank,
+-- because "Water Villa with Pool" is a room and rooms do not have star ratings.
+--
+-- Purely additive. Nothing to copy back: the values dropped earlier belonged to
+-- resort villa types and are already represented by their island's rating.
+ALTER TABLE `Accommodation` ADD COLUMN `starRating` SMALLINT NULL;

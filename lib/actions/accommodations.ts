@@ -34,6 +34,9 @@ export async function createAccommodation(formData: FormData) {
   const shortDesc = (formData.get("shortDesc") as string) || null;
   const description = formData.get("description") as string;
   const type = formData.get("type") as AccommodationType;
+  const starRating = formData.get("starRating")
+    ? parseInt(formData.get("starRating") as string)
+    : null;
   const maxAdults = formData.get("maxAdults")
     ? parseInt(formData.get("maxAdults") as string)
     : null;
@@ -66,7 +69,7 @@ export async function createAccommodation(formData: FormData) {
   try {
     const accommodation = await prisma.accommodation.create({
       data: {
-        name, slug, shortDesc, description, type, maxAdults, maxChildren,
+        name, slug, shortDesc, description, type, starRating, maxAdults, maxChildren,
         locationId, houseReef, suits, boardOptions, absentNote,
         contactEmail, contactPhone,
         isActive, sortOrder, coverImage,
@@ -89,6 +92,9 @@ export async function updateAccommodation(id: string, formData: FormData) {
   const shortDesc = (formData.get("shortDesc") as string) || null;
   const description = formData.get("description") as string;
   const type = formData.get("type") as AccommodationType;
+  const starRating = formData.get("starRating")
+    ? parseInt(formData.get("starRating") as string)
+    : null;
   const maxAdults = formData.get("maxAdults")
     ? parseInt(formData.get("maxAdults") as string)
     : null;
@@ -109,7 +115,7 @@ export async function updateAccommodation(id: string, formData: FormData) {
     await prisma.accommodation.update({
       where: { id },
       data: {
-        name, slug, shortDesc, description, type, maxAdults, maxChildren,
+        name, slug, shortDesc, description, type, starRating, maxAdults, maxChildren,
         locationId, houseReef, suits, boardOptions, absentNote,
         contactEmail, contactPhone,
         isActive, sortOrder,

@@ -98,6 +98,21 @@ model Accommodation {
   shortDesc   String?           @db.VarChar(300)
   description String            @db.Text
 
+  /**
+   * A guesthouse's own rating.
+   *
+   * Both this and Location.starRating exist, because the two kinds of stay are
+   * not the same shape. A resort IS its island — one resort, one island, one
+   * rating — so the rating belongs on the location. A local island like Maafushi
+   * has dozens of guesthouses at different standards and no star rating of its
+   * own, so the rating belongs here.
+   *
+   * Resolution is: this if set, otherwise the island's. Leave it blank for a
+   * resort's villa types, which is what "Water Villa with Pool" is — a room, not
+   * something with a star rating.
+   */
+  starRating Int? @db.SmallInt
+
   // Display fields the redesign reads. Nullable; the front end drops the row when absent.
   // Occupancy. Caps the Guests selector on any package sold against this stay,
   // so a villa that sleeps three cannot be enquired about for six. Null means

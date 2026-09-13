@@ -121,11 +121,19 @@ async function getAccommodationsQuery(
 
   // Filter by star rating
   if (starRating !== undefined) {
-    // Through the island, which is what carries the rating now.
-    where.location = {
-      ...((where.location as Prisma.LocationWhereInput) || {}),
-      starRating: { gte: starRating },
-    };
+    // Either the stay's own rating or, where it has none, its island's. Written
+    // as an OR rather than a COALESCE because Prisma has no COALESCE, and as two
+    // explicit arms so a guesthouse rated 3 on a 5-star island is not swept in
+    // by the island's rating.
+    where.AND = [
+      ...((where.AND as Prisma.AccommodationWhereInput[]) ?? []),
+      {
+        OR: [
+          { starRating: { gte: starRating } },
+          { starRating: null, location: { starRating: { gte: starRating } } },
+        ],
+      },
+    ];
   }
 
   // Search in name, description, location name
@@ -154,10 +162,18 @@ async function getAccommodationsQuery(
       orderBy = { name: "desc" };
       break;
     case "rating-desc":
-      orderBy = [{ location: { starRating: "desc" } }, { name: "asc" }];
+      orderBy = [
+        { starRating: "desc" },
+        { location: { starRating: "desc" } },
+        { name: "asc" },
+      ];
       break;
     case "rating-asc":
-      orderBy = [{ location: { starRating: "asc" } }, { name: "asc" }];
+      orderBy = [
+        { starRating: "asc" },
+        { location: { starRating: "asc" } },
+        { name: "asc" },
+      ];
       break;
     default:
       orderBy = [{ sortOrder: "asc" }, { createdAt: "desc" }];
@@ -616,6 +632,7 @@ export async function getStayCards(opts: { locationSlug?: string } = {}): Promis
       name: true,
       shortDesc: true,
       type: true,
+      starRating: true,
       boardOptions: true,
       coverImage: true,
       sortOrder: true,
@@ -647,7 +664,9 @@ export async function getStayCards(opts: { locationSlug?: string } = {}): Promis
       blurb: a.shortDesc,
       islandName: a.location.name,
       islandSlug: a.location.slug,
-      starRating: a.location.starRating,
+      // The stay's own if it has one — a guesthouse — otherwise the
+      // island's, which is how a resort's villa types inherit the resort's.
+      starRating: a.starRating ?? a.location.starRating,
       typeLabel: accommodationTypeLabel(a.type),
       type: a.type,
       // Null when nothing is entered yet, so the spec row drops rather than
@@ -736,7 +755,7 @@ export async function getStayDetail(slug: string): Promise<StayDetailData | null
     coverImage: row.coverImage,
     photoRich: isPhotoRich({ coverImage: row.coverImage, images: row.images }),
     description: row.description,
-    starRating: row.location.starRating,
+    starRating: row.starRating ?? row.location.starRating,
     houseReef: row.houseReef,
     suits: row.suits,
     absentNote: row.absentNote,

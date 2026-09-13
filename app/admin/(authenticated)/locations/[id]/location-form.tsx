@@ -342,8 +342,11 @@ export function LocationForm({
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Star rating</label>
               <input type="number" min="1" max="5" value={starRating} onChange={(e) => setStarRating(e.target.value)} placeholder="e.g. 5" className={`${inputClass} max-w-[160px]`} />
-              <p className="mt-1 text-xs text-slate-400">
-                Shown on the island page and beside every stay here.
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                For a resort, which is its own island. Stays here inherit it
+                unless they carry a rating of their own — which is what a
+                guesthouse on a local island should do. Leave blank for a local
+                island: Maafushi has no star rating, its guesthouses do.
               </p>
             </div>
 
