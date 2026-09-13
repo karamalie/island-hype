@@ -132,7 +132,18 @@ export default async function LocationsPage() {
                           </div>
                         )}
                         <div className="flex items-baseline justify-between gap-3">
-                          <span className="text-caption text-meta">{l.transfer ?? "—"}</span>
+                          <span className="text-caption text-meta">
+                            {l.starRating ? (
+                              <>
+                                <span aria-label={`${l.starRating} star`}>
+                                  {"★".repeat(l.starRating)}
+                                </span>
+                                {l.transfer ? ` · ${l.transfer}` : ""}
+                              </>
+                            ) : (
+                              (l.transfer ?? "—")
+                            )}
+                          </span>
                           <span className="text-caption font-medium text-teal-deep">
                             {l.meta} →
                           </span>

@@ -106,6 +106,11 @@ export default async function AccommodationDetailPage({
               className="mb-10 border-b border-ink-200 pb-10"
               cells={[
                 { label: "Island", value: stay.islandName },
+                // The island's rating, on the stay, because the stay is a villa
+                // type and the rating describes the resort it sits on.
+                ...(stay.starRating
+                  ? [{ label: "Rating", value: "★".repeat(stay.starRating) }]
+                  : []),
                 { label: "Transfer", value: stay.transfer },
                 { label: "Rooms", value: stay.rooms },
                 { label: "Board", value: stay.board },

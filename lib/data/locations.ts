@@ -474,6 +474,8 @@ export interface LocationCard {
   meta: string;
   packageCount: number;
   stayCount: number;
+  /** The island's rating, for the card. Null where staff have not set one. */
+  starRating: number | null;
   coverImage: string | null;
 }
 
@@ -492,6 +494,7 @@ export async function getLocationCards(): Promise<LocationCard[]> {
       transferTime: true,
       coverImage: true,
       sortOrder: true,
+      starRating: true,
       _count: { select: { packages: true, accommodations: true } },
     },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -514,6 +517,7 @@ export async function getLocationCards(): Promise<LocationCard[]> {
     }),
     packageCount: l._count.packages,
     stayCount: l._count.accommodations,
+    starRating: l.starRating,
     coverImage: l.coverImage,
   }));
 }

@@ -588,6 +588,8 @@ export interface StayCard {
   blurb: string | null;
   islandName: string;
   islandSlug: string;
+  /** The ISLAND's rating. A villa type has none of its own. */
+  starRating: number | null;
   /** "Guesthouse" — the badge pill. */
   typeLabel: string;
   type: AccommodationType;
@@ -618,7 +620,13 @@ export async function getStayCards(opts: { locationSlug?: string } = {}): Promis
       coverImage: true,
       sortOrder: true,
       location: {
-        select: { name: true, slug: true, transferType: true, transferTime: true },
+        select: {
+          name: true,
+          slug: true,
+          transferType: true,
+          transferTime: true,
+          starRating: true,
+        },
       },
       roomTypes: { select: { name: true, nightlyFrom: true }, orderBy: { sortOrder: "asc" } },
       images: { select: { url: true }, take: 1 },
@@ -639,6 +647,7 @@ export async function getStayCards(opts: { locationSlug?: string } = {}): Promis
       blurb: a.shortDesc,
       islandName: a.location.name,
       islandSlug: a.location.slug,
+      starRating: a.location.starRating,
       typeLabel: accommodationTypeLabel(a.type),
       type: a.type,
       // Null when nothing is entered yet, so the spec row drops rather than
