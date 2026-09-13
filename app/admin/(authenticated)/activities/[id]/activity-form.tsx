@@ -17,9 +17,7 @@ import {
   createActivity,
   updateActivity,
   deleteActivity,
-  uploadActivityImage,
   deleteActivityImage,
-  uploadActivityCoverImage,
 } from "@/lib/actions/activities";
 import { generateSlug } from "@/lib/utils";
 
@@ -167,25 +165,7 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
   }
 
 
-  async function handleCoverUpload(file: File) {
-    if (!activity) return { success: false, error: "Save the activity first" };
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await runAction(() =>
-      uploadActivityCoverImage(activity.id, formData)
-    );
-    if (result.success) router.refresh();
-    return result;
-  }
 
-  async function handleImageUpload(file: File) {
-    if (!activity) return { success: false, error: "Save the activity first" };
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await runAction(() => uploadActivityImage(activity.id, formData));
-    if (result.success) router.refresh();
-    return result;
-  }
 
   async function handleImageDelete(imageId: string) {
     return deleteActivityImage(imageId);
@@ -211,8 +191,10 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
             <CoverImageUpload
               currentImageUrl={activity?.coverImage || undefined}
+              kind="activity"
+              entityId={activity?.id}
               onFileChange={!isEdit ? setCoverFile : undefined}
-              onUpload={isEdit ? handleCoverUpload : undefined}
+              onUploaded={() => router.refresh()}
               required={!isEdit}
             />
 
@@ -300,8 +282,10 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
         {isEdit && (
           <ImageGallery
             images={images}
-            onUpload={handleImageUpload}
+            kind="activity"
+            entityId={activity!.id}
             onDelete={handleImageDelete}
+            onUploaded={() => router.refresh()}
           />
         )}
       </div>

@@ -1,5 +1,17 @@
 "use client";
 
+// components/admin/shared/image-gallery.tsx
+//
+// The gallery manager: add photographs to a record, remove them.
+//
+// Uploads go one at a time, on purpose. Each one is resized on a server with
+// 1 GB of RAM shared with MySQL, and several at once is how that server gets
+// itself restarted mid-request. Sequential is also what lets the progress bar
+// mean anything — "3 of 8" plus a real percentage for the one in flight.
+//
+// Each photograph is shrunk in the browser first, so what actually crosses the
+// wire is about 1.7 MB rather than 47 MB.
+
 import { useState, useCallback, useRef } from "react";
 import { X, Upload, Loader2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +21,10 @@ import {
   looksLikeImage,
   uploadSizeError,
 } from "@/lib/upload-limits";
+import { uploadWithProgress, type UploadProgress } from "@/lib/admin/upload-file";
+import { attachImage, type MediaKind } from "@/lib/actions/media";
+import { runAction } from "@/lib/admin/run-action";
+import { UploadProgressBar } from "@/components/admin/ui/upload-progress";
 
 export interface GalleryImage {
   id: string;
@@ -18,74 +34,93 @@ export interface GalleryImage {
 
 interface ImageGalleryProps {
   images: GalleryImage[];
-  onUpload: (file: File) => Promise<{ success: boolean; url?: string; id?: string; error?: string }>;
+  kind: MediaKind;
+  entityId: string;
   onDelete: (imageId: string) => Promise<{ success: boolean; error?: string }>;
+  /** Called once a batch finishes, so the page can pick up the new rows. */
+  onUploaded?: () => void;
   disabled?: boolean;
 }
 
+const BUCKETS: Record<MediaKind, string> = {
+  location: "locations",
+  accommodation: "accommodations",
+  activity: "activities",
+  package: "packages",
+};
+
 export function ImageGallery({
   images,
-  onUpload,
+  kind,
+  entityId,
   onDelete,
+  onUploaded,
   disabled = false,
 }: ImageGalleryProps) {
   const [currentImages, setCurrentImages] = useState<GalleryImage[]>(images);
-  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
+  const [batch, setBatch] = useState<{ done: number; total: number } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  /** "3 of 8" while a batch is in flight, so a slow upload does not look stuck. */
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploading = progress !== null;
 
   const handleFiles = useCallback(
     async (files: FileList | File[]) => {
-      const fileArray = Array.from(files).filter(looksLikeImage);
-      if (fileArray.length === 0) {
+      const all = Array.from(files).filter(looksLikeImage);
+      if (all.length === 0) {
         toast.error("Please select image files only");
         return;
       }
 
-      // Checked here as well as on the server so an oversized file is refused
-      // instantly, rather than after the browser has spent minutes sending it.
-      const tooBig = fileArray.filter((f) => uploadSizeError(f.name, f.size));
-      const toSend = fileArray.filter((f) => !uploadSizeError(f.name, f.size));
+      // Refused instantly, rather than after the browser has spent minutes on it.
+      const tooBig = all.filter((f) => uploadSizeError(f.name, f.size));
+      const toSend = all.filter((f) => !uploadSizeError(f.name, f.size));
       for (const f of tooBig) toast.error(uploadSizeError(f.name, f.size)!);
       if (toSend.length === 0) return;
 
-      setUploading(true);
-      // One at a time on purpose. Each upload is resized on the server, and the
-      // server has 1 GB of RAM; parallel uploads would have it decoding several
-      // large photographs at once.
       let uploaded = 0;
       let failed = 0;
+
       for (const [index, file] of toSend.entries()) {
-        setProgress({ done: index, total: toSend.length });
-        const result = await onUpload(file);
-        if (result.success && result.url) {
-          uploaded++;
-          setCurrentImages((prev) => [
-            ...prev,
-            {
-              id: result.id || Date.now().toString(),
-              url: result.url!,
-              alt: file.name,
-            },
-          ]);
-        } else {
+        setBatch({ done: index, total: toSend.length });
+        const result = await uploadWithProgress(
+          file,
+          { bucket: BUCKETS[kind], folder: entityId },
+          setProgress
+        );
+
+        if (!result.success || !result.path) {
           failed++;
           toast.error(result.error || `Failed to upload ${file.name}`);
+          continue;
         }
-      }
-      setProgress(null);
-      setUploading(false);
 
-      // Only claim what actually happened. This used to report the whole batch
-      // as uploaded even when every file in it had failed.
+        const recorded = await runAction(() => attachImage(kind, entityId, result.path!));
+        if (!recorded.success) {
+          failed++;
+          toast.error(recorded.error || `Uploaded ${file.name} but could not attach it`);
+          continue;
+        }
+
+        uploaded++;
+        setCurrentImages((prev) => [
+          ...prev,
+          { id: (recorded as { id?: string }).id ?? result.path!, url: result.url!, alt: null },
+        ]);
+      }
+
+      setProgress(null);
+      setBatch(null);
+
+      // Only claim what actually happened.
       if (uploaded === 1 && failed === 0) toast.success("Image uploaded");
       else if (uploaded > 0 && failed === 0) toast.success(`${uploaded} images uploaded`);
       else if (uploaded > 0) toast.success(`${uploaded} uploaded, ${failed} failed`);
+      if (uploaded > 0) onUploaded?.();
     },
-    [onUpload]
+    [kind, entityId, onUploaded]
   );
 
   function handleDragOver(e: React.DragEvent) {
@@ -93,31 +128,26 @@ export function ImageGallery({
     e.stopPropagation();
     if (!disabled && !uploading) setDragOver(true);
   }
-
   function handleDragLeave(e: React.DragEvent) {
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
   }
-
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
     if (disabled || uploading) return;
-    const files = e.dataTransfer.files;
-    if (files.length > 0) handleFiles(files);
+    if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
   }
-
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (files && files.length > 0) handleFiles(files);
+    if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files);
     e.target.value = "";
   }
 
   async function handleDelete(imageId: string) {
     setDeletingId(imageId);
-    const result = await onDelete(imageId);
+    const result = await runAction(() => onDelete(imageId));
     setDeletingId(null);
     if (result.success) {
       setCurrentImages((prev) => prev.filter((i) => i.id !== imageId));
@@ -129,11 +159,8 @@ export function ImageGallery({
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 className="text-base font-semibold text-slate-900 mb-4">
-        Image Gallery
-      </h2>
+      <h2 className="text-base font-semibold text-slate-900 mb-4">Image Gallery</h2>
 
-      {/* Thumbnail grid */}
       {currentImages.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
           {currentImages.map((img) => (
@@ -141,11 +168,8 @@ export function ImageGallery({
               key={img.id}
               className="relative group rounded-lg overflow-hidden border-2 border-slate-200"
             >
-              <img
-                src={img.url}
-                alt={img.alt || ""}
-                className="w-full h-28 object-cover"
-              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt={img.alt || ""} className="w-full h-28 object-cover" />
               <button
                 type="button"
                 onClick={(e) => {
@@ -166,30 +190,26 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* Drag & drop upload zone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !disabled && !uploading && fileInputRef.current?.click()}
-        className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors cursor-pointer ${
-          dragOver
-            ? "border-blue-500 bg-blue-50"
-            : "border-slate-300 hover:border-slate-400 hover:bg-slate-50"
-        } ${disabled || uploading ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors ${
+          uploading ? "cursor-default border-slate-300" : "cursor-pointer"
+        } ${
+          dragOver ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-slate-400 hover:bg-slate-50"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       >
-        {uploading ? (
-          <>
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            <p className="text-sm text-slate-600 font-medium">
-              {progress && progress.total > 1
-                ? `Uploading ${progress.done + 1} of ${progress.total}...`
-                : "Uploading..."}
-            </p>
-            <p className="text-xs text-slate-400">
-              Large photos take a moment — they are resized as they arrive.
-            </p>
-          </>
+        {uploading && progress ? (
+          <div className="w-full max-w-md">
+            {batch && batch.total > 1 && (
+              <p className="mb-2 text-center text-xs font-medium text-slate-500">
+                Photo {batch.done + 1} of {batch.total}
+              </p>
+            )}
+            <UploadProgressBar progress={progress} />
+          </div>
         ) : currentImages.length === 0 ? (
           <>
             <ImageIcon className="w-8 h-8 text-slate-400" />
@@ -205,9 +225,7 @@ export function ImageGallery({
         ) : (
           <>
             <Upload className="w-6 h-6 text-slate-400" />
-            <p className="text-sm text-slate-500">
-              Drop more images or click to upload
-            </p>
+            <p className="text-sm text-slate-500">Drop more images or click to upload</p>
           </>
         )}
         <input

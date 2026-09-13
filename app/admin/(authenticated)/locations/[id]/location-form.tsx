@@ -27,9 +27,7 @@ import {
   createLocation,
   updateLocation,
   deleteLocation,
-  uploadLocationImage,
   deleteLocationImage,
-  uploadLocationCoverImage,
 } from "@/lib/actions/locations";
 import { generateSlug } from "@/lib/utils";
 
@@ -204,25 +202,7 @@ export function LocationForm({
   }
 
 
-  async function handleCoverUpload(file: File) {
-    if (!location) return { success: false, error: "Save the location first" };
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await runAction(() =>
-      uploadLocationCoverImage(location.id, formData)
-    );
-    if (result.success) router.refresh();
-    return result;
-  }
 
-  async function handleImageUpload(file: File) {
-    if (!location) return { success: false, error: "Save the location first" };
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await runAction(() => uploadLocationImage(location.id, formData));
-    if (result.success) router.refresh();
-    return result;
-  }
 
   async function handleImageDelete(imageId: string) {
     return deleteLocationImage(imageId);
@@ -248,8 +228,10 @@ export function LocationForm({
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
             <CoverImageUpload
               currentImageUrl={location?.coverImage || undefined}
+              kind="location"
+              entityId={location?.id}
               onFileChange={!isEdit ? setCoverFile : undefined}
-              onUpload={isEdit ? handleCoverUpload : undefined}
+              onUploaded={() => router.refresh()}
               required={!isEdit}
             />
 
@@ -345,8 +327,10 @@ export function LocationForm({
           <>
             <ImageGallery
               images={images}
-              onUpload={handleImageUpload}
+              kind="location"
+              entityId={location!.id}
               onDelete={handleImageDelete}
+              onUploaded={() => router.refresh()}
             />
 
             {/* Each block below saves independently. They are separate from the

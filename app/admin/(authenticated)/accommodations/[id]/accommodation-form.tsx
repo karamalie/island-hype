@@ -17,9 +17,7 @@ import {
   createAccommodation,
   updateAccommodation,
   deleteAccommodation,
-  uploadAccommodationImage,
   deleteAccommodationImage,
-  uploadAccommodationCoverImage,
   updateAccommodationRooms,
   updateAccommodationFacilities,
 } from "@/lib/actions/accommodations";
@@ -229,27 +227,7 @@ export function AccommodationForm({
   }
 
 
-  async function handleCoverUpload(file: File) {
-    if (!accommodation) return { success: false, error: "Save the accommodation first" };
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await runAction(() =>
-      uploadAccommodationCoverImage(accommodation.id, formData)
-    );
-    if (result.success) router.refresh();
-    return result;
-  }
 
-  async function handleImageUpload(file: File) {
-    if (!accommodation) return { success: false, error: "Save the accommodation first" };
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await runAction(() =>
-      uploadAccommodationImage(accommodation.id, formData)
-    );
-    if (result.success) router.refresh();
-    return result;
-  }
 
   async function handleImageDelete(imageId: string) {
     return deleteAccommodationImage(imageId);
@@ -275,8 +253,10 @@ export function AccommodationForm({
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
             <CoverImageUpload
               currentImageUrl={accommodation?.coverImage || undefined}
+              kind="accommodation"
+              entityId={accommodation?.id}
               onFileChange={!isEdit ? setCoverFile : undefined}
-              onUpload={isEdit ? handleCoverUpload : undefined}
+              onUploaded={() => router.refresh()}
               required={!isEdit}
             />
 
@@ -519,8 +499,10 @@ export function AccommodationForm({
           <>
             <ImageGallery
               images={images}
-              onUpload={handleImageUpload}
+              kind="accommodation"
+              entityId={accommodation!.id}
               onDelete={handleImageDelete}
+              onUploaded={() => router.refresh()}
             />
 
             <FaqEditor

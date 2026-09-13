@@ -27,9 +27,7 @@ import {
   updatePackagePricing,
   updatePackageInclusions,
   updatePackageActivities,
-  uploadPackageImage,
   deletePackageImage,
-  uploadPackageCoverImage,
 } from "@/lib/actions/packages";
 import { generateSlug } from "@/lib/utils";
 import { X, Plus, Trash2 } from "lucide-react";
@@ -440,23 +438,7 @@ export function PackageForm({
   }
 
 
-  async function handleCoverUpload(file: File) {
-    if (!pkg) return { success: false, error: "Save the package first" };
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await runAction(() => uploadPackageCoverImage(pkg.id, formData));
-    if (result.success) router.refresh();
-    return result;
-  }
 
-  async function handleImageUpload(file: File) {
-    if (!pkg) return { success: false, error: "Save the package first" };
-    const formData = new FormData();
-    formData.set("file", file);
-    const result = await runAction(() => uploadPackageImage(pkg.id, formData));
-    if (result.success) router.refresh();
-    return result;
-  }
 
   async function handleImageDelete(imageId: string) {
     return deletePackageImage(imageId);
@@ -578,8 +560,10 @@ export function PackageForm({
             <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
               <CoverImageUpload
                 currentImageUrl={pkg?.coverImage || undefined}
+                kind="package"
+                entityId={pkg?.id}
                 onFileChange={!isEdit ? setCoverFile : undefined}
-                onUpload={isEdit ? handleCoverUpload : undefined}
+                onUploaded={() => router.refresh()}
                 required={!isEdit}
               />
 
@@ -799,8 +783,10 @@ export function PackageForm({
         {activeTab === "images" && isEdit && (
           <ImageGallery
             images={currentImages}
-            onUpload={handleImageUpload}
+            kind="package"
+            entityId={pkg!.id}
             onDelete={handleImageDelete}
+            onUploaded={() => router.refresh()}
           />
         )}
 

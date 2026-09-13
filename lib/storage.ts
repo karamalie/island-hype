@@ -28,7 +28,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import sharp from "sharp";
-import { MAX_UPLOAD_BYTES, formatBytes, uploadSizeError } from "@/lib/upload-limits";
+import { MAX_UPLOAD_BYTES, uploadSizeError } from "@/lib/upload-limits";
 
 export type StorageBucket =
   | "locations"
@@ -47,6 +47,8 @@ interface UploadOptions {
 interface UploadResult {
   url: string;
   path: string;
+  /** What ended up on disk, so the admin can be shown what was achieved. */
+  storedBytes?: number;
   error?: string;
 }
 
@@ -126,19 +128,27 @@ export function getImageUrl(bucket: StorageBucket, objectPath: string): string {
  * as JPEG. Callers must persist the returned path rather than deriving one from
  * the original filename.
  */
-export async function uploadImage(
-  file: File,
+/**
+ * Normalise an image and save it into the media tree.
+ *
+ * `source` is either the bytes or a path on disk, and which one matters. A
+ * Server Action can only give us bytes — it buffers the whole body to build a
+ * File. The upload route streams to a temp file and passes the path, and libvips
+ * then reads it back lazily: measured on a 100 MP photograph, 147 MB peak from a
+ * Buffer against 53 MB from a path, and the path figure does not grow with the
+ * file.
+ *
+ * The returned `path` carries the extension we chose, which is not necessarily
+ * the one that was uploaded — a PNG photograph is stored as JPEG, an iPhone HEIC
+ * as JPEG. Callers must persist the returned path rather than deriving one from
+ * the original filename.
+ */
+async function processAndWrite(
+  source: Buffer | string,
+  originalName: string,
   options: UploadOptions
 ): Promise<UploadResult> {
   const { bucket, folder, fileName } = options;
-
-  const tooBig = uploadSizeError(file.name, file.size);
-  if (tooBig) return { url: "", path: "", error: tooBig };
-  if (file.size === 0) {
-    return { url: "", path: "", error: `${file.name} is empty.` };
-  }
-
-  const input = Buffer.from(await file.arrayBuffer());
 
   // The format comes from the bytes, never from the filename. libvips sniffs the
   // header, which is the same check that found the four mislabelled files.
@@ -148,9 +158,9 @@ export async function uploadImage(
   // how we learn which ceiling this file should be held to.
   let meta: sharp.Metadata;
   try {
-    meta = await sharp(input, { limitInputPixels: false, animated: false }).metadata();
+    meta = await sharp(source as never, { limitInputPixels: false, animated: false }).metadata();
   } catch (err) {
-    return { url: "", path: "", error: describeDecodeFailure(file.name, input, err) };
+    return { url: "", path: "", error: describeDecodeFailure(originalName, err) };
   }
 
   const format = meta.format ?? "";
@@ -158,7 +168,7 @@ export async function uploadImage(
     return {
       url: "",
       path: "",
-      error: `${file.name} is not an image we can use${format ? ` (it is ${format})` : ""}. Upload a JPEG, PNG, WebP or HEIC.`,
+      error: `${originalName} is not an image we can use${format ? ` (it is ${format})` : ""}. Upload a JPEG, PNG, WebP or HEIC.`,
     };
   }
 
@@ -169,11 +179,11 @@ export async function uploadImage(
     return {
       url: "",
       path: "",
-      error: `${file.name} is ${width} x ${height} (${((width * height) / 1e6).toFixed(1)} megapixels), which is larger than this server can process. Export it at up to ${(ceiling / 1e6).toFixed(0)} megapixels and upload again.`,
+      error: `${originalName} is ${width} x ${height} (${((width * height) / 1e6).toFixed(1)} megapixels), which is larger than this server can process. Export it at up to ${(ceiling / 1e6).toFixed(0)} megapixels and upload again.`,
     };
   }
 
-  const image = sharp(input, {
+  const image = sharp(source as never, {
     limitInputPixels: ceiling,
     animated: false,
     // Streams the source instead of random-accessing it, which is the single
@@ -228,7 +238,7 @@ export async function uploadImage(
     return {
       url: "",
       path: "",
-      error: `Could not process ${file.name}: ${err instanceof Error ? err.message : "unknown error"}`,
+      error: `Could not process ${originalName}: ${err instanceof Error ? err.message : "unknown error"}`,
     };
   }
 
@@ -248,13 +258,40 @@ export async function uploadImage(
     };
   }
 
-  return { url: getImageUrl(bucket, objectPath), path: objectPath };
+  return {
+    url: getImageUrl(bucket, objectPath),
+    path: objectPath,
+    storedBytes: output.length,
+  };
 }
 
 /**
- * Delete an image from the local media filesystem.
- * Server-side only! Accepts a bucket-relative object path.
+ * The Server Action path: a File in memory. Used by the create forms, where the
+ * image travels with the rest of the form.
  */
+export async function uploadImage(
+  file: File,
+  options: UploadOptions
+): Promise<UploadResult> {
+  const tooBig = uploadSizeError(file.name, file.size);
+  if (tooBig) return { url: "", path: "", error: tooBig };
+  if (file.size === 0) {
+    return { url: "", path: "", error: `${file.name} is empty.` };
+  }
+  return processAndWrite(Buffer.from(await file.arrayBuffer()), file.name, options);
+}
+
+/**
+ * The upload-route path: a file already streamed to disk. Costs the same
+ * whatever its size, which is the point.
+ */
+export async function storeImageFromPath(
+  tempPath: string,
+  options: UploadOptions & { originalName: string }
+): Promise<UploadResult> {
+  return processAndWrite(tempPath, options.originalName, options);
+}
+
 export async function deleteImage(
   bucket: StorageBucket,
   objectPath: string
@@ -281,23 +318,18 @@ export async function deleteImage(
  * and a HEIC that this libvips build cannot read — both of which otherwise
  * surface as the same opaque "unsupported image format".
  */
-function describeDecodeFailure(name: string, input: Buffer, err: unknown): string {
+function describeDecodeFailure(name: string, err: unknown): string {
   const message = err instanceof Error ? err.message : "";
 
   if (/pixel limit|too large|exceeds/i.test(message)) {
     return `${name} has too many pixels to process safely. Export it at a smaller size and try again.`;
   }
 
-  // ISO-BMFF container: "ftyp" at offset 4, brand at 8. Covers HEIC and HEIF.
-  const brand =
-    input.length > 12 && input.toString("ascii", 4, 8) === "ftyp"
-      ? input.toString("ascii", 8, 12)
-      : "";
-  if (brand.startsWith("hei") || brand.startsWith("mif")) {
-    return `${name} is a HEIC photo this server cannot read. Export it as JPEG and upload that.`;
+  if (/heif|heic|unsupported image format/i.test(message)) {
+    return `${name} is in a format this server cannot read. Export it as JPEG and upload that.`;
   }
 
-  return `${name} does not look like an image we can read (${formatBytes(input.length)}).`;
+  return `${name} does not look like an image we can read.`;
 }
 
 export { MAX_UPLOAD_BYTES };

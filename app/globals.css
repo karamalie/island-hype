@@ -394,3 +394,22 @@ h4 {
   min-height: 100vh;
   min-height: 100svh;
 }
+
+/* The travelling band on an indeterminate upload phase. Compressing and the
+   server-side resize have no percentage to report, and a bar frozen at 0 reads
+   as broken. */
+@keyframes upload-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+.upload-indeterminate {
+  width: 25%;
+  animation: upload-indeterminate 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .upload-indeterminate {
+    width: 100%;
+    animation: none;
+    opacity: 0.5;
+  }
+}
