@@ -72,6 +72,26 @@ const nextConfig: NextConfig = {
      * nginx's client_max_body_size must stay at or above this.
      */
     serverActions: { bodySizeLimit: "55mb" },
+
+    /**
+     * The SECOND body gate, and the one that actually broke a 49 MB upload in
+     * production after bodySizeLimit above was already raised.
+     *
+     * Next caps the body it will buffer for any request that passes through
+     * middleware — "proxy" in 16 — at 10 MB by default, independently of the
+     * Server Action limit. middleware.ts matches every non-asset path, so every
+     * admin upload goes through it, and the multipart form was being cut off
+     * mid-file:
+     *
+     *   Request body exceeded 10MB for /admin/accommodations/new.
+     *   Only the first 10MB will be available unless configured.
+     *   Error: Unexpected end of form
+     *
+     * Kept in step with bodySizeLimit and with nginx's client_max_body_size.
+     * There are now four numbers gating an upload and they all have to agree;
+     * lib/upload-limits.ts holds the one the user is told about.
+     */
+    proxyClientMaxBodySize: "55mb",
   },
 };
 
