@@ -21,6 +21,11 @@ model Location {
 
   atoll  String
   island String?
+  // The rating belongs to the island or resort, not to a villa type. It lived on
+  // Accommodation, where the rows are things like "Water Villa with Pool" — and
+  // rating a villa four stars says nothing anyone means by a star rating. Every
+  // location's stays already carried one shared value, so moving it lost nothing.
+  starRating Int? @db.SmallInt
 
   // Display fields the redesign reads. All nullable — admin decides what to publish.
   region               String? @db.VarChar(120) // "North-west · UNESCO biosphere"
@@ -35,6 +40,16 @@ model Location {
   transferType TransferType? // Primary transfer type
   transferInfo String?       @db.Text // Additional transfer details
 
+  // Terms and privacy, per island, because they differ by resort and a guest
+  // agrees to the island's terms rather than the site's. Shown on every package
+  // sold for this location.
+  termsText   String? @db.Text
+  privacyText String? @db.Text
+  // Baggage, travel times and the other things true of every package here.
+  // Deliberately NOT shown on the location page — it appears on the packages.
+  importantInfo String? @db.Text
+
+  amenities  LocationAmenity[]
   images     LocationImage[]
   coverImage String?
 
@@ -82,8 +97,6 @@ model Accommodation {
   type        AccommodationType
   shortDesc   String?           @db.VarChar(300)
   description String            @db.Text
-
-  starRating Int? @db.SmallInt
 
   // Display fields the redesign reads. Nullable; the front end drops the row when absent.
   // Occupancy. Caps the Guests selector on any package sold against this stay,
@@ -223,6 +236,13 @@ model Package {
   travelWindowStart  DateTime?
   travelWindowEnd    DateTime?
 
+  // Baggage for THIS package specifically. The island's generic baggage note
+  // lives on Location.importantInfo and is shown alongside it, not instead.
+  baggageInfo String? @db.Text
+  // How guests reach the island on this package. SetNull rather than Cascade:
+  // retiring a transfer option must never delete the packages that used it.
+  transferOptionId String?
+  transferOption   TransferOption? @relation(fields: [transferOptionId], references: [id], onDelete: SetNull)
   // Additional info
   terms              String? @db.Text
   cancellationPolicy String? @db.Text
@@ -519,6 +539,45 @@ model RoomType {
 
 /// Replaces the old flat `Accommodation.amenities` JSON array. Grouped, because the
 /// design shows two labelled columns rather than one undifferentiated list.
+/**
+ * What the island itself offers, as opposed to a particular stay. Shaped like
+ * Facility on purpose so the same admin editor and the same grouped display work
+ * for both.
+ */
+model LocationAmenity {
+  id         String   @id @default(cuid())
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  group     String @db.VarChar(60) // "In the water", "On the island"
+  item      String @db.VarChar(160)
+  sortOrder Int    @default(0)
+
+  @@index([locationId])
+}
+
+/**
+ * How guests get there, written once and chosen per package.
+ *
+ * A single global list rather than one per island: the same speedboat transfer
+ * is described identically on every package that uses it, and staff maintain the
+ * wording in one place instead of re-typing it per location.
+ */
+model TransferOption {
+  id         String  @id @default(cuid())
+  name       String  @db.VarChar(120) // "Speedboat, shared"
+  details    String? @db.Text // what it is, how long, when it runs
+  conditions String? @db.Text // luggage limits, timing rules, what happens if a flight is late
+  policy     String? @db.Text // cancellation and change policy for the transfer itself
+  sortOrder  Int     @default(0)
+  isActive   Boolean @default(true)
+
+  packages Package[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Facility {
   id              String        @id @default(cuid())
   accommodationId String

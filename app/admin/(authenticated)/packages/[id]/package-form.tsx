@@ -80,6 +80,8 @@ interface PackageFormProps {
     accommodationId: string;
     nights: number;
     maxGuests: number | null;
+    baggageInfo: string | null;
+    transferOptionId: string | null;
     bookingWindowStart: Date | null;
     bookingWindowEnd: Date | null;
     travelWindowStart: Date | null;
@@ -120,6 +122,7 @@ interface PackageFormProps {
   display?: PackageDisplayFields;
   blackouts?: BlackoutRow[];
   allTags?: { id: string; name: string }[];
+  transferOptions?: { id: string; name: string }[];
   tagIds?: string[];
   faqs?: { question: string; answer: string }[];
   /** Drives the note explaining whether filters are visible on the site yet. */
@@ -166,6 +169,7 @@ export function PackageForm({
   display,
   blackouts = [],
   allTags = [],
+  transferOptions = [],
   tagIds = [],
   faqs = [],
   livePackageCount = 0,
@@ -188,6 +192,8 @@ export function PackageForm({
       locationId: pkg?.locationId || "",
       accommodationId: pkg?.accommodationId || "",
       nights: pkg?.nights?.toString() || "1",
+      baggageInfo: pkg?.baggageInfo || "",
+      transferOptionId: pkg?.transferOptionId || "",
       maxGuests: pkg?.maxGuests?.toString() || "",
       isFeatured: pkg?.isFeatured ?? false,
       isActive: pkg?.isActive ?? true,
@@ -205,6 +211,8 @@ export function PackageForm({
   const [locationId, setLocationId] = useState(saved.locationId);
   const [accommodationId, setAccommodationId] = useState(saved.accommodationId);
   const [nights, setNights] = useState(saved.nights);
+  const [baggageInfo, setBaggageInfo] = useState(saved.baggageInfo);
+  const [transferOptionId, setTransferOptionId] = useState(saved.transferOptionId);
   const [maxGuests, setMaxGuests] = useState(saved.maxGuests);
   const [isFeatured, setIsFeatured] = useState(saved.isFeatured);
   const [isActive, setIsActive] = useState(saved.isActive);
@@ -243,7 +251,7 @@ export function PackageForm({
 
   type Values = typeof saved;
 
-  const values: Values = { name, slug, shortDesc, description, highlights, locationId, accommodationId, nights, maxGuests, isFeatured, isActive, sortOrder };
+  const values: Values = { name, slug, shortDesc, description, highlights, locationId, accommodationId, nights, maxGuests, baggageInfo, transferOptionId, isFeatured, isActive, sortOrder };
 
   function apply(v: Values) {
     setName(v.name);
@@ -254,6 +262,8 @@ export function PackageForm({
     setLocationId(v.locationId);
     setAccommodationId(v.accommodationId);
     setNights(v.nights);
+    setBaggageInfo(v.baggageInfo);
+    setTransferOptionId(v.transferOptionId);
     setMaxGuests(v.maxGuests);
     setIsFeatured(v.isFeatured);
     setIsActive(v.isActive);
@@ -323,6 +333,8 @@ export function PackageForm({
     formData.set("locationId", locationId);
     formData.set("accommodationId", accommodationId);
     formData.set("nights", nights);
+    formData.set("baggageInfo", baggageInfo);
+    formData.set("transferOptionId", transferOptionId);
     if (maxGuests) formData.set("maxGuests", maxGuests);
     formData.set("isFeatured", String(isFeatured));
     formData.set("isActive", String(isActive));
@@ -641,6 +653,29 @@ export function PackageForm({
                   <label className="block text-sm font-medium text-slate-700 mb-1">Max Guests</label>
                   <input type="number" value={maxGuests} onChange={(e) => setMaxGuests(e.target.value)} className={inputClass} />
                 </div>
+              </div>
+
+              {/* Chosen from the global Transfers list rather than typed here,
+                  so the luggage limits and late-flight rules stay written in one
+                  place instead of drifting across every package. */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Transfer</label>
+                <select value={transferOptionId} onChange={(e) => setTransferOptionId(e.target.value)} className={inputClass}>
+                  <option value="">No transfer chosen</option>
+                  {transferOptions.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-slate-400">
+                  Its details, conditions and policy appear on this package. Managed under Transfers.
+                </p>
+              </div>
+
+              {/* This package's own baggage note. The island's generic one lives
+                  on the location's Important information and shows alongside. */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Baggage information</label>
+                <textarea value={baggageInfo} onChange={(e) => setBaggageInfo(e.target.value)} rows={3} placeholder="Anything specific to this package — extra allowance, dive gear, oversized bags." className={inputClass} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

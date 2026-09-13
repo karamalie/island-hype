@@ -34,7 +34,7 @@ export default async function AccommodationsPage() {
                 <td className="px-4 py-3 text-slate-600">{acc.type}</td>
                 <td className="px-4 py-3 text-slate-600">{acc.location.name}</td>
                 <td className="px-4 py-3 text-slate-600">
-                  {acc.starRating ? "★".repeat(acc.starRating) : "—"}
+                  {acc.location.starRating ? "★".repeat(acc.location.starRating) : "—"}
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={acc.isActive ? "active" : "inactive"} />

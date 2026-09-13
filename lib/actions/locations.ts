@@ -22,6 +22,7 @@ export async function getLocation(id: string) {
     where: { id },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
+      amenities: { orderBy: { sortOrder: "asc" } },
     },
   });
 }
@@ -47,6 +48,12 @@ export async function createLocation(formData: FormData) {
     ? parseInt(formData.get("transferTime") as string)
     : null;
   const transferInfo = (formData.get("transferInfo") as string) || null;
+  const starRating = formData.get("starRating")
+    ? parseInt(formData.get("starRating") as string)
+    : null;
+  const termsText = (formData.get("termsText") as string) || null;
+  const privacyText = (formData.get("privacyText") as string) || null;
+  const importantInfo = (formData.get("importantInfo") as string) || null;
   const isFeatured = formData.get("isFeatured") === "true";
   const isActive = formData.get("isActive") === "true";
   const sortOrder = parseInt((formData.get("sortOrder") as string) || "0");
@@ -69,6 +76,7 @@ export async function createLocation(formData: FormData) {
       data: {
         name, slug, description, shortDesc, atoll, island,
         latitude, longitude, transferType, transferTime, transferInfo,
+        starRating, termsText, privacyText, importantInfo,
         isFeatured, isActive, sortOrder, coverImage,
       },
     });
@@ -101,6 +109,12 @@ export async function updateLocation(id: string, formData: FormData) {
     ? parseInt(formData.get("transferTime") as string)
     : null;
   const transferInfo = (formData.get("transferInfo") as string) || null;
+  const starRating = formData.get("starRating")
+    ? parseInt(formData.get("starRating") as string)
+    : null;
+  const termsText = (formData.get("termsText") as string) || null;
+  const privacyText = (formData.get("privacyText") as string) || null;
+  const importantInfo = (formData.get("importantInfo") as string) || null;
   const isFeatured = formData.get("isFeatured") === "true";
   const isActive = formData.get("isActive") === "true";
   const sortOrder = parseInt((formData.get("sortOrder") as string) || "0");
@@ -111,6 +125,7 @@ export async function updateLocation(id: string, formData: FormData) {
       data: {
         name, slug, description, shortDesc, atoll, island,
         latitude, longitude, transferType, transferTime, transferInfo,
+        starRating, termsText, privacyText, importantInfo,
         isFeatured, isActive, sortOrder,
       },
     });
@@ -357,5 +372,41 @@ export async function updateLocationCharacter(
     return { success: true };
   } catch {
     return { success: false, error: "Failed to save those details" };
+  }
+}
+
+/**
+ * Replace the island's amenity list.
+ *
+ * Wholesale replacement rather than a diff, same as the stay facilities editor:
+ * the list is short, hand-written and reordered by dragging rows about, so
+ * working out which rows moved costs more than rewriting all of them.
+ */
+export async function updateLocationAmenities(
+  locationId: string,
+  rows: { group: string; item: string }[]
+) {
+  const session = await getSession();
+  if (!session?.isLoggedIn) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.$transaction([
+      prisma.locationAmenity.deleteMany({ where: { locationId } }),
+      prisma.locationAmenity.createMany({
+        data: rows
+          .filter((r) => r.item.trim())
+          .map((r, i) => ({
+            locationId,
+            group: r.group.trim() || "On the island",
+            item: r.item.trim(),
+            sortOrder: i,
+          })),
+      }),
+    ]);
+    revalidatePath(`/admin/locations/${locationId}`);
+    revalidatePath("/locations");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to save amenities" };
   }
 }

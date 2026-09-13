@@ -12,7 +12,7 @@ import { getLocationDetail } from "@/lib/data/locations";
 import { getPackageCards } from "@/lib/data/packages";
 import { getStayTypesForLocation } from "@/lib/data/stay-types";
 import { packagesHereHeading } from "@/lib/design/inventory";
-import { Container, Label, Section } from "@/components/ui";
+import { Container, Label, Mark, Section } from "@/components/ui";
 import { Footer } from "@/components/layout/footer";
 import { NavBar } from "@/components/layout/nav-bar";
 import {
@@ -67,7 +67,17 @@ export default async function LocationDetailPage({
 
         <div className="mb-8 max-w-[700px]">
           {loc.region && <Label className="mb-4">{loc.region}</Label>}
-          <h1 className="m-0 mb-4 text-display-l">{loc.name}</h1>
+          <div className="mb-4 flex flex-wrap items-baseline gap-4">
+            <h1 className="m-0 text-display-l">{loc.name}</h1>
+            {loc.starRating && (
+              <span
+                className="font-mono text-label text-meta"
+                aria-label={`${loc.starRating} star`}
+              >
+                {"★".repeat(loc.starRating)}
+              </span>
+            )}
+          </div>
           {loc.blurb && <p className="m-0 text-body-l text-ink-700">{loc.blurb}</p>}
         </div>
       </Container>
@@ -140,6 +150,32 @@ export default async function LocationDetailPage({
             note="If your inbound lands late, you cannot fly on. We build in a night near the airport and price it before you pay."
           />
         </div>
+
+        {loc.amenities.length > 0 && (
+          <div className="mb-12">
+            <h2 className="m-0 mb-6 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+              What is on the island
+            </h2>
+            <div className="flex flex-wrap gap-8">
+              {loc.amenities.map((group) => (
+                <div key={group.group} className="min-w-0 shrink grow basis-[260px]">
+                  <div className="mb-4 font-mono text-label uppercase text-meta">
+                    {group.group}
+                  </div>
+                  {group.items.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-baseline gap-3 border-b border-ink-200 py-3"
+                    >
+                      <Mark className="text-[12px]" />
+                      <span className="text-body-s text-ink-700">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <FaqRows items={loc.faqs} />
       </Container>

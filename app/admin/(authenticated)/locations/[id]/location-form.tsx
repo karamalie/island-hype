@@ -30,6 +30,16 @@ import {
   deleteLocationImage,
 } from "@/lib/actions/locations";
 import { generateSlug } from "@/lib/utils";
+import { X, Plus } from "lucide-react";
+import { updateLocationAmenities } from "@/lib/actions/locations";
+
+interface AmenityRow {
+  group: string;
+  item: string;
+}
+
+/** Hints, not a fixed list — the field is free text and staff can type anything. */
+const AMENITY_GROUPS = ["On the island", "In the water", "Eating and drinking"];
 
 const inputClass =
   "w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors";
@@ -50,12 +60,17 @@ interface LocationFormProps {
     transferType: string | null;
     transferTime: number | null;
     transferInfo: string | null;
+    starRating: number | null;
+    termsText: string | null;
+    privacyText: string | null;
+    importantInfo: string | null;
     coverImage: string | null;
     isFeatured: boolean;
     isActive: boolean;
     sortOrder: number;
   };
   images?: { id: string; url: string; alt: string | null }[];
+  amenities?: AmenityRow[];
   /** Each of these blocks saves on its own, below the main details form. */
   character?: LocationCharacterFields;
   season?: Record<number, SeasonState>;
@@ -68,6 +83,7 @@ interface LocationFormProps {
 export function LocationForm({
   location,
   images = [],
+  amenities: initialAmenities = [],
   character,
   season = {},
   seasonLabel = "",
@@ -93,6 +109,10 @@ export function LocationForm({
       transferType: location?.transferType || "",
       transferTime: location?.transferTime?.toString() || "",
       transferInfo: location?.transferInfo || "",
+      starRating: location?.starRating?.toString() || "",
+      termsText: location?.termsText || "",
+      privacyText: location?.privacyText || "",
+      importantInfo: location?.importantInfo || "",
       isFeatured: location?.isFeatured ?? false,
       isActive: location?.isActive ?? true,
       sortOrder: location?.sortOrder || 0,
@@ -111,6 +131,12 @@ export function LocationForm({
   const [transferType, setTransferType] = useState(saved.transferType);
   const [transferTime, setTransferTime] = useState(saved.transferTime);
   const [transferInfo, setTransferInfo] = useState(saved.transferInfo);
+  const [starRating, setStarRating] = useState(saved.starRating);
+  const [amenities, setAmenities] = useState<AmenityRow[]>(initialAmenities);
+  const [savingAmenities, setSavingAmenities] = useState(false);
+  const [termsText, setTermsText] = useState(saved.termsText);
+  const [privacyText, setPrivacyText] = useState(saved.privacyText);
+  const [importantInfo, setImportantInfo] = useState(saved.importantInfo);
   const [isFeatured, setIsFeatured] = useState(saved.isFeatured);
   const [isActive, setIsActive] = useState(saved.isActive);
   const [sortOrder, setSortOrder] = useState(saved.sortOrder);
@@ -119,7 +145,7 @@ export function LocationForm({
 
   type Values = typeof saved;
 
-  const values: Values = { name, slug, description, shortDesc, atoll, island, latitude, longitude, transferType, transferTime, transferInfo, isFeatured, isActive, sortOrder };
+  const values: Values = { name, slug, description, shortDesc, atoll, island, latitude, longitude, transferType, transferTime, transferInfo, starRating, termsText, privacyText, importantInfo, isFeatured, isActive, sortOrder };
 
   function apply(v: Values) {
     setName(v.name);
@@ -133,6 +159,10 @@ export function LocationForm({
     setTransferType(v.transferType);
     setTransferTime(v.transferTime);
     setTransferInfo(v.transferInfo);
+    setStarRating(v.starRating);
+    setTermsText(v.termsText);
+    setPrivacyText(v.privacyText);
+    setImportantInfo(v.importantInfo);
     setIsFeatured(v.isFeatured);
     setIsActive(v.isActive);
     setSortOrder(v.sortOrder);
@@ -178,6 +208,10 @@ export function LocationForm({
     formData.set("transferType", transferType);
     if (transferTime) formData.set("transferTime", transferTime);
     formData.set("transferInfo", transferInfo);
+    if (starRating) formData.set("starRating", starRating);
+    formData.set("termsText", termsText);
+    formData.set("privacyText", privacyText);
+    formData.set("importantInfo", importantInfo);
     formData.set("isFeatured", String(isFeatured));
     formData.set("isActive", String(isActive));
     formData.set("sortOrder", String(sortOrder));
@@ -303,6 +337,39 @@ export function LocationForm({
               <textarea value={transferInfo} onChange={(e) => setTransferInfo(e.target.value)} rows={2} className={inputClass} />
             </div>
 
+            {/* The rating belongs here rather than on a stay: it describes the
+                island or resort, and the stays under it are villa types. */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Star rating</label>
+              <input type="number" min="1" max="5" value={starRating} onChange={(e) => setStarRating(e.target.value)} placeholder="e.g. 5" className={`${inputClass} max-w-[160px]`} />
+              <p className="mt-1 text-xs text-slate-400">
+                Shown on the island page and beside every stay here.
+              </p>
+            </div>
+
+            {/* Generic, and shown on the PACKAGES rather than here — baggage,
+                travel times, the things true of every package for this island. */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Important information</label>
+              <textarea value={importantInfo} onChange={(e) => setImportantInfo(e.target.value)} rows={5} placeholder={"Baggage allowance on the transfer\nTravel times and check-in\nAnything true of every package here"} className={inputClass} />
+              <p className="mt-1 text-xs text-slate-400">
+                Appears on every package for this island, not on the island page itself.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Terms and conditions</label>
+              <textarea value={termsText} onChange={(e) => setTermsText(e.target.value)} rows={6} className={inputClass} />
+              <p className="mt-1 text-xs text-slate-400">
+                Guests must accept these before sending an enquiry for any package here.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Privacy policy</label>
+              <textarea value={privacyText} onChange={(e) => setPrivacyText(e.target.value)} rows={6} className={inputClass} />
+            </div>
+
             <div className="flex gap-4">
               <Toggle checked={isFeatured} onChange={setIsFeatured} label="Featured" />
               <Toggle checked={isActive} onChange={setIsActive} label="Active" />
@@ -322,6 +389,80 @@ export function LocationForm({
             )}
           </div>
         </form>
+
+        {/* Amenities. Shaped and edited exactly like a stay's facilities, so the
+            two lists behave the same for whoever maintains them — and so the
+            island's own offering is not confused with a villa's. */}
+        {isEdit && location && (
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Amenities</h2>
+                <p className="text-xs text-slate-500">
+                  What the island offers. Grouped — the site renders one column per group.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAmenities([...amenities, { group: AMENITY_GROUPS[0], item: "" }])}
+                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+              >
+                <Plus className="w-4 h-4" /> Add amenity
+              </button>
+            </div>
+            <div className="space-y-2">
+              {amenities.map((a, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    list="amenity-groups"
+                    value={a.group}
+                    onChange={(e) => { const u = [...amenities]; u[i] = { ...u[i], group: e.target.value }; setAmenities(u); }}
+                    placeholder="Group"
+                    className={inputClass}
+                  />
+                  <input
+                    value={a.item}
+                    onChange={(e) => { const u = [...amenities]; u[i] = { ...u[i], item: e.target.value }; setAmenities(u); }}
+                    placeholder="Dive centre, spa, sandbank picnics"
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setAmenities(amenities.filter((_, idx) => idx !== i))}
+                    className="px-2 text-slate-400 hover:text-red-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              <datalist id="amenity-groups">
+                {AMENITY_GROUPS.map((g) => <option key={g} value={g} />)}
+              </datalist>
+              {amenities.length === 0 && (
+                <p className="text-sm text-slate-500">
+                  No amenities yet. The section is hidden on the site until you add one.
+                </p>
+              )}
+            </div>
+            <div className="mt-3">
+              <SubmitButton
+                type="button"
+                loading={savingAmenities}
+                onClick={async () => {
+                  setSavingAmenities(true);
+                  const result = await runAction(() =>
+                    updateLocationAmenities(location.id, amenities)
+                  );
+                  setSavingAmenities(false);
+                  if (result.success) toast.success("Amenities saved");
+                  else toast.error(result.error || "Failed to save amenities");
+                }}
+              >
+                Save amenities
+              </SubmitButton>
+            </div>
+          </div>
+        )}
 
         {isEdit && location && (
           <>

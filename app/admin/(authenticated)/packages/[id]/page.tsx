@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getPackage } from "@/lib/actions/packages";
+import { getActiveTransferOptions } from "@/lib/actions/transfers";
 import { getImageUrl } from "@/lib/image-urls";
 import { PackageForm } from "./package-form";
 
@@ -22,6 +23,7 @@ export default async function EditPackagePage({
     faqRows,
     blackoutRows,
     livePackageCount,
+    transferOptions,
   ] = await Promise.all([
     prisma.location.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.accommodation.findMany({
@@ -37,6 +39,7 @@ export default async function EditPackagePage({
     prisma.faqItem.findMany({ where: { packageId: id }, orderBy: { sortOrder: "asc" } }),
     prisma.blackoutRange.findMany({ where: { packageId: id }, orderBy: { startDate: "asc" } }),
     prisma.package.count({ where: { isActive: true } }),
+    getActiveTransferOptions(),
   ]);
 
   /** yyyy-mm-dd for a date input; empty string for null. */
@@ -77,6 +80,7 @@ export default async function EditPackagePage({
         reason: b.reason ?? "",
       }))}
       allTags={allTags}
+      transferOptions={transferOptions}
       tagIds={tagRows.map((t) => t.tagId)}
       faqs={faqRows.map((f) => ({ question: f.question, answer: f.answer }))}
       livePackageCount={livePackageCount}

@@ -53,6 +53,10 @@ export async function createPackage(formData: FormData) {
   const maxGuests = formData.get("maxGuests")
     ? parseInt(formData.get("maxGuests") as string)
     : null;
+  const baggageInfo = (formData.get("baggageInfo") as string) || null;
+  // Empty string means "no transfer chosen", which is a null column rather than
+  // a foreign key to nothing.
+  const transferOptionId = (formData.get("transferOptionId") as string) || null;
   const isFeatured = formData.get("isFeatured") === "true";
   const isActive = formData.get("isActive") === "true";
   const sortOrder = parseInt((formData.get("sortOrder") as string) || "0");
@@ -75,6 +79,7 @@ export async function createPackage(formData: FormData) {
       data: {
         name, slug, shortDesc, description, highlights,
         locationId, accommodationId, nights, maxGuests,
+        baggageInfo, transferOptionId,
         isFeatured, isActive, sortOrder, coverImage,
       },
     });
@@ -117,6 +122,10 @@ export async function updatePackage(id: string, formData: FormData) {
   const terms = (formData.get("terms") as string) || null;
   const cancellationPolicy = (formData.get("cancellationPolicy") as string) || null;
   const bookingInfo = (formData.get("bookingInfo") as string) || null;
+  const baggageInfo = (formData.get("baggageInfo") as string) || null;
+  // Empty string means "no transfer chosen", which is a null column rather than
+  // a foreign key to nothing.
+  const transferOptionId = (formData.get("transferOptionId") as string) || null;
   const isFeatured = formData.get("isFeatured") === "true";
   const isActive = formData.get("isActive") === "true";
   const sortOrder = parseInt((formData.get("sortOrder") as string) || "0");
@@ -127,6 +136,7 @@ export async function updatePackage(id: string, formData: FormData) {
       data: {
         name, slug, shortDesc, description, highlights,
         locationId, accommodationId, nights, maxGuests,
+        baggageInfo, transferOptionId,
         bookingWindowStart, bookingWindowEnd, travelWindowStart, travelWindowEnd,
         terms, cancellationPolicy, bookingInfo,
         isFeatured, isActive, sortOrder,

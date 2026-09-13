@@ -44,6 +44,7 @@ export default async function EditLocationPage({
     <LocationForm
       location={resolvedLocation}
       images={resolvedImages}
+      amenities={location.amenities.map((a) => ({ group: a.group, item: a.item }))}
       character={{
         region: location.region ?? "",
         knownFor: location.knownFor ?? "",

@@ -632,6 +632,15 @@ export interface PackageDetail extends PackageCard {
   included: string[];
   location: Location;
   accommodation: Accommodation;
+  /** This package's own baggage note. The island's generic one is on location. */
+  baggageInfo: string | null;
+  /** Chosen from the global list. Null when staff have not picked one. */
+  transferOption: {
+    name: string;
+    details: string | null;
+    conditions: string | null;
+    policy: string | null;
+  } | null;
   /** Suggestions, not a schedule. Empty means the section does not render. */
   suggestions: PackageSuggestion[];
   faqs: { id: string; question: string; answer: string }[];
@@ -648,6 +657,9 @@ export async function getPackageDetail(
     include: {
       location: true,
       accommodation: true,
+      transferOption: {
+        select: { name: true, details: true, conditions: true, policy: true },
+      },
       pricing: true,
       images: { orderBy: { sortOrder: "asc" } },
       inclusions: { orderBy: { sortOrder: "asc" } },
@@ -703,6 +715,8 @@ export async function getPackageDetail(
     included: row.inclusions.map((i) => i.details ? `${i.item} — ${i.details}` : i.item),
     location: row.location,
     accommodation: row.accommodation,
+    baggageInfo: row.baggageInfo,
+    transferOption: row.transferOption,
     suggestions: row.activities.map((a) => ({
       id: a.activity.id,
       name: a.activity.name,

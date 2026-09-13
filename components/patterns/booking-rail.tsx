@@ -37,6 +37,14 @@ export interface BookingRailProps {
   maxChildren: number | null;
   /** Where "Check these dates" goes. Null hides the WhatsApp path entirely. */
   whatsappNumber: string | null;
+  /**
+   * The island's own terms and privacy text. Per location rather than per site:
+   * a guest is agreeing to the resort's conditions, and those differ by resort.
+   * Null or blank falls back to the site-wide pages so the links always lead
+   * somewhere.
+   */
+  termsText: string | null;
+  privacyText: string | null;
 }
 
 /**
@@ -76,6 +84,9 @@ export function BookingRail(props: BookingRailProps) {
   const [arrival, setArrival] = useState("");
   const [adults, setAdults] = useState("2");
   const [children, setChildren] = useState("0");
+  const [accepted, setAccepted] = useState(false);
+  /** Which policy is expanded inline, if any. */
+  const [showing, setShowing] = useState<"terms" | "privacy" | null>(null);
   const [state, setState] = useState<"idle" | "sent">("idle");
 
   const ended = props.lifecycle === "ended";
@@ -320,9 +331,65 @@ export function BookingRail(props: BookingRailProps) {
           </div>
 
 
+          {/* Ticked before anything is sent, and read inline rather than behind
+              a link that takes someone off the page mid-enquiry. Where an island
+              has no text of its own, the links fall back to the site's pages. */}
+          <div className="mb-4">
+            <label className="flex cursor-pointer items-start gap-2.5">
+              <input
+                type="checkbox"
+                checked={accepted}
+                onChange={(e) => setAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-teal-deep"
+              />
+              <span className="text-caption leading-5 text-ink-700">
+                I accept the{" "}
+                {props.termsText ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowing(showing === "terms" ? null : "terms")}
+                    className="cursor-pointer underline underline-offset-2 hover:text-ink-900"
+                  >
+                    terms and conditions
+                  </button>
+                ) : (
+                  <Link href="/terms" className="underline underline-offset-2 hover:text-ink-900">
+                    terms and conditions
+                  </Link>
+                )}{" "}
+                and{" "}
+                {props.privacyText ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowing(showing === "privacy" ? null : "privacy")}
+                    className="cursor-pointer underline underline-offset-2 hover:text-ink-900"
+                  >
+                    privacy policy
+                  </button>
+                ) : (
+                  <Link href="/privacy" className="underline underline-offset-2 hover:text-ink-900">
+                    privacy policy
+                  </Link>
+                )}
+                .
+              </span>
+            </label>
+
+            {showing && (
+              <div className="mt-3 max-h-56 overflow-y-auto border-l-[3px] border-ink-200 bg-ink-50 p-4">
+                <div className="mb-1.5 font-mono text-label-sm uppercase text-meta">
+                  {showing === "terms" ? "Terms and conditions" : "Privacy policy"}
+                </div>
+                <p className="m-0 whitespace-pre-line text-body-xs leading-[22px] text-ink-900">
+                  {showing === "terms" ? props.termsText : props.privacyText}
+                </p>
+              </div>
+            )}
+          </div>
+
           <button
             type="submit"
-            disabled={blocked}
+            disabled={blocked || !accepted}
             className="mb-2 h-[52px] w-full cursor-pointer rounded-full bg-ink-900 text-body-m font-medium text-white transition-colors duration-[220ms] hover:bg-ink-800 disabled:pointer-events-none disabled:opacity-50"
           >
             Check these dates

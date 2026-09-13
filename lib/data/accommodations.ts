@@ -121,8 +121,10 @@ async function getAccommodationsQuery(
 
   // Filter by star rating
   if (starRating !== undefined) {
-    where.starRating = {
-      gte: starRating,
+    // Through the island, which is what carries the rating now.
+    where.location = {
+      ...((where.location as Prisma.LocationWhereInput) || {}),
+      starRating: { gte: starRating },
     };
   }
 
@@ -152,10 +154,10 @@ async function getAccommodationsQuery(
       orderBy = { name: "desc" };
       break;
     case "rating-desc":
-      orderBy = [{ starRating: "desc" }, { name: "asc" }];
+      orderBy = [{ location: { starRating: "desc" } }, { name: "asc" }];
       break;
     case "rating-asc":
-      orderBy = [{ starRating: "asc" }, { name: "asc" }];
+      orderBy = [{ location: { starRating: "asc" } }, { name: "asc" }];
       break;
     default:
       orderBy = [{ sortOrder: "asc" }, { createdAt: "desc" }];
@@ -655,6 +657,7 @@ export async function getStayCards(opts: { locationSlug?: string } = {}): Promis
 
 export interface StayDetailData extends StayCard {
   description: string;
+  /** The island's rating. A villa type does not have one of its own. */
   starRating: number | null;
   houseReef: string | null;
   suits: string | null;
@@ -724,7 +727,7 @@ export async function getStayDetail(slug: string): Promise<StayDetailData | null
     coverImage: row.coverImage,
     photoRich: isPhotoRich({ coverImage: row.coverImage, images: row.images }),
     description: row.description,
-    starRating: row.starRating,
+    starRating: row.location.starRating,
     houseReef: row.houseReef,
     suits: row.suits,
     absentNote: row.absentNote,

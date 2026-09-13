@@ -300,6 +300,71 @@ export default async function PackageDetailPage({
               </div>
             </div>
 
+            {/* The chosen transfer, written once under Transfers in admin and
+                shown here in full. Details, conditions and policy are separate
+                headings because guests ask about them separately — the luggage
+                limit is not a footnote to the timetable. */}
+            {pkg.transferOption &&
+              (pkg.transferOption.details ||
+                pkg.transferOption.conditions ||
+                pkg.transferOption.policy) && (
+                <div className="mb-12">
+                  <h2 className="m-0 mb-6 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                    Your transfer
+                  </h2>
+                  <div className="mb-4 font-mono text-label uppercase text-meta">
+                    {pkg.transferOption.name}
+                  </div>
+                  <div className="flex flex-col gap-6">
+                    {[
+                      ["What to expect", pkg.transferOption.details],
+                      ["Conditions", pkg.transferOption.conditions],
+                      ["Transfer policy", pkg.transferOption.policy],
+                    ]
+                      .filter(([, body]) => body)
+                      .map(([label, body]) => (
+                        <div key={label} className="border-t border-ink-200 pt-4">
+                          <div className="mb-2 font-mono text-label-sm uppercase text-meta">
+                            {label}
+                          </div>
+                          <p className="m-0 max-w-[62ch] whitespace-pre-line text-body-s leading-[26px] text-ink-700">
+                            {body}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+            {/* The island's generic note plus anything specific to this package.
+                Both, not one or the other: the island's covers travel times and
+                the standing baggage allowance, and the package's covers what is
+                different about this one. */}
+            {(pkg.location.importantInfo || pkg.baggageInfo) && (
+              <div className="mb-12">
+                <h2 className="m-0 mb-6 text-[clamp(24px,2.6vw,32px)] font-medium leading-[1.18] tracking-[-0.015em]">
+                  Important information
+                </h2>
+                <div className="flex flex-col gap-6">
+                  {pkg.location.importantInfo && (
+                    <p className="m-0 max-w-[62ch] whitespace-pre-line text-body-s leading-[26px] text-ink-700">
+                      {pkg.location.importantInfo}
+                    </p>
+                  )}
+                  {pkg.baggageInfo && (
+                    <div className="border-t border-ink-200 pt-4">
+                      <div className="mb-2 font-mono text-label-sm uppercase text-meta">
+                        Baggage
+                      </div>
+                      <p className="m-0 max-w-[62ch] whitespace-pre-line text-body-s leading-[26px] text-ink-700">
+                        {pkg.baggageInfo}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <FaqRows items={pkg.faqs} />
           </div>
 
@@ -316,6 +381,8 @@ export default async function PackageDetailPage({
               maxAdults={pkg.accommodation.maxAdults}
               maxChildren={pkg.accommodation.maxChildren}
               whatsappNumber={contact.phone || null}
+              termsText={pkg.location.termsText}
+              privacyText={pkg.location.privacyText}
             />
           </div>
         </div>

@@ -11,7 +11,7 @@ import type { AccommodationType } from "@prisma/client";
 export async function getAccommodations() {
   return prisma.accommodation.findMany({
     orderBy: { sortOrder: "asc" },
-    include: { location: { select: { id: true, name: true } } },
+    include: { location: { select: { id: true, name: true, starRating: true } } },
   });
 }
 
@@ -40,9 +40,6 @@ export async function createAccommodation(formData: FormData) {
   const maxChildren = formData.get("maxChildren")
     ? parseInt(formData.get("maxChildren") as string)
     : null;
-  const starRating = formData.get("starRating")
-    ? parseInt(formData.get("starRating") as string)
-    : null;
   const locationId = formData.get("locationId") as string;
   const houseReef = ((formData.get("houseReef") as string) || "").trim() || null;
   const suits = ((formData.get("suits") as string) || "").trim() || null;
@@ -69,7 +66,7 @@ export async function createAccommodation(formData: FormData) {
   try {
     const accommodation = await prisma.accommodation.create({
       data: {
-        name, slug, shortDesc, description, type, starRating, maxAdults, maxChildren,
+        name, slug, shortDesc, description, type, maxAdults, maxChildren,
         locationId, houseReef, suits, boardOptions, absentNote,
         contactEmail, contactPhone,
         isActive, sortOrder, coverImage,
@@ -98,9 +95,6 @@ export async function updateAccommodation(id: string, formData: FormData) {
   const maxChildren = formData.get("maxChildren")
     ? parseInt(formData.get("maxChildren") as string)
     : null;
-  const starRating = formData.get("starRating")
-    ? parseInt(formData.get("starRating") as string)
-    : null;
   const locationId = formData.get("locationId") as string;
   const houseReef = ((formData.get("houseReef") as string) || "").trim() || null;
   const suits = ((formData.get("suits") as string) || "").trim() || null;
@@ -115,7 +109,7 @@ export async function updateAccommodation(id: string, formData: FormData) {
     await prisma.accommodation.update({
       where: { id },
       data: {
-        name, slug, shortDesc, description, type, starRating, maxAdults, maxChildren,
+        name, slug, shortDesc, description, type, maxAdults, maxChildren,
         locationId, houseReef, suits, boardOptions, absentNote,
         contactEmail, contactPhone,
         isActive, sortOrder,

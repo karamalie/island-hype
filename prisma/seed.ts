@@ -170,7 +170,6 @@ async function main() {
         description:
           "Arena Beach Hotel is one of Maafushi's premier guesthouses, located directly on the bikini beach. Enjoy modern rooms, a rooftop restaurant, and easy access to water sports.",
         coverImage: "arena-beach.jpg",
-        starRating: 4,
         locationId: locations[0].id,
       },
     }),
@@ -183,7 +182,6 @@ async function main() {
         description:
           "Kaani Beach Hotel offers contemporary rooms with ocean views, an infinity pool, and excellent dining. Located at the quieter end of Maafushi.",
         coverImage: "kaani-beach.jpg",
-        starRating: 4,
         locationId: locations[0].id,
       },
     }),
@@ -196,7 +194,6 @@ async function main() {
         description:
           "Thundi Guesthouse offers a warm, family-run experience on peaceful Fulidhoo. Simple but comfortable rooms and home-cooked Maldivian meals.",
         coverImage: "thundi.jpg",
-        starRating: 3,
         locationId: locations[2].id,
       },
     }),
@@ -209,7 +206,6 @@ async function main() {
         description:
           "Wake up to stunning beach views at this comfortable guesthouse. Perfect base for whale shark excursions with PADI dive center on-site.",
         coverImage: "dhigurah-beach-view.jpg",
-        starRating: 3,
         locationId: locations[3].id,
       },
     }),
@@ -222,7 +218,6 @@ async function main() {
         description:
           "Baros Maldives features elegant water villas, overwater spa, fine dining restaurants, and one of the best house reefs in the Maldives. A true barefoot luxury experience.",
         coverImage: "baros-resort.jpg",
-        starRating: 5,
         locationId: locations[4].id,
       },
     }),
@@ -235,7 +230,6 @@ async function main() {
         description:
           "Soneva Fushi offers ultra-luxury villas with private pools, Butler service, and incredible experiences from stargazing to chocolate rooms. Sustainable luxury at its finest.",
         coverImage: "soneva-fushi-resort.jpg",
-        starRating: 5,
         locationId: locations[5].id,
       },
     }),

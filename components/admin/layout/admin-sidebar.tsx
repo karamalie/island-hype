@@ -10,6 +10,7 @@ import {
   Activity,
   Filter,
   Tag,
+  Ship,
   MessageSquare,
   Settings,
   Waves,
@@ -47,6 +48,11 @@ const navItems = [
     label: "Offers",
     href: "/admin/offers",
     icon: Tag,
+  },
+  {
+    label: "Transfers",
+    href: "/admin/transfers",
+    icon: Ship,
   },
   {
     label: "Filter categories",

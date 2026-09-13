@@ -531,6 +531,10 @@ export interface LocationDetailData extends LocationCard {
   season: { month: number; state: SeasonState }[];
   images: { id: string; url: string; alt: string | null }[];
   faqs: { id: string; question: string; answer: string }[];
+  /** The island's own rating. Moved here from the stays, which are villa types. */
+  starRating: number | null;
+  /** Grouped, so the page can render a column per group. */
+  amenities: { group: string; items: string[] }[];
 }
 
 export async function getLocationDetail(
@@ -540,6 +544,7 @@ export async function getLocationDetail(
     where: { slug },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
+      amenities: { orderBy: { sortOrder: "asc" } },
       seasonMonths: { orderBy: { month: "asc" } },
       faqs: { orderBy: { sortOrder: "asc" } },
       _count: { select: { packages: true, accommodations: true } },
@@ -571,5 +576,14 @@ export async function getLocationDetail(
     season: row.seasonMonths.map((m) => ({ month: m.month, state: m.state })),
     images: row.images.map((i) => ({ id: i.id, url: i.url, alt: i.alt })),
     faqs: row.faqs.map((f) => ({ id: f.id, question: f.question, answer: f.answer })),
+    starRating: row.starRating,
+    // Grouped here rather than in the component, so the page renders what it is
+    // given and the grouping rule lives with the data.
+    amenities: Object.entries(
+      row.amenities.reduce<Record<string, string[]>>((acc, a) => {
+        (acc[a.group] ??= []).push(a.item);
+        return acc;
+      }, {})
+    ).map(([group, items]) => ({ group, items })),
   };
 }
