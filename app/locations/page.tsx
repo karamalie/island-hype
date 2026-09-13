@@ -188,7 +188,15 @@ export default async function LocationsPage() {
                       className="mb-7 grid gap-x-6"
                       style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}
                     >
+                      {/* This page has two layouts — tiles and these rows — and
+                          the rating has to be in both. Adding it to one and
+                          checking that page locally is how it ended up shipping
+                          invisible on production, which renders the other. */}
                       {[
+                        {
+                          label: "Rating",
+                          value: l.starRating ? "★".repeat(l.starRating) : null,
+                        },
                         { label: "Transfer", value: l.transfer },
                         { label: "Best months", value: l.bestMonths },
                         { label: "Known for", value: l.knownFor },
