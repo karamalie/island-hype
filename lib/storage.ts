@@ -72,12 +72,23 @@ const MASTER_MAX_EDGE = 3000;
 const MASTER_QUALITY = 90;
 
 /**
- * A decompression-bomb guard, and a memory guard for this box in particular.
- * 100 MP is past any camera the client is likely to own and well past anything
- * that arrives inside the 50 MB file ceiling as a JPEG; it exists for the small
- * PNG that expands to 30000 x 30000.
+ * Decompression-bomb and memory guards, which have to differ by format.
+ *
+ * A flat 100 MP ceiling was the first attempt and it was wrong twice over. It
+ * rejected a real client photograph at 12288 x 8192 — 100.7 MP, over by 0.7% —
+ * and it applied the same number to formats with wildly different costs.
+ *
+ * JPEG is cheap to shrink: libvips decodes at 1/2, 1/4 or 1/8 scale when the
+ * output is smaller, so a 200 MP JPEG bound for 3000px never allocates more than
+ * a few tens of MB. PNG, TIFF and HEIF have no equivalent — they decode at full
+ * resolution, three bytes a pixel, and 200 MP of that is 600 MB on a box with
+ * about 350 MB free. Hence the two numbers.
+ *
+ * The 50 MB file ceiling is the real backstop for the non-JPEG formats anyway: a
+ * 60 MP PNG photograph does not fit inside it.
  */
-const MAX_INPUT_PIXELS = 100_000_000;
+const JPEG_MAX_PIXELS = 200_000_000;
+const OTHER_MAX_PIXELS = 60_000_000;
 
 /** What libvips will decode. SVG is deliberately absent: it is script, not photo. */
 const ACCEPTED_FORMATS = new Set([
@@ -131,11 +142,13 @@ export async function uploadImage(
 
   // The format comes from the bytes, never from the filename. libvips sniffs the
   // header, which is the same check that found the four mislabelled files.
-  let image: sharp.Sharp;
+  //
+  // Read with no pixel ceiling on purpose: metadata() parses the header and does
+  // not allocate the bitmap, so nothing can be spent here — and the header is
+  // how we learn which ceiling this file should be held to.
   let meta: sharp.Metadata;
   try {
-    image = sharp(input, { limitInputPixels: MAX_INPUT_PIXELS, animated: false });
-    meta = await image.metadata();
+    meta = await sharp(input, { limitInputPixels: false, animated: false }).metadata();
   } catch (err) {
     return { url: "", path: "", error: describeDecodeFailure(file.name, input, err) };
   }
@@ -148,6 +161,29 @@ export async function uploadImage(
       error: `${file.name} is not an image we can use${format ? ` (it is ${format})` : ""}. Upload a JPEG, PNG, WebP or HEIC.`,
     };
   }
+
+  const ceiling = format === "jpeg" ? JPEG_MAX_PIXELS : OTHER_MAX_PIXELS;
+  const width = meta.width ?? 0;
+  const height = meta.height ?? 0;
+  if (width * height > ceiling) {
+    return {
+      url: "",
+      path: "",
+      error: `${file.name} is ${width} x ${height} (${((width * height) / 1e6).toFixed(1)} megapixels), which is larger than this server can process. Export it at up to ${(ceiling / 1e6).toFixed(0)} megapixels and upload again.`,
+    };
+  }
+
+  const image = sharp(input, {
+    limitInputPixels: ceiling,
+    animated: false,
+    // Streams the source instead of random-accessing it, which is the single
+    // biggest lever on this box. Measured on a 100.7 MP JPEG: peak memory for
+    // the resize fell from 108 MB to 4 MB for the same 1.5 seconds of work.
+    // Without it, one upload took the process to roughly 375 MB against the
+    // 450 MB at which pm2 restarts it — a spike that would have killed the
+    // request, and the site with it, at exactly the wrong moment.
+    sequentialRead: true,
+  });
 
   // Alpha has to survive, so anything transparent becomes WebP and everything
   // else becomes JPEG. JPEG for the common case on purpose: the master is also
@@ -248,7 +284,7 @@ export async function deleteImage(
 function describeDecodeFailure(name: string, input: Buffer, err: unknown): string {
   const message = err instanceof Error ? err.message : "";
 
-  if (message.includes("pixels")) {
+  if (/pixel limit|too large|exceeds/i.test(message)) {
     return `${name} has too many pixels to process safely. Export it at a smaller size and try again.`;
   }
 
