@@ -162,14 +162,14 @@ async function getPackagesQuery(
 
   // Filter by nights
   if (minNights !== undefined) {
-    where.minNights = {
+    where.nights = {
       gte: minNights,
     };
   }
 
   if (maxNights !== undefined) {
-    where.minNights = {
-      ...(where.minNights as Prisma.IntFilter),
+    where.nights = {
+      ...(where.nights as Prisma.IntFilter),
       lte: maxNights,
     };
   }
@@ -219,10 +219,10 @@ async function getPackagesQuery(
       orderBy = { name: "asc" }; // Will sort by price client-side
       break;
     case "nights-asc":
-      orderBy = { minNights: "asc" };
+      orderBy = { nights: "asc" };
       break;
     case "nights-desc":
-      orderBy = { minNights: "desc" };
+      orderBy = { nights: "desc" };
       break;
     case "name-asc":
       orderBy = { name: "asc" };
@@ -437,7 +437,7 @@ export async function getPackageBySlug(
 // These return exactly what a page renders: display strings are built here, not
 // in components, and every layout-affecting fact (photoRich, lifecycle, price) is
 // derived at this boundary. Components stay dumb, which is what keeps the density
-// rules honest — a component cannot accidentally read `minNights` and print
+// rules honest — a component cannot accidentally read a raw column and print
 // "4+ nights", because it never sees it.
 //
 // The pre-redesign exports above are still used by the old pages and are removed
@@ -455,7 +455,7 @@ export interface PackageCard {
   atoll: string;
   locationName: string;
   locationSlug: string;
-  /** The sold length. `minNights` never leaves this module. */
+  /** The sold length. */
   nights: number;
   stay: string | null;
   transfer: string | null;
@@ -477,7 +477,7 @@ const cardSelect = {
   slug: true,
   name: true,
   shortDesc: true,
-  minNights: true,
+  nights: true,
   mealPlan: true,
   badge: true,
   coverImage: true,
@@ -505,7 +505,7 @@ type CardRow = {
   slug: string;
   name: string;
   shortDesc: string | null;
-  minNights: number;
+  nights: number;
   mealPlan: string | null;
   badge: string | null;
   coverImage: string | null;
@@ -539,11 +539,11 @@ function toCard(row: CardRow, market: Market): PackageCard {
     slug: row.slug,
     name: row.name,
     blurb: row.shortDesc,
-    eyebrow: packageEyebrow(row.location.atoll, row.minNights),
+    eyebrow: packageEyebrow(row.location.atoll, row.nights),
     atoll: row.location.atoll,
     locationName: row.location.name,
     locationSlug: row.location.slug,
-    nights: row.minNights,
+    nights: row.nights,
     stay: `${row.accommodation.name}, ${accommodationTypeLabel(row.accommodation.type).toLowerCase()}`,
     transfer: transferSummary(row.location.transferType, row.location.transferTime),
     mealPlan: row.mealPlan,
@@ -622,8 +622,7 @@ export interface PackageDetail extends PackageCard {
   description: string;
   longBlurb: string | null;
   bestMonths: string | null;
-  minNights: number;
-  maxNights: number | null;
+  nights: number;
   /** The rail validates against these, and lifecycleOf() is derived from them. */
   travelWindowStart: Date | null;
   travelWindowEnd: Date | null;
@@ -695,8 +694,7 @@ export async function getPackageDetail(
     description: row.description,
     longBlurb: row.longBlurb,
     bestMonths: row.bestMonths,
-    minNights: row.minNights,
-    maxNights: row.maxNights,
+    nights: row.nights,
     travelWindowStart: row.travelWindowStart,
     travelWindowEnd: row.travelWindowEnd,
     bookingWindowStart: row.bookingWindowStart,

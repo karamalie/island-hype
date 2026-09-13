@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPackageCards, getPackageDetail } from "@/lib/data/packages";
+import { getContactDetails } from "@/lib/data/settings";
 import { showRelated } from "@/lib/design/density";
 import { SITE_IMAGES } from "@/lib/design/site-images";
 import { distinctOfferBadge } from "@/lib/design/offers";
@@ -55,7 +56,10 @@ export default async function PackageDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const pkg = await getPackageDetail(slug);
+  const [pkg, contact] = await Promise.all([
+    getPackageDetail(slug),
+    getContactDetails(),
+  ]);
   if (!pkg) notFound();
 
   const related = showRelated(pkg.relatedCount)
@@ -305,12 +309,13 @@ export default async function PackageDetailPage({
               packageName={pkg.name}
               price={pkg.price}
               nights={pkg.nights}
-              minNights={pkg.minNights}
-              maxNights={pkg.maxNights}
               lifecycle={pkg.lifecycle}
               travel={{ start: pkg.travelWindowStart, end: pkg.travelWindowEnd }}
               booking={{ start: pkg.bookingWindowStart, end: pkg.bookingWindowEnd }}
               blackouts={pkg.blackouts}
+              maxAdults={pkg.accommodation.maxAdults}
+              maxChildren={pkg.accommodation.maxChildren}
+              whatsappNumber={contact.phone || null}
             />
           </div>
         </div>

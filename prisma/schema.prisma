@@ -86,6 +86,11 @@ model Accommodation {
   starRating Int? @db.SmallInt
 
   // Display fields the redesign reads. Nullable; the front end drops the row when absent.
+  // Occupancy. Caps the Guests selector on any package sold against this stay,
+  // so a villa that sleeps three cannot be enquired about for six. Null means
+  // unknown, and the selector falls back to the package's own maxGuests.
+  maxAdults    Int?    @db.SmallInt
+  maxChildren  Int?    @db.SmallInt
   houseReef    String? @db.VarChar(160) // "Yes — 9m from the villa ladder"
   suits        String? @db.VarChar(160) // "Couples, snorkellers, divers"
   boardOptions String? @db.VarChar(160) // "Half-board or full-board"
@@ -197,10 +202,12 @@ model Package {
   // Stored as a JSON array of strings (MySQL has no scalar-list type).
   highlights  Json    @default("[]")
 
-  // minNights is the sold length (the designs show a single "4 nights"); maxNights is
-  // the extendable ceiling. The data layer exposes minNights as `nights`.
-  minNights Int  @default(1)
-  maxNights Int?
+  // How long the package is. One number, not a range: it used to be minNights
+  // (the sold length) plus an optional maxNights ceiling, which put a Nights
+  // dropdown in front of guests offering lengths that were never really on sale.
+  // A 4-night package is four nights; the arrival date is the only thing a guest
+  // chooses, and the departure follows from it.
+  nights    Int  @default(1)
   maxGuests Int?
 
   // Display fields the redesign reads. All nullable — a null drops its spec row.

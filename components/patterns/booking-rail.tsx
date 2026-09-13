@@ -18,6 +18,7 @@ import Link from "next/link";
 import { Card, FieldLabel, Input, Mark, Select } from "@/components/ui";
 import { checkDates, type Blackout, type PackageLifecycle } from "@/lib/design/availability";
 import { submitDateEnquiry } from "@/lib/actions/enquiry";
+import { whatsappHref } from "@/lib/data/settings";
 import { PriceBlock } from "./price-block";
 import type { PackagePrice } from "@/lib/design/pricing";
 
@@ -25,23 +26,75 @@ export interface BookingRailProps {
   packageId: string;
   packageName: string;
   price: PackagePrice | null;
+  /** The package's length. Not a choice — the arrival date is the only choice. */
   nights: number;
-  minNights: number;
-  maxNights: number | null;
   lifecycle: PackageLifecycle;
   travel: { start: Date | null; end: Date | null };
   booking: { start: Date | null; end: Date | null };
   blackouts: Blackout[];
+  /** Occupancy of the stay this package is sold against. Null = not recorded. */
+  maxAdults: number | null;
+  maxChildren: number | null;
+  /** Where "Check these dates" goes. Null hides the WhatsApp path entirely. */
+  whatsappNumber: string | null;
+}
+
+/**
+ * Date-only formatting in UTC, deliberately.
+ *
+ * These dates come out of MySQL at UTC midnight and go into an <input
+ * type="date">, which speaks bare YYYY-MM-DD. Formatting them through local
+ * getters would shift the day for anyone west of Greenwich, so a travel window
+ * ending on the 22nd would stop admitting the 22nd.
+ */
+function isoDate(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    d.getUTCDate()
+  ).padStart(2, "0")}`;
+}
+
+/** "Sun 16 Nov 2026", for stating the departure a guest did not have to work out. */
+function humanDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function addDays(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return isoDate(d);
 }
 
 export function BookingRail(props: BookingRailProps) {
   const [arrival, setArrival] = useState("");
-  const [nights, setNights] = useState(String(props.nights));
-  const [guests, setGuests] = useState("2");
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [adults, setAdults] = useState("2");
+  const [children, setChildren] = useState("0");
+  const [state, setState] = useState<"idle" | "sent">("idle");
 
   const ended = props.lifecycle === "ended";
+
+  // The picker's own bounds. A guest should not be able to choose a date the
+  // package cannot take and only learn so from a message underneath.
+  const today = new Date();
+  const todayIso = isoDate(
+    new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()))
+  );
+  const windowStart = props.travel.start ? isoDate(props.travel.start) : null;
+  const minArrival = windowStart && windowStart > todayIso ? windowStart : todayIso;
+  const maxArrival = props.travel.end ? isoDate(props.travel.end) : undefined;
+
+  // Occupancy comes from the stay. Where it has not been recorded, the package's
+  // own ceiling stands in, and four is the last resort — the number the selector
+  // offered before any of this existed.
+  const adultCap = Math.max(1, props.maxAdults ?? 4);
+  const childCap = Math.max(0, props.maxChildren ?? 0);
 
   // Runs as the guest types. The server runs the same function again on submit.
   const verdict = useMemo(() => {
@@ -50,30 +103,77 @@ export function BookingRail(props: BookingRailProps) {
     if (Number.isNaN(date.getTime())) return null;
     return checkDates({
       arrival: date,
-      nights: Number(nights),
+      nights: props.nights,
       travel: props.travel,
       booking: props.booking,
       blackouts: props.blackouts,
-      minNights: props.minNights,
-      maxNights: props.maxNights,
     });
-  }, [arrival, nights, props.travel, props.booking, props.blackouts, props.minNights, props.maxNights]);
+  }, [arrival, props.nights, props.travel, props.booking, props.blackouts]);
 
   const blocked = verdict !== null && !verdict.ok;
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  /**
+   * What the guest is about to send, in words. Built here rather than on the
+   * server because it has to exist before any await — see onSubmit.
+   */
+  function whatsappMessage(name: string, email: string): string {
+    const lines = [
+      `Hi Island Hype — I'd like to check these dates.`,
+      ``,
+      `Package: ${props.packageName}`,
+    ];
+    if (arrival) {
+      lines.push(`Arrival: ${humanDate(arrival)}`);
+      lines.push(
+        `${props.nights} ${props.nights === 1 ? "night" : "nights"}, departing ${humanDate(
+          addDays(arrival, props.nights)
+        )}`
+      );
+    }
+    const kids = Number(children);
+    lines.push(
+      `Guests: ${adults} ${Number(adults) === 1 ? "adult" : "adults"}${
+        kids > 0 ? ` and ${kids} ${kids === 1 ? "child" : "children"}` : ""
+      }`
+    );
+    if (props.price) {
+      lines.push(
+        `Price shown: ${props.price.currency === "MVR" ? "MVR " : "$"}${props.price.total.toLocaleString()} total`
+      );
+    }
+    lines.push(``, `Name: ${name}`, `Email: ${email}`);
+    return lines.join("\n");
+  }
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setState("sending");
-    setServerError(null);
     const data = new FormData(e.currentTarget);
     data.set("packageId", props.packageId);
-    const result = await submitDateEnquiry(data);
-    if (result.success) {
-      setState("sent");
-    } else {
-      setState("error");
-      setServerError(result.error ?? null);
+    data.set("nights", String(props.nights));
+    data.set("adults", adults);
+    data.set("children", children);
+
+    const name = String(data.get("name") ?? "");
+    const email = String(data.get("email") ?? "");
+
+    // Opened synchronously, inside the gesture that triggered it. Anything
+    // awaited first — including the enquiry write — ends the user-activation
+    // window and the browser blocks the tab as a popup.
+    if (props.whatsappNumber) {
+      window.open(
+        whatsappHref(props.whatsappNumber, whatsappMessage(name, email)),
+        "_blank",
+        "noopener,noreferrer"
+      );
     }
+
+    // Recorded as well, and deliberately not awaited. The guest is already in
+    // WhatsApp; a slow or failing write here must not hold that up or replace
+    // the confirmation with an error about something they cannot act on.
+    setState("sent");
+    void submitDateEnquiry(data).catch(() => {
+      /* the enquiry is in WhatsApp either way */
+    });
   }
 
   if (state === "sent") {
@@ -125,7 +225,9 @@ export function BookingRail(props: BookingRailProps) {
         </div>
       ) : (
         <form onSubmit={onSubmit}>
-          <input type="hidden" name="adults" value={guests} />
+          <input type="hidden" name="nights" value={props.nights} />
+          <input type="hidden" name="adults" value={adults} />
+          <input type="hidden" name="children" value={children} />
           <div className="mb-4 flex flex-col gap-2">
             <div>
               <FieldLabel htmlFor="rail-arrival">Arrival date</FieldLabel>
@@ -134,42 +236,56 @@ export function BookingRail(props: BookingRailProps) {
                 name="arrival"
                 type="date"
                 value={arrival}
+                /* The travel window, enforced by the picker rather than only
+                   explained after the fact. Never earlier than today, whatever
+                   the window says. */
+                min={minArrival}
+                max={maxArrival}
                 onChange={(e) => setArrival(e.target.value)}
               />
+              {/* The length is the package's, so the only thing worth saying is
+                  when they would leave — which a guest should not have to count
+                  out on their fingers. */}
+              <p className="m-0 mt-1.5 text-caption text-meta">
+                {arrival
+                  ? `${props.nights} ${props.nights === 1 ? "night" : "nights"} — departing ${humanDate(addDays(arrival, props.nights))}`
+                  : `${props.nights} ${props.nights === 1 ? "night" : "nights"}, set by the package`}
+              </p>
             </div>
+            {/* Capped by the stay this package is sold against, so nobody can
+                enquire about six people in a villa that sleeps three and be told
+                so only after a reply from Male'. */}
             <div className="flex gap-2">
               <div className="flex-1">
-                <FieldLabel htmlFor="rail-nights">Nights</FieldLabel>
+                <FieldLabel htmlFor="rail-adults">Adults</FieldLabel>
                 <Select
-                  id="rail-nights"
-                  name="nights"
-                  value={nights}
-                  onChange={(e) => setNights(e.target.value)}
+                  id="rail-adults"
+                  value={adults}
+                  onChange={(e) => setAdults(e.target.value)}
                 >
-                  {Array.from(
-                    { length: (props.maxNights ?? props.minNights + 6) - props.minNights + 1 },
-                    (_, i) => props.minNights + i
-                  ).map((n) => (
+                  {Array.from({ length: adultCap }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>
-                      {n}
+                      {n} {n === 1 ? "adult" : "adults"}
                     </option>
                   ))}
                 </Select>
               </div>
-              <div className="flex-1">
-                <FieldLabel htmlFor="rail-guests">Guests</FieldLabel>
-                <Select
-                  id="rail-guests"
-                  value={guests}
-                  onChange={(e) => setGuests(e.target.value)}
-                >
-                  {[1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n}>
-                      {n} {n === 1 ? "guest" : "guests"}
-                    </option>
-                  ))}
-                </Select>
-              </div>
+              {childCap > 0 && (
+                <div className="flex-1">
+                  <FieldLabel htmlFor="rail-children">Children</FieldLabel>
+                  <Select
+                    id="rail-children"
+                    value={children}
+                    onChange={(e) => setChildren(e.target.value)}
+                  >
+                    {Array.from({ length: childCap + 1 }, (_, i) => i).map((n) => (
+                      <option key={n} value={n}>
+                        {n === 0 ? "None" : `${n} ${n === 1 ? "child" : "children"}`}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
 
@@ -196,21 +312,13 @@ export function BookingRail(props: BookingRailProps) {
             </div>
           </div>
 
-          {state === "error" && serverError && (
-            <div className="mb-4 border-l-[3px] border-meta-inverse bg-ink-50 p-4">
-              <div className="mb-1.5 font-mono text-label-sm uppercase text-meta">
-                Needs attention
-              </div>
-              <p className="m-0 text-body-xs leading-[22px] text-ink-900">{serverError}</p>
-            </div>
-          )}
 
           <button
             type="submit"
-            disabled={blocked || state === "sending"}
+            disabled={blocked}
             className="mb-2 h-[52px] w-full cursor-pointer rounded-full bg-ink-900 text-body-m font-medium text-white transition-colors duration-[220ms] hover:bg-ink-800 disabled:pointer-events-none disabled:opacity-50"
           >
-            {state === "sending" ? "Sending…" : "Check these dates"}
+            Check these dates
           </button>
           <Link
             href="/contact"

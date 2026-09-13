@@ -416,7 +416,7 @@ async function main() {
       description:
         "Discover why Maafushi is the most popular local island in the Maldives. This value-packed getaway combines beach relaxation, water sports, and authentic cultural experiences.",
       coverImage: "maafushi-getaway.jpg",
-      minNights: 4,
+      nights: 4,
       maxGuests: 4,
       isFeatured: true,
       isActive: true,
@@ -486,7 +486,7 @@ async function main() {
       description:
         "South Ari Atoll is the whale shark capital of the world. This package guarantees multiple whale shark excursions along with incredible diving and the beautiful 3km beach of Dhigurah.",
       coverImage: "whale-shark.jpg",
-      minNights: 5,
+      nights: 5,
       maxGuests: 6,
       isFeatured: true,
       isActive: true,
@@ -567,7 +567,7 @@ async function main() {
       description:
         "Baros Maldives has been winning hearts (and awards) for over 50 years. This romantic package includes a water villa, private dining experiences, couples spa, and unforgettable moments.",
       coverImage: "baros-romance.jpg",
-      minNights: 5,
+      nights: 5,
       maxGuests: 2,
       isFeatured: true,
       isActive: true,
@@ -649,7 +649,7 @@ async function main() {
       description:
         "The ultimate family vacation at the legendary Soneva Fushi. Kids will love The Den (kids club), chocolate room, observatory, and outdoor cinema. Parents will appreciate barefoot luxury and world-class service.",
       coverImage: "soneva-family.jpg",
-      minNights: 6,
+      nights: 6,
       maxGuests: 6,
       isFeatured: true,
       isActive: true,
@@ -731,7 +731,7 @@ async function main() {
       description:
         "Fulidhoo offers an incredible experience: snorkeling with dozens of nurse sharks at the famous shark point. Combined with the island's peaceful atmosphere, this is a unique Maldives adventure.",
       coverImage: "fulidhoo-sharks.jpg",
-      minNights: 4,
+      nights: 4,
       maxGuests: 4,
       isFeatured: false,
       isActive: true,

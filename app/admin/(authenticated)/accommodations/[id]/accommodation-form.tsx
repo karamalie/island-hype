@@ -60,6 +60,8 @@ interface AccommodationFormProps {
     shortDesc: string | null;
     description: string;
     starRating: number | null;
+    maxAdults: number | null;
+    maxChildren: number | null;
     locationId: string;
     houseReef: string | null;
     suits: string | null;
@@ -99,6 +101,8 @@ export function AccommodationForm({
       shortDesc: accommodation?.shortDesc || "",
       description: accommodation?.description || "",
       starRating: accommodation?.starRating?.toString() || "",
+      maxAdults: accommodation?.maxAdults?.toString() || "",
+      maxChildren: accommodation?.maxChildren?.toString() || "",
       locationId: accommodation?.locationId || "",
       houseReef: accommodation?.houseReef || "",
       suits: accommodation?.suits || "",
@@ -118,6 +122,8 @@ export function AccommodationForm({
   const [shortDesc, setShortDesc] = useState(saved.shortDesc);
   const [description, setDescription] = useState(saved.description);
   const [starRating, setStarRating] = useState(saved.starRating);
+  const [maxAdults, setMaxAdults] = useState(saved.maxAdults);
+  const [maxChildren, setMaxChildren] = useState(saved.maxChildren);
   const [locationId, setLocationId] = useState(saved.locationId);
   const [rooms, setRooms] = useState<RoomRow[]>(initialRooms);
   const [facilities, setFacilities] = useState<FacilityRow[]>(initialFacilities);
@@ -138,7 +144,7 @@ export function AccommodationForm({
   type Values = typeof saved;
 
   const values: Values = {
-    name, slug, type, shortDesc, description, starRating, locationId,
+    name, slug, type, shortDesc, description, starRating, maxAdults, maxChildren, locationId,
     houseReef, suits, boardOptions, absentNote, contactEmail, contactPhone,
     isActive, sortOrder,
   };
@@ -150,6 +156,8 @@ export function AccommodationForm({
     setShortDesc(v.shortDesc);
     setDescription(v.description);
     setStarRating(v.starRating);
+    setMaxAdults(v.maxAdults);
+    setMaxChildren(v.maxChildren);
     setLocationId(v.locationId);
     setHouseReef(v.houseReef);
     setSuits(v.suits);
@@ -195,6 +203,8 @@ export function AccommodationForm({
     formData.set("shortDesc", shortDesc);
     formData.set("description", description);
     if (starRating) formData.set("starRating", starRating);
+    if (maxAdults) formData.set("maxAdults", maxAdults);
+    if (maxChildren) formData.set("maxChildren", maxChildren);
     formData.set("locationId", locationId);
     formData.set("houseReef", houseReef);
     formData.set("suits", suits);
@@ -283,6 +293,22 @@ export function AccommodationForm({
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Star Rating</label>
                 <input type="number" min="1" max="5" value={starRating} onChange={(e) => setStarRating(e.target.value)} className={inputClass} />
+              </div>
+            </div>
+
+            {/* Occupancy. These caps the Guests selector on every package sold
+                against this stay, so nobody can enquire for six people in a
+                villa that sleeps three and find out only after a reply. Left
+                blank means we have not asked the island yet, and the selector
+                falls back to its old ceiling rather than guessing a limit. */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Max adults</label>
+                <input type="number" min="1" value={maxAdults} onChange={(e) => setMaxAdults(e.target.value)} placeholder="e.g. 3" className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Max children</label>
+                <input type="number" min="0" value={maxChildren} onChange={(e) => setMaxChildren(e.target.value)} placeholder="e.g. 2" className={inputClass} />
               </div>
             </div>
 

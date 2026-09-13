@@ -49,10 +49,7 @@ export async function createPackage(formData: FormData) {
   const highlights = highlightsStr.split("\n").map((s) => s.trim()).filter(Boolean);
   const locationId = formData.get("locationId") as string;
   const accommodationId = formData.get("accommodationId") as string;
-  const minNights = parseInt((formData.get("minNights") as string) || "1");
-  const maxNights = formData.get("maxNights")
-    ? parseInt(formData.get("maxNights") as string)
-    : null;
+  const nights = parseInt((formData.get("nights") as string) || "1");
   const maxGuests = formData.get("maxGuests")
     ? parseInt(formData.get("maxGuests") as string)
     : null;
@@ -77,7 +74,7 @@ export async function createPackage(formData: FormData) {
     const pkg = await prisma.package.create({
       data: {
         name, slug, shortDesc, description, highlights,
-        locationId, accommodationId, minNights, maxNights, maxGuests,
+        locationId, accommodationId, nights, maxGuests,
         isFeatured, isActive, sortOrder, coverImage,
       },
     });
@@ -101,10 +98,7 @@ export async function updatePackage(id: string, formData: FormData) {
   const highlights = highlightsStr.split("\n").map((s) => s.trim()).filter(Boolean);
   const locationId = formData.get("locationId") as string;
   const accommodationId = formData.get("accommodationId") as string;
-  const minNights = parseInt((formData.get("minNights") as string) || "1");
-  const maxNights = formData.get("maxNights")
-    ? parseInt(formData.get("maxNights") as string)
-    : null;
+  const nights = parseInt((formData.get("nights") as string) || "1");
   const maxGuests = formData.get("maxGuests")
     ? parseInt(formData.get("maxGuests") as string)
     : null;
@@ -132,7 +126,7 @@ export async function updatePackage(id: string, formData: FormData) {
       where: { id },
       data: {
         name, slug, shortDesc, description, highlights,
-        locationId, accommodationId, minNights, maxNights, maxGuests,
+        locationId, accommodationId, nights, maxGuests,
         bookingWindowStart, bookingWindowEnd, travelWindowStart, travelWindowEnd,
         terms, cancellationPolicy, bookingInfo,
         isFeatured, isActive, sortOrder,
@@ -216,8 +210,7 @@ export async function duplicatePackage(id: string) {
         highlights: (pkg.highlights ?? []) as string[],
         locationId: pkg.locationId,
         accommodationId: pkg.accommodationId,
-        minNights: pkg.minNights,
-        maxNights: pkg.maxNights,
+        nights: pkg.nights,
         maxGuests: pkg.maxGuests,
         terms: pkg.terms,
         cancellationPolicy: pkg.cancellationPolicy,

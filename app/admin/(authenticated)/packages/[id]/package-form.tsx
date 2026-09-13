@@ -78,8 +78,7 @@ interface PackageFormProps {
     highlights: string[];
     locationId: string;
     accommodationId: string;
-    minNights: number;
-    maxNights: number | null;
+    nights: number;
     maxGuests: number | null;
     bookingWindowStart: Date | null;
     bookingWindowEnd: Date | null;
@@ -188,8 +187,7 @@ export function PackageForm({
       highlights: pkg?.highlights || [],
       locationId: pkg?.locationId || "",
       accommodationId: pkg?.accommodationId || "",
-      minNights: pkg?.minNights?.toString() || "1",
-      maxNights: pkg?.maxNights?.toString() || "",
+      nights: pkg?.nights?.toString() || "1",
       maxGuests: pkg?.maxGuests?.toString() || "",
       isFeatured: pkg?.isFeatured ?? false,
       isActive: pkg?.isActive ?? true,
@@ -206,8 +204,7 @@ export function PackageForm({
   const [newHighlight, setNewHighlight] = useState("");
   const [locationId, setLocationId] = useState(saved.locationId);
   const [accommodationId, setAccommodationId] = useState(saved.accommodationId);
-  const [minNights, setMinNights] = useState(saved.minNights);
-  const [maxNights, setMaxNights] = useState(saved.maxNights);
+  const [nights, setNights] = useState(saved.nights);
   const [maxGuests, setMaxGuests] = useState(saved.maxGuests);
   const [isFeatured, setIsFeatured] = useState(saved.isFeatured);
   const [isActive, setIsActive] = useState(saved.isActive);
@@ -246,7 +243,7 @@ export function PackageForm({
 
   type Values = typeof saved;
 
-  const values: Values = { name, slug, shortDesc, description, highlights, locationId, accommodationId, minNights, maxNights, maxGuests, isFeatured, isActive, sortOrder };
+  const values: Values = { name, slug, shortDesc, description, highlights, locationId, accommodationId, nights, maxGuests, isFeatured, isActive, sortOrder };
 
   function apply(v: Values) {
     setName(v.name);
@@ -256,8 +253,7 @@ export function PackageForm({
     setHighlights(v.highlights);
     setLocationId(v.locationId);
     setAccommodationId(v.accommodationId);
-    setMinNights(v.minNights);
-    setMaxNights(v.maxNights);
+    setNights(v.nights);
     setMaxGuests(v.maxGuests);
     setIsFeatured(v.isFeatured);
     setIsActive(v.isActive);
@@ -326,8 +322,7 @@ export function PackageForm({
     formData.set("highlights", highlights.join("\n"));
     formData.set("locationId", locationId);
     formData.set("accommodationId", accommodationId);
-    formData.set("minNights", minNights);
-    if (maxNights) formData.set("maxNights", maxNights);
+    formData.set("nights", nights);
     if (maxGuests) formData.set("maxGuests", maxGuests);
     formData.set("isFeatured", String(isFeatured));
     formData.set("isActive", String(isActive));
@@ -420,7 +415,7 @@ export function PackageForm({
     formData.set("highlights", pkg.highlights.join("\n"));
     formData.set("locationId", pkg.locationId);
     formData.set("accommodationId", pkg.accommodationId);
-    formData.set("minNights", String(pkg.minNights));
+    formData.set("nights", String(pkg.nights));
     formData.set("isFeatured", String(pkg.isFeatured));
     formData.set("isActive", String(pkg.isActive));
     formData.set("sortOrder", String(pkg.sortOrder));
@@ -633,14 +628,14 @@ export function PackageForm({
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Min Nights</label>
-                  <input type="number" min="1" value={minNights} onChange={(e) => setMinNights(e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Max Nights</label>
-                  <input type="number" value={maxNights} onChange={(e) => setMaxNights(e.target.value)} className={inputClass} />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Nights</label>
+                  <input type="number" min="1" value={nights} onChange={(e) => setNights(e.target.value)} className={inputClass} />
+                  <p className="mt-1 text-xs text-slate-400">
+                    How long the package runs. Guests pick an arrival date and this
+                    sets the departure — they are not offered other lengths.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Max Guests</label>

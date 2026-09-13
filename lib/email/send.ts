@@ -1,6 +1,28 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+/**
+ * Built on first use, not at import.
+ *
+ * `new Resend(undefined)` THROWS — "Missing API key" — so constructing it at
+ * module scope meant this file could not be imported at all without the key.
+ * Both lib/actions/contact.ts and lib/actions/enquiry.ts import it, so on a
+ * server without RESEND_API_KEY the enquiry action died at module evaluation,
+ * before the prisma.inquiry.create that saves the lead. The guard below, which
+ * exists precisely to make a missing key harmless, was unreachable: line 3 had
+ * already thrown.
+ *
+ * That was live on production and the Inquiry table is empty because of it.
+ *
+ * Lazily built, the guard works and the failure is the right size: no key means
+ * no notification email, not a lost customer.
+ */
+let client: Resend | null = null;
+
+function resendClient(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  client ??= new Resend(process.env.RESEND_API_KEY);
+  return client;
+}
 
 interface SendEmailOptions {
   to: string[];
@@ -10,8 +32,9 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, from }: SendEmailOptions) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY not set, skipping email");
+  const resend = resendClient();
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set — enquiry saved, notification skipped");
     return { success: true, data: null };
   }
 

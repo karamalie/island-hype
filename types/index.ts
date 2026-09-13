@@ -52,7 +52,7 @@ export type PackageCardData = Pick<
   | "name"
   | "shortDesc"
   | "coverImage"
-  | "minNights"
+  | "nights"
   | "isFeatured"
 > & {
   location: Pick<Location, "name" | "atoll">;

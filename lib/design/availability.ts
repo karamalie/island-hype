@@ -99,29 +99,13 @@ export function checkDates(args: {
   travel: DateWindow;
   booking: DateWindow;
   blackouts: Blackout[];
-  minNights: number;
-  maxNights: number | null;
   now?: Date;
 }): DateCheck {
-  const { arrival, nights, travel, booking, blackouts, minNights, maxNights } = args;
+  const { arrival, nights, travel, booking, blackouts } = args;
 
-  if (nights < minNights) {
-    return {
-      ok: false,
-      reason: "too-short",
-      message: `This package runs a minimum of ${minNights} ${
-        minNights === 1 ? "night" : "nights"
-      }.`,
-    };
-  }
-
-  if (maxNights !== null && nights > maxNights) {
-    return {
-      ok: false,
-      reason: "too-long",
-      message: `This package runs up to ${maxNights} nights. Tell us what you had in mind and we'll quote the extra nights at the island's rate.`,
-    };
-  }
+  // No minimum or maximum check: a package is one length, and `nights` is
+  // that length rather than anything a guest typed. What can still be wrong is
+  // WHEN they arrive, which is everything below.
 
   const arrivalDay = startOfDay(arrival);
   // Departure is exclusive: a stay of 4 nights arriving on the 10th leaves on the 14th.

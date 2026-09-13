@@ -66,8 +66,6 @@ export async function submitDateEnquiry(formData: FormData): Promise<EnquiryResu
           endDate: b.endDate,
           reason: b.reason,
         })),
-        minNights: pkg.minNights,
-        maxNights: pkg.maxNights,
       });
       if (!verdict.ok) return { success: false, error: verdict.message };
     }
