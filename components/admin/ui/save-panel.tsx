@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { AlertCircle, Check, Info } from "lucide-react";
 import { toast } from "sonner";
 import { SubmitButton } from "./submit-button";
+import { runAction } from "@/lib/admin/run-action";
 import { cn } from "@/lib/utils";
 
 export interface SavePanelProps {
@@ -66,23 +67,25 @@ export function SavePanel({
   async function handleSave() {
     setState("saving");
     setError(null);
-    try {
-      const result = await onSave();
-      if (result.success) {
-        setState("idle");
-        setSavedOnce(true);
-        setError(null);
-        toast.success(`${title} saved`);
-        onSaved?.();
-      } else {
-        setState("error");
-        setError(result.error ?? "That didn't save. Try again.");
-        toast.error(result.error ?? `${title} didn't save`);
-      }
-    } catch {
+
+    // Through runAction rather than a catch of its own. The hand-written one
+    // here said "Your changes are still here — try again" for every failure,
+    // including the one where retrying can never work: after a deploy the
+    // action id is dead, and that advice had a colleague pressing Save ten
+    // times against it. runAction names the actual cause and, for that case,
+    // offers the reload that is the only thing that helps.
+    const result = await runAction(() => onSave(), `${title} didn't save.`);
+
+    if (result.success) {
+      setState("idle");
+      setSavedOnce(true);
+      setError(null);
+      toast.success(`${title} saved`);
+      onSaved?.();
+    } else {
       setState("error");
-      setError("Something went wrong saving that. Your changes are still here — try again.");
-      toast.error(`${title} didn't save`);
+      setError(result.error ?? "That didn't save. Try again.");
+      toast.error(result.error ?? `${title} didn't save`);
     }
   }
 
