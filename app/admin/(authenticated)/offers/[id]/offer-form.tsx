@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { runAction } from "@/lib/admin/run-action";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { offerDeleteImpact } from "@/lib/actions/delete-impact";
@@ -86,9 +87,9 @@ export function OfferForm({ offer, packages }: OfferFormProps) {
     formData.set("packageId", packageId);
     formData.set("isActive", String(isActive));
 
-    const result = isEdit
-      ? await updateOffer(offer.id, formData)
-      : await createOffer(formData);
+    const result = await runAction(() =>
+      isEdit ? updateOffer(offer.id, formData) : createOffer(formData)
+    );
 
     setLoading(false);
 

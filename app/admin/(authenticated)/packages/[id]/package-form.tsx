@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { runAction } from "@/lib/admin/run-action";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { packageDeleteImpact } from "@/lib/actions/delete-impact";
@@ -276,9 +277,9 @@ export function PackageForm({
     formData.set("sortOrder", String(sortOrder));
     if (!isEdit && coverFile) formData.set("coverImage", coverFile);
 
-    const result = isEdit
-      ? await updatePackage(pkg.id, formData)
-      : await createPackage(formData);
+    const result = await runAction(() =>
+      isEdit ? updatePackage(pkg.id, formData) : createPackage(formData)
+    );
 
     setLoading(false);
 
@@ -302,19 +303,21 @@ export function PackageForm({
       return;
     }
     setSavingPricing(market);
-    const result = await updatePackagePricing(pkg.id, market, {
-      basePrice: parseFloat(p.basePrice),
-      couplePrice: parseFloat(p.couplePrice),
-      extraAdultPrice: p.extraAdultPrice ? parseFloat(p.extraAdultPrice) : null,
-      childPrice: p.childPrice ? parseFloat(p.childPrice) : null,
-      infantPrice: p.infantPrice ? parseFloat(p.infantPrice) : null,
-      singleSupplement: p.singleSupplement ? parseFloat(p.singleSupplement) : null,
-      childAgeMin: parseInt(p.childAgeMin) || 2,
-      childAgeMax: parseInt(p.childAgeMax) || 11,
-      validFrom: p.validFrom || null,
-      validUntil: p.validUntil || null,
-      notes: p.notes || null,
-    });
+    const result = await runAction(() =>
+      updatePackagePricing(pkg.id, market, {
+        basePrice: parseFloat(p.basePrice),
+        couplePrice: parseFloat(p.couplePrice),
+        extraAdultPrice: p.extraAdultPrice ? parseFloat(p.extraAdultPrice) : null,
+        childPrice: p.childPrice ? parseFloat(p.childPrice) : null,
+        infantPrice: p.infantPrice ? parseFloat(p.infantPrice) : null,
+        singleSupplement: p.singleSupplement ? parseFloat(p.singleSupplement) : null,
+        childAgeMin: parseInt(p.childAgeMin) || 2,
+        childAgeMax: parseInt(p.childAgeMax) || 11,
+        validFrom: p.validFrom || null,
+        validUntil: p.validUntil || null,
+        notes: p.notes || null,
+      })
+    );
     setSavingPricing(null);
     if (result.success) toast.success(`${market} pricing saved`);
     else toast.error(result.error || "Failed to save pricing");
@@ -323,14 +326,16 @@ export function PackageForm({
   async function handleSaveInclusions() {
     if (!pkg) return;
     setSavingInclusions(true);
-    const result = await updatePackageInclusions(
-      pkg.id,
-      inclusions.map((inc, i) => ({
-        category: inc.category,
-        item: inc.item,
-        details: inc.details || null,
-        sortOrder: i,
-      }))
+    const result = await runAction(() =>
+      updatePackageInclusions(
+        pkg.id,
+        inclusions.map((inc, i) => ({
+          category: inc.category,
+          item: inc.item,
+          details: inc.details || null,
+          sortOrder: i,
+        }))
+      )
     );
     setSavingInclusions(false);
     if (result.success) toast.success("Inclusions saved");
@@ -340,9 +345,12 @@ export function PackageForm({
   async function handleSaveActivities() {
     if (!pkg) return;
     setSavingExpAct(true);
-    await updatePackageActivities(pkg.id, selectedActivities);
+    const result = await runAction(() =>
+      updatePackageActivities(pkg.id, selectedActivities)
+    );
     setSavingExpAct(false);
-    toast.success("Activities saved");
+    if (result.success) toast.success("Activities saved");
+    else toast.error(result.error || "Failed to save activities");
   }
 
   async function handleSaveTerms() {
@@ -362,9 +370,10 @@ export function PackageForm({
     formData.set("terms", terms);
     formData.set("cancellationPolicy", cancellationPolicy);
     formData.set("bookingInfo", bookingInfo);
-    await updatePackage(pkg.id, formData);
+    const result = await runAction(() => updatePackage(pkg.id, formData));
     setSavingTerms(false);
-    toast.success("Terms saved");
+    if (result.success) toast.success("Terms saved");
+    else toast.error(result.error || "Failed to save terms");
   }
 
 
@@ -372,7 +381,7 @@ export function PackageForm({
     if (!pkg) return { success: false, error: "Save the package first" };
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadPackageCoverImage(pkg.id, formData);
+    const result = await runAction(() => uploadPackageCoverImage(pkg.id, formData));
     if (result.success) router.refresh();
     return result;
   }
@@ -381,7 +390,7 @@ export function PackageForm({
     if (!pkg) return { success: false, error: "Save the package first" };
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadPackageImage(pkg.id, formData);
+    const result = await runAction(() => uploadPackageImage(pkg.id, formData));
     if (result.success) router.refresh();
     return result;
   }

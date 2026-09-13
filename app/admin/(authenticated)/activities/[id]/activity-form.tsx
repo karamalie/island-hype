@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { runAction } from "@/lib/admin/run-action";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { activityDeleteImpact } from "@/lib/actions/delete-impact";
@@ -89,9 +90,9 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
     formData.set("sortOrder", String(sortOrder));
     if (!isEdit && coverFile) formData.set("coverImage", coverFile);
 
-    const result = isEdit
-      ? await updateActivity(activity.id, formData)
-      : await createActivity(formData);
+    const result = await runAction(() =>
+      isEdit ? updateActivity(activity.id, formData) : createActivity(formData)
+    );
 
     setLoading(false);
 
@@ -111,7 +112,9 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
     if (!activity) return { success: false, error: "Save the activity first" };
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadActivityCoverImage(activity.id, formData);
+    const result = await runAction(() =>
+      uploadActivityCoverImage(activity.id, formData)
+    );
     if (result.success) router.refresh();
     return result;
   }
@@ -120,7 +123,7 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
     if (!activity) return { success: false, error: "Save the activity first" };
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadActivityImage(activity.id, formData);
+    const result = await runAction(() => uploadActivityImage(activity.id, formData));
     if (result.success) router.refresh();
     return result;
   }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { runAction } from "@/lib/admin/run-action";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { locationDeleteImpact } from "@/lib/actions/delete-impact";
@@ -120,9 +121,9 @@ export function LocationForm({
     formData.set("sortOrder", String(sortOrder));
     if (!isEdit && coverFile) formData.set("coverImage", coverFile);
 
-    const result = isEdit
-      ? await updateLocation(location.id, formData)
-      : await createLocation(formData);
+    const result = await runAction(() =>
+      isEdit ? updateLocation(location.id, formData) : createLocation(formData)
+    );
 
     setLoading(false);
 
@@ -142,7 +143,9 @@ export function LocationForm({
     if (!location) return { success: false, error: "Save the location first" };
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadLocationCoverImage(location.id, formData);
+    const result = await runAction(() =>
+      uploadLocationCoverImage(location.id, formData)
+    );
     if (result.success) router.refresh();
     return result;
   }
@@ -151,7 +154,7 @@ export function LocationForm({
     if (!location) return { success: false, error: "Save the location first" };
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadLocationImage(location.id, formData);
+    const result = await runAction(() => uploadLocationImage(location.id, formData));
     if (result.success) router.refresh();
     return result;
   }

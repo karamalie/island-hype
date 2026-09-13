@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { runAction } from "@/lib/admin/run-action";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { accommodationDeleteImpact } from "@/lib/actions/delete-impact";
@@ -138,9 +139,11 @@ export function AccommodationForm({
     formData.set("sortOrder", String(sortOrder));
     if (!isEdit && coverFile) formData.set("coverImage", coverFile);
 
-    const result = isEdit
-      ? await updateAccommodation(accommodation.id, formData)
-      : await createAccommodation(formData);
+    const result = await runAction(() =>
+      isEdit
+        ? updateAccommodation(accommodation.id, formData)
+        : createAccommodation(formData)
+    );
 
     setLoading(false);
 
@@ -160,7 +163,9 @@ export function AccommodationForm({
     if (!accommodation) return { success: false, error: "Save the accommodation first" };
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadAccommodationCoverImage(accommodation.id, formData);
+    const result = await runAction(() =>
+      uploadAccommodationCoverImage(accommodation.id, formData)
+    );
     if (result.success) router.refresh();
     return result;
   }
@@ -169,7 +174,9 @@ export function AccommodationForm({
     if (!accommodation) return { success: false, error: "Save the accommodation first" };
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadAccommodationImage(accommodation.id, formData);
+    const result = await runAction(() =>
+      uploadAccommodationImage(accommodation.id, formData)
+    );
     if (result.success) router.refresh();
     return result;
   }
@@ -314,16 +321,18 @@ export function AccommodationForm({
                       loading={savingRooms}
                       onClick={async () => {
                         setSavingRooms(true);
-                        const result = await updateAccommodationRooms(
-                          accommodation!.id,
-                          rooms.map((r) => ({
-                            name: r.name,
-                            blurb: r.blurb,
-                            nightlyFrom: r.nightlyFrom ? Number(r.nightlyFrom) : null,
-                            size: r.size,
-                            sleeps: r.sleeps,
-                            access: r.access,
-                          }))
+                        const result = await runAction(() =>
+                          updateAccommodationRooms(
+                            accommodation!.id,
+                            rooms.map((r) => ({
+                              name: r.name,
+                              blurb: r.blurb,
+                              nightlyFrom: r.nightlyFrom ? Number(r.nightlyFrom) : null,
+                              size: r.size,
+                              sleeps: r.sleeps,
+                              access: r.access,
+                            }))
+                          )
                         );
                         setSavingRooms(false);
                         if (result.success) toast.success("Rooms saved");
@@ -378,7 +387,9 @@ export function AccommodationForm({
                       loading={savingFacilities}
                       onClick={async () => {
                         setSavingFacilities(true);
-                        const result = await updateAccommodationFacilities(accommodation!.id, facilities);
+                        const result = await runAction(() =>
+                          updateAccommodationFacilities(accommodation!.id, facilities)
+                        );
                         setSavingFacilities(false);
                         if (result.success) toast.success("Facilities saved");
                         else toast.error(result.error || "Failed to save facilities");
