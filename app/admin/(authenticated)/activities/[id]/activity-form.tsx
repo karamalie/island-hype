@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { runAction } from "@/lib/admin/run-action";
+import { useFormDraft } from "@/lib/admin/use-form-draft";
+import { DraftBanner, ClearFormButton } from "@/components/admin/ui/form-draft";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { activityDeleteImpact } from "@/lib/actions/delete-impact";
@@ -53,19 +55,75 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
   const router = useRouter();
   const isEdit = !!activity;
 
-  const [name, setName] = useState(activity?.name || "");
-  const [slug, setSlug] = useState(activity?.slug || "");
-  const [shortDesc, setShortDesc] = useState(activity?.shortDesc || "");
-  const [description, setDescription] = useState(activity?.description || "");
-  const [category, setCategory] = useState(activity?.category || "WATER_SPORTS");
-  const [duration, setDuration] = useState(activity?.duration?.toString() || "");
-  const [locationId, setLocationId] = useState(activity?.locationId || "");
-  const [localPrice, setLocalPrice] = useState(activity?.localPrice?.toString() || "");
-  const [internationalPrice, setInternationalPrice] = useState(activity?.internationalPrice?.toString() || "");
-  const [isActive, setIsActive] = useState(activity?.isActive ?? true);
-  const [sortOrder, setSortOrder] = useState(activity?.sortOrder || 0);
+  // One object for every field the draft and the undo both work on, built once
+  // so the useState defaults and "put back what is saved" cannot drift apart.
+  const saved = useMemo(
+    () => ({
+      name: activity?.name || "",
+      slug: activity?.slug || "",
+      shortDesc: activity?.shortDesc || "",
+      description: activity?.description || "",
+      category: activity?.category || "WATER_SPORTS",
+      duration: activity?.duration?.toString() || "",
+      locationId: activity?.locationId || "",
+      localPrice: activity?.localPrice?.toString() || "",
+      internationalPrice: activity?.internationalPrice?.toString() || "",
+      isActive: activity?.isActive ?? true,
+      sortOrder: activity?.sortOrder || 0,
+    }),
+    [activity]
+  );
+
+  const [name, setName] = useState(saved.name);
+  const [slug, setSlug] = useState(saved.slug);
+  const [shortDesc, setShortDesc] = useState(saved.shortDesc);
+  const [description, setDescription] = useState(saved.description);
+  const [category, setCategory] = useState(saved.category);
+  const [duration, setDuration] = useState(saved.duration);
+  const [locationId, setLocationId] = useState(saved.locationId);
+  const [localPrice, setLocalPrice] = useState(saved.localPrice);
+  const [internationalPrice, setInternationalPrice] = useState(saved.internationalPrice);
+  const [isActive, setIsActive] = useState(saved.isActive);
+  const [sortOrder, setSortOrder] = useState(saved.sortOrder);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+
+  type Values = typeof saved;
+
+  const values: Values = { name, slug, shortDesc, description, category, duration, locationId, localPrice, internationalPrice, isActive, sortOrder };
+
+  function apply(v: Values) {
+    setName(v.name);
+    setSlug(v.slug);
+    setShortDesc(v.shortDesc);
+    setDescription(v.description);
+    setCategory(v.category);
+    setDuration(v.duration);
+    setLocationId(v.locationId);
+    setLocalPrice(v.localPrice);
+    setInternationalPrice(v.internationalPrice);
+    setIsActive(v.isActive);
+    setSortOrder(v.sortOrder);
+  }
+
+  // New records only — see the note in use-form-draft.ts on why an edit must not
+  // be silently overwritten by a draft made days earlier.
+  const draft = useFormDraft<Values>({
+    key: "activity",
+    enabled: !isEdit,
+    values,
+    baseline: saved,
+    onRestore: apply,
+  });
+
+  const changed = JSON.stringify(values) !== JSON.stringify(saved);
+
+  function handleClear() {
+    apply(saved);
+    setCoverFile(null);
+    draft.clear();
+  }
+
 
   function handleNameChange(value: string) {
     setName(value);
@@ -97,6 +155,7 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
     setLoading(false);
 
     if (result.success) {
+      draft.clear();
       toast.success(isEdit ? "Activity updated" : "Activity created");
       if (!isEdit && "data" in result) {
         const created = result as { data: { id: string } };
@@ -135,6 +194,14 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
   return (
     <div>
       <BackButton href="/admin/activities" />
+
+      {draft.pending && (
+        <DraftBanner
+          savedAt={draft.pending.savedAt}
+          onRestore={draft.restore}
+          onDiscard={draft.discard}
+        />
+      )}
       <h1 className="text-2xl font-bold text-slate-900 mt-4 mb-6">
         {isEdit ? `Edit: ${activity.name}` : "New Activity"}
       </h1>
@@ -216,8 +283,9 @@ export function ActivityForm({ activity, images = [], locations }: ActivityFormP
             <Toggle checked={isActive} onChange={setIsActive} label="Active" />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Activity"}</SubmitButton>
+            <ClearFormButton isEdit={isEdit} disabled={!changed} onClear={handleClear} />
             {isEdit && (
               <DeleteWithImpact
                 noun="activity"

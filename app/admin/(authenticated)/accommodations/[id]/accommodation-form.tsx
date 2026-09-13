@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { runAction } from "@/lib/admin/run-action";
+import { useFormDraft } from "@/lib/admin/use-form-draft";
+import { DraftBanner, ClearFormButton } from "@/components/admin/ui/form-draft";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { accommodationDeleteImpact } from "@/lib/actions/delete-impact";
@@ -89,28 +91,95 @@ export function AccommodationForm({
   const router = useRouter();
   const isEdit = !!accommodation;
 
-  const [name, setName] = useState(accommodation?.name || "");
-  const [slug, setSlug] = useState(accommodation?.slug || "");
-  const [type, setType] = useState(accommodation?.type || "RESORT");
-  const [shortDesc, setShortDesc] = useState(accommodation?.shortDesc || "");
-  const [description, setDescription] = useState(accommodation?.description || "");
-  const [starRating, setStarRating] = useState(accommodation?.starRating?.toString() || "");
-  const [locationId, setLocationId] = useState(accommodation?.locationId || "");
+  // One object for every field the draft and the undo both work on, built once
+  // so the useState defaults and "put back what is saved" cannot drift apart.
+  const saved = useMemo(
+    () => ({
+      name: accommodation?.name || "",
+      slug: accommodation?.slug || "",
+      type: accommodation?.type || "RESORT",
+      shortDesc: accommodation?.shortDesc || "",
+      description: accommodation?.description || "",
+      starRating: accommodation?.starRating?.toString() || "",
+      locationId: accommodation?.locationId || "",
+      houseReef: accommodation?.houseReef || "",
+      suits: accommodation?.suits || "",
+      boardOptions: accommodation?.boardOptions || "",
+      absentNote: accommodation?.absentNote || "",
+      contactEmail: accommodation?.contactEmail || "",
+      contactPhone: accommodation?.contactPhone || "",
+      isActive: accommodation?.isActive ?? true,
+      sortOrder: accommodation?.sortOrder || 0,
+    }),
+    [accommodation]
+  );
+
+  const [name, setName] = useState(saved.name);
+  const [slug, setSlug] = useState(saved.slug);
+  const [type, setType] = useState(saved.type);
+  const [shortDesc, setShortDesc] = useState(saved.shortDesc);
+  const [description, setDescription] = useState(saved.description);
+  const [starRating, setStarRating] = useState(saved.starRating);
+  const [locationId, setLocationId] = useState(saved.locationId);
   const [rooms, setRooms] = useState<RoomRow[]>(initialRooms);
   const [facilities, setFacilities] = useState<FacilityRow[]>(initialFacilities);
   const [savingRooms, setSavingRooms] = useState(false);
   const [savingFacilities, setSavingFacilities] = useState(false);
   // Display fields the redesign reads. Nullable — a blank drops the row on the site.
-  const [houseReef, setHouseReef] = useState(accommodation?.houseReef || "");
-  const [suits, setSuits] = useState(accommodation?.suits || "");
-  const [boardOptions, setBoardOptions] = useState(accommodation?.boardOptions || "");
-  const [absentNote, setAbsentNote] = useState(accommodation?.absentNote || "");
-  const [contactEmail, setContactEmail] = useState(accommodation?.contactEmail || "");
-  const [contactPhone, setContactPhone] = useState(accommodation?.contactPhone || "");
-  const [isActive, setIsActive] = useState(accommodation?.isActive ?? true);
-  const [sortOrder, setSortOrder] = useState(accommodation?.sortOrder || 0);
+  const [houseReef, setHouseReef] = useState(saved.houseReef);
+  const [suits, setSuits] = useState(saved.suits);
+  const [boardOptions, setBoardOptions] = useState(saved.boardOptions);
+  const [absentNote, setAbsentNote] = useState(saved.absentNote);
+  const [contactEmail, setContactEmail] = useState(saved.contactEmail);
+  const [contactPhone, setContactPhone] = useState(saved.contactPhone);
+  const [isActive, setIsActive] = useState(saved.isActive);
+  const [sortOrder, setSortOrder] = useState(saved.sortOrder);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+
+  type Values = typeof saved;
+
+  const values: Values = {
+    name, slug, type, shortDesc, description, starRating, locationId,
+    houseReef, suits, boardOptions, absentNote, contactEmail, contactPhone,
+    isActive, sortOrder,
+  };
+
+  function apply(v: Values) {
+    setName(v.name);
+    setSlug(v.slug);
+    setType(v.type);
+    setShortDesc(v.shortDesc);
+    setDescription(v.description);
+    setStarRating(v.starRating);
+    setLocationId(v.locationId);
+    setHouseReef(v.houseReef);
+    setSuits(v.suits);
+    setBoardOptions(v.boardOptions);
+    setAbsentNote(v.absentNote);
+    setContactEmail(v.contactEmail);
+    setContactPhone(v.contactPhone);
+    setIsActive(v.isActive);
+    setSortOrder(v.sortOrder);
+  }
+
+  // New records only — see the note in use-form-draft.ts on why an edit must not
+  // be silently overwritten by a draft made days earlier.
+  const draft = useFormDraft<Values>({
+    key: "accommodation",
+    enabled: !isEdit,
+    values,
+    baseline: saved,
+    onRestore: apply,
+  });
+
+  const changed = JSON.stringify(values) !== JSON.stringify(saved);
+
+  function handleClear() {
+    apply(saved);
+    setCoverFile(null);
+    draft.clear();
+  }
 
   function handleNameChange(value: string) {
     setName(value);
@@ -148,6 +217,7 @@ export function AccommodationForm({
     setLoading(false);
 
     if (result.success) {
+      draft.clear();
       toast.success(isEdit ? "Accommodation updated" : "Accommodation created");
       if (!isEdit && "data" in result) {
         const created = result as { data: { id: string } };
@@ -188,6 +258,14 @@ export function AccommodationForm({
   return (
     <div>
       <BackButton href="/admin/accommodations" />
+
+      {draft.pending && (
+        <DraftBanner
+          savedAt={draft.pending.savedAt}
+          onRestore={draft.restore}
+          onDiscard={draft.discard}
+        />
+      )}
       <h1 className="text-2xl font-bold text-slate-900 mt-4 mb-6">
         {isEdit ? `Edit: ${accommodation.name}` : "New Accommodation"}
       </h1>
@@ -423,8 +501,9 @@ export function AccommodationForm({
             <Toggle checked={isActive} onChange={setIsActive} label="Active" />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Accommodation"}</SubmitButton>
+            <ClearFormButton isEdit={isEdit} disabled={!changed} onClear={handleClear} />
             {isEdit && (
               <DeleteWithImpact
                 noun="place to stay"

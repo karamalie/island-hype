@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { runAction } from "@/lib/admin/run-action";
+import { useFormDraft } from "@/lib/admin/use-form-draft";
+import { DraftBanner, ClearFormButton } from "@/components/admin/ui/form-draft";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { packageDeleteImpact } from "@/lib/actions/delete-impact";
@@ -180,20 +182,41 @@ export function PackageForm({
   const [activeTab, setActiveTab] = useState("basic");
 
   // Basic info
-  const [name, setName] = useState(pkg?.name || "");
-  const [slug, setSlug] = useState(pkg?.slug || "");
-  const [shortDesc, setShortDesc] = useState(pkg?.shortDesc || "");
-  const [description, setDescription] = useState(pkg?.description || "");
-  const [highlights, setHighlights] = useState<string[]>(pkg?.highlights || []);
+  // One object for every field the draft and the undo both work on, built once
+  // so the useState defaults and "put back what is saved" cannot drift apart.
+  const saved = useMemo(
+    () => ({
+      name: pkg?.name || "",
+      slug: pkg?.slug || "",
+      shortDesc: pkg?.shortDesc || "",
+      description: pkg?.description || "",
+      highlights: pkg?.highlights || [],
+      locationId: pkg?.locationId || "",
+      accommodationId: pkg?.accommodationId || "",
+      minNights: pkg?.minNights?.toString() || "1",
+      maxNights: pkg?.maxNights?.toString() || "",
+      maxGuests: pkg?.maxGuests?.toString() || "",
+      isFeatured: pkg?.isFeatured ?? false,
+      isActive: pkg?.isActive ?? true,
+      sortOrder: pkg?.sortOrder || 0,
+    }),
+    [pkg]
+  );
+
+  const [name, setName] = useState(saved.name);
+  const [slug, setSlug] = useState(saved.slug);
+  const [shortDesc, setShortDesc] = useState(saved.shortDesc);
+  const [description, setDescription] = useState(saved.description);
+  const [highlights, setHighlights] = useState<string[]>(saved.highlights);
   const [newHighlight, setNewHighlight] = useState("");
-  const [locationId, setLocationId] = useState(pkg?.locationId || "");
-  const [accommodationId, setAccommodationId] = useState(pkg?.accommodationId || "");
-  const [minNights, setMinNights] = useState(pkg?.minNights?.toString() || "1");
-  const [maxNights, setMaxNights] = useState(pkg?.maxNights?.toString() || "");
-  const [maxGuests, setMaxGuests] = useState(pkg?.maxGuests?.toString() || "");
-  const [isFeatured, setIsFeatured] = useState(pkg?.isFeatured ?? false);
-  const [isActive, setIsActive] = useState(pkg?.isActive ?? true);
-  const [sortOrder, setSortOrder] = useState(pkg?.sortOrder || 0);
+  const [locationId, setLocationId] = useState(saved.locationId);
+  const [accommodationId, setAccommodationId] = useState(saved.accommodationId);
+  const [minNights, setMinNights] = useState(saved.minNights);
+  const [maxNights, setMaxNights] = useState(saved.maxNights);
+  const [maxGuests, setMaxGuests] = useState(saved.maxGuests);
+  const [isFeatured, setIsFeatured] = useState(saved.isFeatured);
+  const [isActive, setIsActive] = useState(saved.isActive);
+  const [sortOrder, setSortOrder] = useState(saved.sortOrder);
 
   // Pricing
   const [pricing, setPricing] = useState(initPricing(pkg));
@@ -225,6 +248,45 @@ export function PackageForm({
 
   // Loading states
   const [loading, setLoading] = useState(false);
+
+  type Values = typeof saved;
+
+  const values: Values = { name, slug, shortDesc, description, highlights, locationId, accommodationId, minNights, maxNights, maxGuests, isFeatured, isActive, sortOrder };
+
+  function apply(v: Values) {
+    setName(v.name);
+    setSlug(v.slug);
+    setShortDesc(v.shortDesc);
+    setDescription(v.description);
+    setHighlights(v.highlights);
+    setLocationId(v.locationId);
+    setAccommodationId(v.accommodationId);
+    setMinNights(v.minNights);
+    setMaxNights(v.maxNights);
+    setMaxGuests(v.maxGuests);
+    setIsFeatured(v.isFeatured);
+    setIsActive(v.isActive);
+    setSortOrder(v.sortOrder);
+  }
+
+  // New records only — see the note in use-form-draft.ts on why an edit must not
+  // be silently overwritten by a draft made days earlier.
+  const draft = useFormDraft<Values>({
+    key: "package",
+    enabled: !isEdit,
+    values,
+    baseline: saved,
+    onRestore: apply,
+  });
+
+  const changed = JSON.stringify(values) !== JSON.stringify(saved);
+
+  function handleClear() {
+    apply(saved);
+    setCoverFile(null);
+    draft.clear();
+  }
+
   const [savingPricing, setSavingPricing] = useState<string | null>(null);
   const [savingInclusions, setSavingInclusions] = useState(false);
   const [savingExpAct, setSavingExpAct] = useState(false);
@@ -284,6 +346,7 @@ export function PackageForm({
     setLoading(false);
 
     if (result.success) {
+      draft.clear();
       toast.success(isEdit ? "Package updated" : "Package created");
       if (!isEdit && "data" in result) {
         const created = result as { data: { id: string } };
@@ -494,6 +557,14 @@ export function PackageForm({
   return (
     <div>
       <BackButton href="/admin/packages" />
+
+      {draft.pending && (
+        <DraftBanner
+          savedAt={draft.pending.savedAt}
+          onRestore={draft.restore}
+          onDiscard={draft.discard}
+        />
+      )}
       <h1 className="text-2xl font-bold text-slate-900 mt-4 mb-4">
         {isEdit ? `Edit: ${pkg.name}` : "New Package"}
       </h1>
@@ -605,8 +676,9 @@ export function PackageForm({
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <SubmitButton loading={loading}>{isEdit ? "Save Basic Info" : "Create Package"}</SubmitButton>
+              <ClearFormButton isEdit={isEdit} disabled={!changed} onClear={handleClear} />
               {isEdit && (
                 <DeleteWithImpact
                 noun="package"

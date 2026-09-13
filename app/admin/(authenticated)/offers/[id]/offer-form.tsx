@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { runAction } from "@/lib/admin/run-action";
+import { useFormDraft } from "@/lib/admin/use-form-draft";
+import { DraftBanner, ClearFormButton } from "@/components/admin/ui/form-draft";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { offerDeleteImpact } from "@/lib/actions/delete-impact";
@@ -46,21 +48,82 @@ export function OfferForm({ offer, packages }: OfferFormProps) {
   const router = useRouter();
   const isEdit = !!offer;
 
-  const [name, setName] = useState(offer?.name || "");
-  const [slug, setSlug] = useState(offer?.slug || "");
-  const [description, setDescription] = useState(offer?.description || "");
-  const [badge, setBadge] = useState(offer?.badge || "");
-  const [discountType, setDiscountType] = useState(offer?.discountType || "PERCENTAGE");
-  const [discountValue, setDiscountValue] = useState(offer?.discountValue?.toString() || "");
-  const [code, setCode] = useState(offer?.code || "");
-  const [validFrom, setValidFrom] = useState(dateStr(offer?.validFrom || null));
-  const [validUntil, setValidUntil] = useState(dateStr(offer?.validUntil || null));
-  const [minNights, setMinNights] = useState(offer?.minNights?.toString() || "");
-  const [minGuests, setMinGuests] = useState(offer?.minGuests?.toString() || "");
-  const [market, setMarket] = useState(offer?.market || "");
-  const [packageId, setPackageId] = useState(offer?.packageId || "");
-  const [isActive, setIsActive] = useState(offer?.isActive ?? true);
+  // One object for every field the draft and the undo both work on, built once
+  // so the useState defaults and "put back what is saved" cannot drift apart.
+  const saved = useMemo(
+    () => ({
+      name: offer?.name || "",
+      slug: offer?.slug || "",
+      description: offer?.description || "",
+      badge: offer?.badge || "",
+      discountType: offer?.discountType || "PERCENTAGE",
+      discountValue: offer?.discountValue?.toString() || "",
+      code: offer?.code || "",
+      validFrom: dateStr(offer?.validFrom || null),
+      validUntil: dateStr(offer?.validUntil || null),
+      minNights: offer?.minNights?.toString() || "",
+      minGuests: offer?.minGuests?.toString() || "",
+      market: offer?.market || "",
+      packageId: offer?.packageId || "",
+      isActive: offer?.isActive ?? true,
+    }),
+    [offer]
+  );
+
+  const [name, setName] = useState(saved.name);
+  const [slug, setSlug] = useState(saved.slug);
+  const [description, setDescription] = useState(saved.description);
+  const [badge, setBadge] = useState(saved.badge);
+  const [discountType, setDiscountType] = useState(saved.discountType);
+  const [discountValue, setDiscountValue] = useState(saved.discountValue);
+  const [code, setCode] = useState(saved.code);
+  const [validFrom, setValidFrom] = useState(saved.validFrom);
+  const [validUntil, setValidUntil] = useState(saved.validUntil);
+  const [minNights, setMinNights] = useState(saved.minNights);
+  const [minGuests, setMinGuests] = useState(saved.minGuests);
+  const [market, setMarket] = useState(saved.market);
+  const [packageId, setPackageId] = useState(saved.packageId);
+  const [isActive, setIsActive] = useState(saved.isActive);
   const [loading, setLoading] = useState(false);
+
+  type Values = typeof saved;
+
+  const values: Values = { name, slug, description, badge, discountType, discountValue, code, validFrom, validUntil, minNights, minGuests, market, packageId, isActive };
+
+  function apply(v: Values) {
+    setName(v.name);
+    setSlug(v.slug);
+    setDescription(v.description);
+    setBadge(v.badge);
+    setDiscountType(v.discountType);
+    setDiscountValue(v.discountValue);
+    setCode(v.code);
+    setValidFrom(v.validFrom);
+    setValidUntil(v.validUntil);
+    setMinNights(v.minNights);
+    setMinGuests(v.minGuests);
+    setMarket(v.market);
+    setPackageId(v.packageId);
+    setIsActive(v.isActive);
+  }
+
+  // New records only — see the note in use-form-draft.ts on why an edit must not
+  // be silently overwritten by a draft made days earlier.
+  const draft = useFormDraft<Values>({
+    key: "offer",
+    enabled: !isEdit,
+    values,
+    baseline: saved,
+    onRestore: apply,
+  });
+
+  const changed = JSON.stringify(values) !== JSON.stringify(saved);
+
+  function handleClear() {
+    apply(saved);
+    draft.clear();
+  }
+
 
   function handleNameChange(value: string) {
     setName(value);
@@ -94,6 +157,7 @@ export function OfferForm({ offer, packages }: OfferFormProps) {
     setLoading(false);
 
     if (result.success) {
+      draft.clear();
       toast.success(isEdit ? "Offer updated" : "Offer created");
       if (!isEdit && "data" in result) {
         const created = result as { data: { id: string } };
@@ -108,6 +172,14 @@ export function OfferForm({ offer, packages }: OfferFormProps) {
   return (
     <div>
       <BackButton href="/admin/offers" />
+
+      {draft.pending && (
+        <DraftBanner
+          savedAt={draft.pending.savedAt}
+          onRestore={draft.restore}
+          onDiscard={draft.discard}
+        />
+      )}
       <h1 className="text-2xl font-bold text-slate-900 mt-4 mb-6">
         {isEdit ? `Edit: ${offer.name}` : "New Offer"}
       </h1>
@@ -199,8 +271,9 @@ export function OfferForm({ offer, packages }: OfferFormProps) {
           <Toggle checked={isActive} onChange={setIsActive} label="Active" />
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Offer"}</SubmitButton>
+          <ClearFormButton isEdit={isEdit} disabled={!changed} onClear={handleClear} />
           {isEdit && (
             <DeleteWithImpact
                 noun="offer"

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { runAction } from "@/lib/admin/run-action";
+import { useFormDraft } from "@/lib/admin/use-form-draft";
+import { DraftBanner, ClearFormButton } from "@/components/admin/ui/form-draft";
 import { BackButton } from "@/components/admin/ui/back-button";
 import { DeleteWithImpact } from "@/components/admin/ui/delete-with-impact";
 import { locationDeleteImpact } from "@/lib/actions/delete-impact";
@@ -78,22 +80,84 @@ export function LocationForm({
   const router = useRouter();
   const isEdit = !!location;
 
-  const [name, setName] = useState(location?.name || "");
-  const [slug, setSlug] = useState(location?.slug || "");
-  const [description, setDescription] = useState(location?.description || "");
-  const [shortDesc, setShortDesc] = useState(location?.shortDesc || "");
-  const [atoll, setAtoll] = useState(location?.atoll || "");
-  const [island, setIsland] = useState(location?.island || "");
-  const [latitude, setLatitude] = useState(location?.latitude?.toString() || "");
-  const [longitude, setLongitude] = useState(location?.longitude?.toString() || "");
-  const [transferType, setTransferType] = useState(location?.transferType || "");
-  const [transferTime, setTransferTime] = useState(location?.transferTime?.toString() || "");
-  const [transferInfo, setTransferInfo] = useState(location?.transferInfo || "");
-  const [isFeatured, setIsFeatured] = useState(location?.isFeatured ?? false);
-  const [isActive, setIsActive] = useState(location?.isActive ?? true);
-  const [sortOrder, setSortOrder] = useState(location?.sortOrder || 0);
+  // One object for every field the draft and the undo both work on, built once
+  // so the useState defaults and "put back what is saved" cannot drift apart.
+  const saved = useMemo(
+    () => ({
+      name: location?.name || "",
+      slug: location?.slug || "",
+      description: location?.description || "",
+      shortDesc: location?.shortDesc || "",
+      atoll: location?.atoll || "",
+      island: location?.island || "",
+      latitude: location?.latitude?.toString() || "",
+      longitude: location?.longitude?.toString() || "",
+      transferType: location?.transferType || "",
+      transferTime: location?.transferTime?.toString() || "",
+      transferInfo: location?.transferInfo || "",
+      isFeatured: location?.isFeatured ?? false,
+      isActive: location?.isActive ?? true,
+      sortOrder: location?.sortOrder || 0,
+    }),
+    [location]
+  );
+
+  const [name, setName] = useState(saved.name);
+  const [slug, setSlug] = useState(saved.slug);
+  const [description, setDescription] = useState(saved.description);
+  const [shortDesc, setShortDesc] = useState(saved.shortDesc);
+  const [atoll, setAtoll] = useState(saved.atoll);
+  const [island, setIsland] = useState(saved.island);
+  const [latitude, setLatitude] = useState(saved.latitude);
+  const [longitude, setLongitude] = useState(saved.longitude);
+  const [transferType, setTransferType] = useState(saved.transferType);
+  const [transferTime, setTransferTime] = useState(saved.transferTime);
+  const [transferInfo, setTransferInfo] = useState(saved.transferInfo);
+  const [isFeatured, setIsFeatured] = useState(saved.isFeatured);
+  const [isActive, setIsActive] = useState(saved.isActive);
+  const [sortOrder, setSortOrder] = useState(saved.sortOrder);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+
+  type Values = typeof saved;
+
+  const values: Values = { name, slug, description, shortDesc, atoll, island, latitude, longitude, transferType, transferTime, transferInfo, isFeatured, isActive, sortOrder };
+
+  function apply(v: Values) {
+    setName(v.name);
+    setSlug(v.slug);
+    setDescription(v.description);
+    setShortDesc(v.shortDesc);
+    setAtoll(v.atoll);
+    setIsland(v.island);
+    setLatitude(v.latitude);
+    setLongitude(v.longitude);
+    setTransferType(v.transferType);
+    setTransferTime(v.transferTime);
+    setTransferInfo(v.transferInfo);
+    setIsFeatured(v.isFeatured);
+    setIsActive(v.isActive);
+    setSortOrder(v.sortOrder);
+  }
+
+  // New records only — see the note in use-form-draft.ts on why an edit must not
+  // be silently overwritten by a draft made days earlier.
+  const draft = useFormDraft<Values>({
+    key: "location",
+    enabled: !isEdit,
+    values,
+    baseline: saved,
+    onRestore: apply,
+  });
+
+  const changed = JSON.stringify(values) !== JSON.stringify(saved);
+
+  function handleClear() {
+    apply(saved);
+    setCoverFile(null);
+    draft.clear();
+  }
+
 
   function handleNameChange(value: string) {
     setName(value);
@@ -128,6 +192,7 @@ export function LocationForm({
     setLoading(false);
 
     if (result.success) {
+      draft.clear();
       toast.success(isEdit ? "Location updated" : "Location created");
       if (!isEdit && "data" in result) {
         const created = result as { data: { id: string } };
@@ -166,6 +231,14 @@ export function LocationForm({
   return (
     <div>
       <BackButton href="/admin/locations" />
+
+      {draft.pending && (
+        <DraftBanner
+          savedAt={draft.pending.savedAt}
+          onRestore={draft.restore}
+          onDiscard={draft.discard}
+        />
+      )}
       <h1 className="text-2xl font-bold text-slate-900 mt-4 mb-6">
         {isEdit ? `Edit: ${location.name}` : "New Location"}
       </h1>
@@ -254,8 +327,9 @@ export function LocationForm({
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <SubmitButton loading={loading}>{isEdit ? "Save Changes" : "Create Location"}</SubmitButton>
+            <ClearFormButton isEdit={isEdit} disabled={!changed} onClear={handleClear} />
             {isEdit && (
               <DeleteWithImpact
                 noun="island"
