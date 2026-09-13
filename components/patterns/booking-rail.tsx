@@ -193,15 +193,22 @@ export function BookingRail(props: BookingRailProps) {
   return (
     <Card variant="elevated" className="p-6">
       <div className="mb-1 flex items-baseline justify-between gap-3">
-        <PriceBlock price={props.price} size="lg" className="[&>div:last-child]:hidden" />
+        {/* No hiding class here any more, and that is the fix rather than a
+            tidy-up. PriceBlock used to render two divs — a big per-person
+            figure and a smaller total beneath it — and the rail hid the second
+            with [&>div:last-child]:hidden because it stated the total itself
+            just below. Collapsing the block to a single price left that
+            selector pointing at the only div it has, so the rail rendered no
+            price at all: just the grey line underneath, reading as a stray
+            subheading. */}
+        <PriceBlock price={props.price} size="lg" />
         <span className="font-mono text-label text-meta">
           {props.nights} nights
         </span>
       </div>
       <div className="mb-5 text-caption text-meta">
-        {props.price
-          ? `${props.price.currency === "MVR" ? "MVR " : "$"}${props.price.total.toLocaleString()} total, all in`
-          : "Tell us your dates for a total"}
+        {/* Says what the figure covers, without repeating the figure. */}
+        {props.price ? "All in — nothing to add on arrival" : "Tell us your dates for a total"}
       </div>
 
       {ended ? (

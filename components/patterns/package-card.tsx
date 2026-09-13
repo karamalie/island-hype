@@ -80,7 +80,10 @@ export function PackageCard({ pkg, form = "grid" }: PackageCardProps) {
           <Label className="mb-2">{pkg.eyebrow}</Label>
           <div className="mb-4 min-h-[52px] text-heading-s">{pkg.name}</div>
           <div className="mt-auto flex items-baseline justify-between gap-3 border-t border-ink-200 pt-4">
-            <PriceBlock price={pkg.price} size="md" className="[&>div:last-child]:hidden" />
+            {/* Same story as the rail: this hid PriceBlock's second div back
+                when there were two. With one price there is one div, and the
+                selector was hiding the price itself. */}
+            <PriceBlock price={pkg.price} size="md" />
             <span className="text-caption font-medium text-teal-deep">View →</span>
           </div>
         </div>
