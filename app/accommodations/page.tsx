@@ -119,7 +119,7 @@ export default async function AccommodationsPage() {
             image="right"
             src={SITE_IMAGES.staysTrust}
             bucket="images"
-            alt="A local island street in the late afternoon"
+            alt="The pool deck of a beach villa, looking past loungers to the lagoon"
             eyebrow="How we choose"
             title="We have stayed in every one of these."
             body="Not a site visit, not a press trip — a night, and usually several. It is the only way to know whether the house reef is any good or the generator is under your window."

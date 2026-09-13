@@ -64,8 +64,20 @@ export const SITE_IMAGES = {
 
   /** The atoll map, on the locations page and in "getting there". */
   map: "guide/maldives-map.jpg",
-  /** 4:5 portrait, "we have stayed in every one of these". */
-  staysTrust: "guide/local-island-life.jpg",
+  /**
+   * 4:5 portrait, "we have stayed in every one of these".
+   *
+   * A client photograph, and the first file in the library to come through the
+   * upload pipeline rather than being added by hand: 8186x5460 and 25.6 MB from
+   * the camera, stored at 3000x2001 and 1.95 MB with its EXIF removed. It
+   * replaced a 670px street scene that was the smallest usable image here.
+   *
+   * Its composition is symmetrical — umbrella centred over the pool, lagoon
+   * behind — so the 4:5 centre crop this slot applies keeps the subject. That is
+   * luck rather than design; a landscape frame with its subject off to one side
+   * would lose it, and the frame's ratio would have to change with it.
+   */
+  staysTrust: "guide/beach-villa-pool.jpg",
   /** Contact's Male' frame. */
   contactMap: "guide/male-mosque.jpg",
 } as const;
