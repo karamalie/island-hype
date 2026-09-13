@@ -3,6 +3,12 @@
 import { useState, useRef, useCallback } from "react";
 import { Upload, Loader2, ImageIcon, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ACCEPTED_UPLOAD_TYPES,
+  MAX_UPLOAD_LABEL,
+  looksLikeImage,
+  uploadSizeError,
+} from "@/lib/upload-limits";
 
 interface CoverImageUploadProps {
   currentImageUrl?: string;
@@ -28,8 +34,16 @@ export function CoverImageUpload({
 
   const handleFile = useCallback(
     async (file: File) => {
-      if (!file.type.startsWith("image/")) {
+      if (!looksLikeImage(file)) {
         toast.error("Please select an image file");
+        return;
+      }
+
+      // Checked here as well as on the server, so an oversized file is refused
+      // before the browser spends minutes sending it.
+      const tooBig = uploadSizeError(file.name, file.size);
+      if (tooBig) {
+        toast.error(tooBig);
         return;
       }
 
@@ -140,7 +154,7 @@ export function CoverImageUpload({
                   Drop an image here or click to upload
                 </p>
                 <p className="text-xs text-slate-400 mt-1">
-                  PNG, JPG, WebP up to 5MB
+                  JPG, PNG, WebP or HEIC, up to {MAX_UPLOAD_LABEL}
                 </p>
               </div>
             </>
@@ -151,7 +165,7 @@ export function CoverImageUpload({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept={ACCEPTED_UPLOAD_TYPES}
         onChange={handleFileInput}
         disabled={uploading}
         className="hidden"

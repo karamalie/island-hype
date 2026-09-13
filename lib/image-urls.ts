@@ -1,4 +1,4 @@
-// lib/image-url.ts
+// lib/image-urls.ts
 // Client-safe image URL helpers - can be used in both client and server components
 
 export type StorageBucket =
@@ -41,48 +41,3 @@ export function getStoragePath(url: string, bucket: StorageBucket): string {
   if (idx !== -1) return url.slice(idx + marker.length);
   return url;
 }
-
-/**
- * Get optimized image URL using Supabase transform
- * Safe to use in client components
- */
-export function getOptimizedImageUrl(
-  url: string,
-  options: {
-    width?: number;
-    height?: number;
-    quality?: number;
-    format?: "webp" | "avif";
-  } = {}
-): string {
-  const { width, height, quality = 80, format = "webp" } = options;
-
-  // If it's a Supabase storage URL, use transforms
-  if (url.includes("supabase.co/storage")) {
-    const params = new URLSearchParams();
-    if (width) params.set("width", width.toString());
-    if (height) params.set("height", height.toString());
-    params.set("quality", quality.toString());
-    params.set("format", format);
-
-    return (
-      url.replace("/object/public/", "/render/image/public/") +
-      "?" +
-      params.toString()
-    );
-  }
-
-  return url;
-}
-
-/**
- * Common image sizes for different use cases
- */
-export const imageSizes = {
-  thumbnail: { width: 200, height: 200 },
-  card: { width: 400, height: 300 },
-  cardLarge: { width: 600, height: 400 },
-  hero: { width: 1920, height: 1080 },
-  gallery: { width: 1200, height: 800 },
-  full: { width: 2400, height: 1600 },
-} as const;

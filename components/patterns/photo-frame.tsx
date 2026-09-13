@@ -8,7 +8,8 @@
 
 import { cn } from "@/lib/utils";
 import type { StorageBucket } from "@/lib/image-urls";
-import { responsiveSource } from "@/lib/design/responsive-image";
+import { getImageUrl } from "@/lib/image-urls";
+import { optimizedSrcSet } from "@/lib/design/optimized-image";
 
 export interface PhotoFrameProps {
   /** A bare filename as stored, or null. */
@@ -66,10 +67,13 @@ export function PhotoFrame({
 }
 
 /**
- * A plain <img> rather than next/image, because the project runs with
- * `unoptimized: true` — next/image would give us the same single-source tag with
- * extra indirection, and no way to pass the srcset we pre-generated. This mirrors
- * what `fill` does: absolutely positioned, covering, inside a positioned parent.
+ * A plain <img> with a srcset pointing at /_next/image, rather than the <Image>
+ * component. Same output, and it keeps this file and page-head.tsx on one
+ * mechanism — the page heads need <picture> for art direction, which <Image>
+ * cannot express, so one of the two has to build URLs by hand anyway.
+ *
+ * The layout mirrors what `fill` does: absolutely positioned, covering, inside a
+ * positioned parent.
  */
 function Frame({
   src,
@@ -86,10 +90,13 @@ function Frame({
   priority: boolean;
   zoom: boolean;
 }) {
-  const { src: fallback, srcSet } = responsiveSource(bucket, src);
+  const url = getImageUrl(bucket, src);
+  const srcSet = optimizedSrcSet(url);
   return (
     <img
-      src={fallback}
+      // The unoptimised original is the fallback, so a browser that ignores
+      // srcset still gets a picture rather than nothing.
+      src={url}
       srcSet={srcSet ?? undefined}
       sizes={srcSet ? sizes : undefined}
       alt={alt}

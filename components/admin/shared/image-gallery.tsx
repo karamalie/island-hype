@@ -3,6 +3,12 @@
 import { useState, useCallback, useRef } from "react";
 import { X, Upload, Loader2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ACCEPTED_UPLOAD_TYPES,
+  MAX_UPLOAD_LABEL,
+  looksLikeImage,
+  uploadSizeError,
+} from "@/lib/upload-limits";
 
 export interface GalleryImage {
   id: string;
@@ -27,22 +33,36 @@ export function ImageGallery({
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  /** "3 of 8" while a batch is in flight, so a slow upload does not look stuck. */
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
     async (files: FileList | File[]) => {
-      const fileArray = Array.from(files).filter((f) =>
-        f.type.startsWith("image/")
-      );
+      const fileArray = Array.from(files).filter(looksLikeImage);
       if (fileArray.length === 0) {
         toast.error("Please select image files only");
         return;
       }
 
+      // Checked here as well as on the server so an oversized file is refused
+      // instantly, rather than after the browser has spent minutes sending it.
+      const tooBig = fileArray.filter((f) => uploadSizeError(f.name, f.size));
+      const toSend = fileArray.filter((f) => !uploadSizeError(f.name, f.size));
+      for (const f of tooBig) toast.error(uploadSizeError(f.name, f.size)!);
+      if (toSend.length === 0) return;
+
       setUploading(true);
-      for (const file of fileArray) {
+      // One at a time on purpose. Each upload is resized on the server, and the
+      // server has 1 GB of RAM; parallel uploads would have it decoding several
+      // large photographs at once.
+      let uploaded = 0;
+      let failed = 0;
+      for (const [index, file] of toSend.entries()) {
+        setProgress({ done: index, total: toSend.length });
         const result = await onUpload(file);
         if (result.success && result.url) {
+          uploaded++;
           setCurrentImages((prev) => [
             ...prev,
             {
@@ -52,15 +72,18 @@ export function ImageGallery({
             },
           ]);
         } else {
+          failed++;
           toast.error(result.error || `Failed to upload ${file.name}`);
         }
       }
+      setProgress(null);
       setUploading(false);
-      toast.success(
-        fileArray.length === 1
-          ? "Image uploaded"
-          : `${fileArray.length} images uploaded`
-      );
+
+      // Only claim what actually happened. This used to report the whole batch
+      // as uploaded even when every file in it had failed.
+      if (uploaded === 1 && failed === 0) toast.success("Image uploaded");
+      else if (uploaded > 0 && failed === 0) toast.success(`${uploaded} images uploaded`);
+      else if (uploaded > 0) toast.success(`${uploaded} uploaded, ${failed} failed`);
     },
     [onUpload]
   );
@@ -158,7 +181,14 @@ export function ImageGallery({
         {uploading ? (
           <>
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            <p className="text-sm text-slate-600 font-medium">Uploading...</p>
+            <p className="text-sm text-slate-600 font-medium">
+              {progress && progress.total > 1
+                ? `Uploading ${progress.done + 1} of ${progress.total}...`
+                : "Uploading..."}
+            </p>
+            <p className="text-xs text-slate-400">
+              Large photos take a moment — they are resized as they arrive.
+            </p>
           </>
         ) : currentImages.length === 0 ? (
           <>
@@ -168,7 +198,7 @@ export function ImageGallery({
                 Drop images here or click to upload
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                PNG, JPG, WebP up to 5MB each
+                JPG, PNG, WebP or HEIC, up to {MAX_UPLOAD_LABEL} each
               </p>
             </div>
           </>
@@ -183,7 +213,7 @@ export function ImageGallery({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={ACCEPTED_UPLOAD_TYPES}
           multiple
           onChange={handleFileInput}
           disabled={disabled || uploading}

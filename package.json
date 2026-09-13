@@ -14,8 +14,6 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:fix-associations": "tsx scripts/fix-catalogue-associations.ts",
     "db:seed-locations": "tsx scripts/seed-location-character.ts",
-    "images:build": "tsx scripts/build-image-derivatives.ts",
-    "images:fix-refs": "tsx scripts/fix-image-extensions.ts",
     "db:backup": "bash scripts/db-backup.sh",
     "db:import-legacy-tags": "tsx scripts/import-legacy-tags.ts",
     "db:seed-stay-types": "tsx scripts/seed-stay-types.ts",

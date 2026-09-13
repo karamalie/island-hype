@@ -35,10 +35,13 @@ jobs:
 
       - name: Assemble deploy bundle
         run: |
-          rm -rf deploy && mkdir -p deploy/.next
+          rm -rf deploy && mkdir -p deploy/.next deploy/public
           cp -r .next/standalone/. deploy/
           cp -r .next/static deploy/.next/static
-          cp -r public deploy/public
+          # `cp -r public deploy/public` nested a second copy at public/public/
+          # whenever the destination already existed, which it does — the
+          # standalone output brings its own public dir. Copy the contents.
+          cp -r public/. deploy/public/
           rm -rf deploy/_migration deploy/docs deploy/.git
 
       - name: Setup SSH
@@ -50,8 +53,20 @@ jobs:
 
       - name: Rsync build to server
         run: |
+          # Two of these exclusions protect server state from --delete:
+          #
+          #   .next/cache/  the image optimiser's resize cache. It is not in the
+          #                 build, so --delete would clear it on every deploy and
+          #                 the box would re-resize every photograph on the next
+          #                 visit. Excluded paths are protected from deletion.
+          #   public/storage  a symlink to /var/www/island-hype-media, which is
+          #                 how the optimiser reaches uploaded media: it fetches
+          #                 originals through Next's own static handler, not
+          #                 through nginx's alias, so the tree has to be visible
+          #                 under public/. The media itself is never deployed.
           rsync -az --delete \
             --exclude='ecosystem.config.cjs' --exclude='_import' \
+            --exclude='.next/cache/' --exclude='public/storage' \
             -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no" \
             deploy/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/island-hype/"
 

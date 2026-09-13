@@ -15,7 +15,7 @@
 // does not exist is a review artefact, not content.
 
 import { NavBar, type NavBarProps } from "./nav-bar";
-import { responsiveSource } from "@/lib/design/responsive-image";
+import { optimizedSrcSet } from "@/lib/design/optimized-image";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -65,11 +65,10 @@ export function PageHead({
   // every decision below keys off isHero, and height alone picks the class.
   const isHero = height !== "band";
 
-  // PageHead is handed resolved URLs, so derive the object path back out to look
-  // the file up in the derivative manifest. The heroes are the largest images on
-  // the site; serving a 2560px original to a phone was most of the page weight.
-  const desktopSet = image ? setFor(image) : null;
-  const mobileSet = mobileImage ? setFor(mobileImage) : null;
+  // The heroes are the largest images on the site; serving a 3000px master to a
+  // phone was most of the page weight.
+  const desktopSet = image ? optimizedSrcSet(image) : null;
+  const mobileSet = mobileImage ? optimizedSrcSet(mobileImage) : null;
 
   return (
     <div
@@ -85,8 +84,10 @@ export function PageHead({
         /* A <picture> rather than two next/image elements toggled with CSS:
            hiding an <img> does not stop the browser fetching it, so the CSS
            version downloaded both heroes on every load — 2.8 MB between them.
-           A source/media pair fetches exactly one. next/image buys us nothing
-           here anyway, since the project runs with unoptimized: true.
+           A source/media pair fetches exactly one, which is also why this
+           cannot become an <Image>: the component has no way to express an
+           art-direction swap, so the srcsets are built by hand — see
+           lib/design/optimized-image.ts.
 
            Every head comes through here, with or without art direction. It used
            to be that only the two-image case did, and the single-image case fell
@@ -164,19 +165,4 @@ export function PageHead({
       </div>
     </div>
   );
-}
-
-const PREFIX = "/storage/v1/object/public/";
-
-/** Recovers bucket + path from a resolved media URL and returns its srcset. */
-function setFor(url: string): string | null {
-  const at = url.indexOf(PREFIX);
-  if (at === -1) return null;
-  const rest = url.slice(at + PREFIX.length);
-  const slash = rest.indexOf("/");
-  if (slash === -1) return null;
-  const bucket = rest.slice(0, slash);
-  const objectPath = rest.slice(slash + 1);
-  return responsiveSource(bucket as Parameters<typeof responsiveSource>[0], objectPath)
-    .srcSet;
 }
