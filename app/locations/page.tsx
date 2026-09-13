@@ -57,8 +57,8 @@ export default async function LocationsPage() {
   for (const p of packages) {
     if (!p.price) continue;
     const current = fromPrices[p.locationSlug];
-    if (current === undefined || p.price.perPerson < current) {
-      fromPrices[p.locationSlug] = p.price.perPerson;
+    if (current === undefined || p.price.total < current) {
+      fromPrices[p.locationSlug] = p.price.total;
     }
   }
 

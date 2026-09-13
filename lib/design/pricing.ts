@@ -2,14 +2,19 @@
 //
 // Money for packages.
 //
-// The one thing to hold onto: `couplePrice` is the WHOLE-PACKAGE total for two,
-// not a nightly rate and not a per-person figure. Confirmed with the client on
+// The one thing to hold onto: `basePrice` is the WHOLE-PACKAGE total, not a
+// nightly rate and not a per-person figure. Confirmed with the client on
 // 2026-09-12 and corroborated by the live rows — a 4-night Maafushi guesthouse
-// carries couplePrice 899, which is $112 a night for two. Reading it as nightly
-// would price that week at $3,596 and put it ~20x over the real market.
+// carries 899, which is $112 a night for two. Reading it as nightly would price
+// that week at $3,596 and put it ~20x over the real market.
 //
-// So: total = couplePrice, and the per-person figure the designs lead with is
-// couplePrice / 2. Never multiply by nights.
+// A package has ONE price. There used to be two whole-package totals, basePrice
+// for single occupancy and couplePrice for two, and the site quoted only the
+// couple one — leading with couplePrice / 2 as a per-person figure. Both the
+// second price and the per-person display are gone: staff enter one number, and
+// the site states it as the total. The optional tiers below still adjust it.
+//
+// Never multiply by nights.
 
 import type { Market } from "@prisma/client";
 
@@ -18,10 +23,8 @@ export type Currency = "USD" | "MVR";
 export interface PricingRow {
   id: string;
   market: Market;
-  /** Total for single occupancy, whole package. */
+  /** The package price, whole package, whatever the party size. */
   basePrice: number;
-  /** Total for two, whole package. */
-  couplePrice: number;
   extraAdultPrice: number | null;
   childPrice: number | null;
   infantPrice: number | null;
@@ -31,9 +34,7 @@ export interface PricingRow {
 }
 
 export interface PackagePrice {
-  /** What the card leads with. */
-  perPerson: number;
-  /** What the line underneath states. */
+  /** What the card leads with — the package price, adjustments applied. */
   total: number;
   /** Everyone the total covers, adults and children. */
   pax: number;
@@ -83,23 +84,18 @@ export function computePackagePrice(
   const adults = Math.max(1, opts.adults);
   const children = Math.max(0, opts.children ?? 0);
 
-  let total: number;
-  if (adults === 1) {
-    total = row.basePrice + (row.singleSupplement ?? 0);
-  } else {
-    total = row.couplePrice;
-    if (adults > 2) {
-      // A null extraAdultPrice means admin hasn't set one. Charging nothing for
-      // the third guest is the safe direction to be wrong in: we confirm every
-      // total with the island before anyone pays.
-      total += (row.extraAdultPrice ?? 0) * (adults - 2);
-    }
-  }
+  // One price, then the optional adjustments staff choose to set. A null in any
+  // of them means admin has not set one, and charging nothing is the safe
+  // direction to be wrong in: every total is confirmed with the island before
+  // anyone pays.
+  let total = row.basePrice;
+
+  if (adults === 1) total += row.singleSupplement ?? 0;
+  else if (adults > 2) total += (row.extraAdultPrice ?? 0) * (adults - 2);
 
   if (children > 0) total += (row.childPrice ?? 0) * children;
 
   return {
-    perPerson: Math.round(total / adults),
     total: Math.round(total),
     pax: adults + children,
     currency: currencyFor(opts.market),
@@ -115,9 +111,12 @@ export function formatMoney(value: number, currency: Currency): string {
   }).format(value);
 }
 
-/** "$4,960 total for two" — the line under the per-person figure. */
+/**
+ * "$4,448 total" — the phrase used wherever the figure needs naming in words.
+ *
+ * It no longer says "for two". The price is the same whatever the party size,
+ * so naming a party count alongside it implied a link that is not there.
+ */
 export function totalLine(price: PackagePrice): string {
-  const who =
-    price.pax === 1 ? "one" : price.pax === 2 ? "two" : `${price.pax} guests`;
-  return `${formatMoney(price.total, price.currency)} total for ${who}`;
+  return `${formatMoney(price.total, price.currency)} total`;
 }

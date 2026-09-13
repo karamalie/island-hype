@@ -251,17 +251,18 @@ async function main() {
     await db.packagePricing.deleteMany({ where: { packageId: created.id } });
     await db.packagePricing.createMany({
       data: [
+        // The couple figure, not the single one: it was always what the site
+        // quoted, and it is what basePrice means now that a package has one
+        // price.
         {
           packageId: created.id,
           market: "INTERNATIONAL",
-          basePrice: p.pricing.base,
-          couplePrice: p.pricing.couple,
+          basePrice: p.pricing.couple,
         },
         {
           packageId: created.id,
           market: "LOCAL",
-          basePrice: MVR(p.pricing.base),
-          couplePrice: MVR(p.pricing.couple),
+          basePrice: MVR(p.pricing.couple),
         },
       ],
     });

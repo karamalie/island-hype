@@ -426,8 +426,7 @@ async function main() {
         create: [
           {
             market: "LOCAL",
-            basePrice: 8500,
-            couplePrice: 12000,
+            basePrice: 12000,
             extraAdultPrice: 3500,
             childPrice: 2000,
             infantPrice: 0,
@@ -435,8 +434,7 @@ async function main() {
           },
           {
             market: "INTERNATIONAL",
-            basePrice: 599,
-            couplePrice: 899,
+            basePrice: 899,
             extraAdultPrice: 250,
             childPrice: 150,
             infantPrice: 0,
@@ -498,8 +496,7 @@ async function main() {
         create: [
           {
             market: "LOCAL",
-            basePrice: 12000,
-            couplePrice: 18000,
+            basePrice: 18000,
             extraAdultPrice: 4500,
             childPrice: 2500,
             infantPrice: 0,
@@ -507,8 +504,7 @@ async function main() {
           },
           {
             market: "INTERNATIONAL",
-            basePrice: 849,
-            couplePrice: 1299,
+            basePrice: 1299,
             extraAdultPrice: 320,
             childPrice: 180,
             infantPrice: 0,
@@ -582,7 +578,6 @@ async function main() {
           {
             market: "LOCAL",
             basePrice: 85000,
-            couplePrice: 85000,
             extraAdultPrice: 0,
             childPrice: 0,
             infantPrice: 0,
@@ -591,7 +586,6 @@ async function main() {
           {
             market: "INTERNATIONAL",
             basePrice: 5499,
-            couplePrice: 5499,
             extraAdultPrice: 0,
             childPrice: 0,
             infantPrice: 0,
@@ -666,7 +660,6 @@ async function main() {
           {
             market: "LOCAL",
             basePrice: 150000,
-            couplePrice: 150000,
             extraAdultPrice: 35000,
             childPrice: 15000,
             infantPrice: 0,
@@ -675,7 +668,6 @@ async function main() {
           {
             market: "INTERNATIONAL",
             basePrice: 9999,
-            couplePrice: 9999,
             extraAdultPrice: 2400,
             childPrice: 999,
             infantPrice: 0,
@@ -749,8 +741,7 @@ async function main() {
         create: [
           {
             market: "LOCAL",
-            basePrice: 7000,
-            couplePrice: 10500,
+            basePrice: 10500,
             extraAdultPrice: 3000,
             childPrice: 1800,
             infantPrice: 0,
@@ -758,8 +749,7 @@ async function main() {
           },
           {
             market: "INTERNATIONAL",
-            basePrice: 499,
-            couplePrice: 749,
+            basePrice: 749,
             extraAdultPrice: 220,
             childPrice: 130,
             infantPrice: 0,

@@ -181,12 +181,12 @@ async function getPackagesQuery(
     };
 
     if (minPrice !== undefined) {
-      priceCondition.couplePrice = { gte: minPrice };
+      priceCondition.basePrice = { gte: minPrice };
     }
 
     if (maxPrice !== undefined) {
-      priceCondition.couplePrice = {
-        ...(priceCondition.couplePrice as Prisma.FloatFilter),
+      priceCondition.basePrice = {
+        ...(priceCondition.basePrice as Prisma.FloatFilter),
         lte: maxPrice,
       };
     }
@@ -281,8 +281,8 @@ async function getPackagesQuery(
   // Sort by price if needed (client-side)
   if (sort === "price-asc" || sort === "price-desc") {
     packages.sort((a, b) => {
-      const aPrice = a.pricing[0]?.couplePrice || 0;
-      const bPrice = b.pricing[0]?.couplePrice || 0;
+      const aPrice = a.pricing[0]?.basePrice || 0;
+      const bPrice = b.pricing[0]?.basePrice || 0;
       return sort === "price-asc" ? aPrice - bPrice : bPrice - aPrice;
     });
   }

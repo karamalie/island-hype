@@ -39,12 +39,11 @@ const inputClass =
   "w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors";
 
 const INCLUSION_CATEGORIES: InclusionCategory[] = [
-  "ACCOMMODATION", "MEALS", "TRANSFER", "ACTIVITY", "EQUIPMENT", "SERVICE",
+  "ACCOMMODATION", "MEALS", "TRANSFER", "ACTIVITY", "EQUIPMENT", "SERVICE", "TAXES",
 ];
 
 interface PricingData {
   basePrice: string;
-  couplePrice: string;
   extraAdultPrice: string;
   childPrice: string;
   infantPrice: string;
@@ -98,7 +97,6 @@ interface PackageFormProps {
       id: string;
       market: Market;
       basePrice: number;
-      couplePrice: number;
       extraAdultPrice: number | null;
       childPrice: number | null;
       infantPrice: number | null;
@@ -136,7 +134,7 @@ function dateStr(d: Date | string | null): string {
 
 function initPricing(p?: PackageFormProps["pkg"]): { local: PricingData; international: PricingData } {
   const empty: PricingData = {
-    basePrice: "", couplePrice: "", extraAdultPrice: "", childPrice: "",
+    basePrice: "", extraAdultPrice: "", childPrice: "",
     infantPrice: "", singleSupplement: "", childAgeMin: "2", childAgeMax: "11",
     validFrom: "", validUntil: "", notes: "",
   };
@@ -147,7 +145,6 @@ function initPricing(p?: PackageFormProps["pkg"]): { local: PricingData; interna
     const key = pr.market === "LOCAL" ? "local" : "international";
     result[key] = {
       basePrice: pr.basePrice.toString(),
-      couplePrice: pr.couplePrice.toString(),
       extraAdultPrice: pr.extraAdultPrice?.toString() || "",
       childPrice: pr.childPrice?.toString() || "",
       infantPrice: pr.infantPrice?.toString() || "",
@@ -359,15 +356,14 @@ export function PackageForm({
     if (!pkg) return;
     const key = market === "LOCAL" ? "local" : "international";
     const p = pricing[key];
-    if (!p.basePrice || !p.couplePrice) {
-      toast.error("Base price and couple price are required");
+    if (!p.basePrice) {
+      toast.error("A price is required");
       return;
     }
     setSavingPricing(market);
     const result = await runAction(() =>
       updatePackagePricing(pkg.id, market, {
         basePrice: parseFloat(p.basePrice),
-        couplePrice: parseFloat(p.couplePrice),
         extraAdultPrice: p.extraAdultPrice ? parseFloat(p.extraAdultPrice) : null,
         childPrice: p.childPrice ? parseFloat(p.childPrice) : null,
         infantPrice: p.infantPrice ? parseFloat(p.infantPrice) : null,
@@ -480,13 +476,18 @@ export function PackageForm({
       <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
         <h3 className="text-base font-semibold text-slate-900">{label} ({currency})</h3>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Base Price *</label>
+          {/* One price, spanning both columns because it is not one of a pair
+              any more. "Base Price" beside a "Couple Price" invited the reading
+              that a guest pays base and a couple pays couple; this is the whole
+              price of the package, and the fields under it adjust it. */}
+          <div className="col-span-2">
+            <label className="block text-xs font-medium text-slate-600 mb-1">Price *</label>
             <input type="number" step="0.01" value={p.basePrice} onChange={(e) => updatePricing(market, "basePrice", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Couple Price *</label>
-            <input type="number" step="0.01" value={p.couplePrice} onChange={(e) => updatePricing(market, "couplePrice", e.target.value)} className={inputClass} />
+            <p className="mt-1 text-xs text-slate-400">
+              The total for the whole package, however many guests. Shown on the
+              site as &ldquo;{currency === "MVR" ? "MVR " : "$"}
+              {p.basePrice ? Number(p.basePrice).toLocaleString() : "0"} total&rdquo;.
+            </p>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">Extra Adult</label>

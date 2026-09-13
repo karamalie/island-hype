@@ -228,7 +228,6 @@ export async function duplicatePackage(id: string) {
           create: pkg.pricing.map((p) => ({
             market: p.market,
             basePrice: p.basePrice,
-            couplePrice: p.couplePrice,
             extraAdultPrice: p.extraAdultPrice,
             childPrice: p.childPrice,
             infantPrice: p.infantPrice,
@@ -271,7 +270,6 @@ export async function updatePackagePricing(
   market: Market,
   data: {
     basePrice: number;
-    couplePrice: number;
     extraAdultPrice?: number | null;
     childPrice?: number | null;
     infantPrice?: number | null;
@@ -300,7 +298,6 @@ export async function updatePackagePricing(
         packageId,
         market,
         basePrice: data.basePrice,
-        couplePrice: data.couplePrice,
         extraAdultPrice: data.extraAdultPrice ?? null,
         childPrice: data.childPrice ?? null,
         infantPrice: data.infantPrice ?? null,
@@ -313,7 +310,6 @@ export async function updatePackagePricing(
       },
       update: {
         basePrice: data.basePrice,
-        couplePrice: data.couplePrice,
         extraAdultPrice: data.extraAdultPrice ?? null,
         childPrice: data.childPrice ?? null,
         infantPrice: data.infantPrice ?? null,

@@ -1,12 +1,17 @@
 // components/patterns/price-block.tsx
 //
-// A per-person figure with the total underneath. The 600 weight here is the only
-// 600 on the page — price figures are the one thing the type scale lets go heavy.
+// The package price. The 600 weight here is the only 600 on the page — price
+// figures are the one thing the type scale lets go heavy.
+//
+// It used to lead with a per-person figure and state the total underneath. A
+// package has one price now and it does not vary with the party size, so the
+// per-person line was both redundant and misleading: dividing one fixed total
+// by however many guests were selected produced a number nobody is charged.
 //
 // Renders null when there is no price row, rather than a zero: a package without
 // pricing is an admin gap, and "$0" would be a lie about it.
 
-import { formatMoney, totalLine, type PackagePrice } from "@/lib/design/pricing";
+import { formatMoney, type PackagePrice } from "@/lib/design/pricing";
 import { cn } from "@/lib/utils";
 
 export function PriceBlock({
@@ -36,11 +41,10 @@ export function PriceBlock({
             size === "xl" && "text-[32px] font-semibold leading-[38px]"
           )}
         >
-          {formatMoney(price.perPerson, price.currency)}
+          {formatMoney(price.total, price.currency)}
         </span>
-        <span className="text-caption text-meta"> / person</span>
+        <span className="text-caption text-meta"> total</span>
       </div>
-      <div className="mt-0.5 text-caption text-meta">{totalLine(price)}</div>
     </div>
   );
 }

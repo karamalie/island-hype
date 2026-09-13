@@ -268,8 +268,13 @@ model PackagePricing {
   market    Market
 
   // WHOLE-PACKAGE totals, not nightly rates and not per person.
-  basePrice       Float // total for single occupancy, whole package
-  couplePrice     Float // total for two, whole package. Per-person display = couplePrice / 2.
+  //
+  // basePrice is THE price of the package, whatever the party size. It used to
+  // be the single-occupancy total, sitting beside a couplePrice that was the
+  // total for two — and since the site quoted the couple figure, that is the one
+  // that survived: the migration copies couplePrice into basePrice so nothing
+  // the client advertises changes.
+  basePrice       Float // total for the package
   extraAdultPrice Float? // Additional adult
   childPrice      Float? // Child (typically 2-11)
   infantPrice     Float? // Infant (typically 0-2)
@@ -317,6 +322,11 @@ enum InclusionCategory {
   ACTIVITY
   EQUIPMENT
   SERVICE
+  // Green tax, GST, service charge — the government and resort charges that
+  // guests ask about most and that used to be stated only as a hardcoded
+  // "Green tax, paid on arrival" under Not included, whether or not it was true
+  // of the package. Now a line staff can put on either side.
+  TAXES
 }
 
 model PackageActivity {

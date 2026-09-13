@@ -229,9 +229,16 @@ export default async function PackageDetailPage({
                   <div className="mb-4 font-mono text-label uppercase text-meta">
                     Not included
                   </div>
+                  {/* Green tax is no longer asserted here. This list is the same
+                      on every package, so stating "Green tax, paid on arrival"
+                      told guests it was excluded even on packages where it is
+                      not — and there was no way for staff to correct it. It
+                      belongs on the Inclusions tab now, under the TAXES
+                      category, where it can be put on whichever side is true of
+                      that package. What is left here is genuinely true of every
+                      package we sell. */}
                   {[
                     "International flights to Male'",
-                    "Green tax, paid on arrival",
                     "Scuba diving and paid excursions",
                     "Alcohol and premium drinks",
                     "Travel insurance",

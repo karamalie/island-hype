@@ -100,7 +100,7 @@ export function BookingRail(props: BookingRailProps) {
       </div>
       <div className="mb-5 text-caption text-meta">
         {props.price
-          ? `${props.price.currency === "MVR" ? "MVR " : "$"}${props.price.total.toLocaleString()} total for two, all in`
+          ? `${props.price.currency === "MVR" ? "MVR " : "$"}${props.price.total.toLocaleString()} total, all in`
           : "Tell us your dates for a total"}
       </div>
 
