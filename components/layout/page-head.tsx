@@ -15,7 +15,7 @@
 // does not exist is a review artefact, not content.
 
 import { NavBar, type NavBarProps } from "./nav-bar";
-import { optimizedSrcSet } from "@/lib/design/optimized-image";
+import { cdnUrl, optimizedSrcSet } from "@/lib/design/optimized-image";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -101,7 +101,7 @@ export function PageHead({
               rel="preload"
               as="image"
               media="(max-width: 767px)"
-              href={mobileImage}
+              href={cdnUrl(mobileImage)}
               {...(mobileSet ? { imageSrcSet: mobileSet, imageSizes: "100vw" } : {})}
             />
           )}
@@ -109,7 +109,7 @@ export function PageHead({
             rel="preload"
             as="image"
             media={mobileImage ? "(min-width: 768px)" : undefined}
-            href={image}
+            href={cdnUrl(image)}
             {...(desktopSet ? { imageSrcSet: desktopSet, imageSizes: "100vw" } : {})}
           />
         </>
@@ -133,12 +133,12 @@ export function PageHead({
           {mobileImage && (
             <source
               media="(max-width: 767px)"
-              srcSet={mobileSet ?? mobileImage}
+              srcSet={mobileSet ?? cdnUrl(mobileImage)}
               sizes="100vw"
             />
           )}
           <img
-            src={image}
+            src={cdnUrl(image)}
             srcSet={desktopSet ?? undefined}
             sizes="100vw"
             alt={imageAlt}

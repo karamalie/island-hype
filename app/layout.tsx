@@ -5,6 +5,9 @@ import { Lora } from "next/font/google";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 
+/** Empty unless a CDN is configured. See lib/design/optimized-image.ts. */
+const CDN = process.env.NEXT_PUBLIC_CDN_URL ?? "";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -121,6 +124,43 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${displaySerif.variable}`}
     >
       <body className="antialiased">
+        {/*
+          If the CDN stops answering — an unpaid invoice, an outage, a DNS
+          mistake — every photograph on the site is pointed at a host that no
+          longer serves them, and there is no server round trip left in which to
+          notice. So the browser is told how to recover.
+
+          One delegated listener rather than an onError on each image: these are
+          server components, and giving PhotoFrame an event handler would turn it
+          and everything containing it into client components for a case that
+          should never happen. Error events do not bubble, hence the capture
+          phase.
+
+          The srcset and any <picture> sources have to go before the src is
+          rewritten. A browser that has already chosen a CDN candidate will
+          simply re-choose another CDN candidate otherwise, and inside a
+          <picture> a failed <source> never falls through to the <img> at all.
+
+          Rewriting to a same-origin path means the second attempt goes to the
+          server that was always able to serve it. If that fails too the prefix
+          no longer matches, so nothing loops.
+        */}
+        {CDN && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html:
+                "(function(c){addEventListener('error',function(e){var t=e.target;" +
+                "if(!t||t.tagName!=='IMG')return;var s=t.currentSrc||t.src;" +
+                "if(!s||s.lastIndexOf(c,0)!==0)return;var p=t.parentNode;" +
+                "if(p&&p.tagName==='PICTURE'){var q=p.getElementsByTagName('source');" +
+                "while(q.length)p.removeChild(q[0]);}" +
+                "t.removeAttribute('srcset');t.removeAttribute('sizes');" +
+                "t.src=s.slice(c.length);},true);})(" +
+                JSON.stringify(CDN) +
+                ");",
+            }}
+          />
+        )}
         {children}
         {/* Suspense because GoogleAnalytics reads useSearchParams, which opts
             its subtree into client-side rendering — without a boundary here

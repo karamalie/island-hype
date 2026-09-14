@@ -9,7 +9,7 @@
 import { cn } from "@/lib/utils";
 import type { StorageBucket } from "@/lib/image-urls";
 import { getImageUrl } from "@/lib/image-urls";
-import { optimizedSrcSet } from "@/lib/design/optimized-image";
+import { cdnUrl, optimizedSrcSet } from "@/lib/design/optimized-image";
 
 export interface PhotoFrameProps {
   /** A bare filename as stored, or null. */
@@ -95,8 +95,10 @@ function Frame({
   return (
     <img
       // The unoptimised original is the fallback, so a browser that ignores
-      // srcset still gets a picture rather than nothing.
-      src={url}
+      // srcset still gets a picture rather than nothing. Through the CDN too —
+      // srcset is what almost everyone uses, but this should not be the one
+      // request that goes back to the origin.
+      src={cdnUrl(url)}
       srcSet={srcSet ?? undefined}
       sizes={srcSet ? sizes : undefined}
       alt={alt}

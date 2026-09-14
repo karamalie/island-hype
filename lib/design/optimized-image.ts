@@ -18,6 +18,25 @@
 // one place and a hand-built srcset in the other, both go through this.
 
 /**
+ * Where images are served from. Empty means same-origin, which is what local
+ * development and any deploy without a CDN do.
+ *
+ * This is deliberately NOT NEXT_PUBLIC_MEDIA_URL, which already exists and looks
+ * like the right knob. That one prefixes getImageUrl, and getImageUrl feeds the
+ * `url` parameter the optimiser resolves — making it absolute would send the
+ * optimiser out over the network to fetch originals it currently reads off local
+ * disk, and would break optimizedSrcSet below, which tests for a path starting
+ * "/storage/". The CDN belongs in front of the finished image, not in front of
+ * the source the optimiser reads.
+ */
+const CDN = process.env.NEXT_PUBLIC_CDN_URL ?? "";
+
+/** Puts the CDN in front of a site-relative path. A no-op when unset. */
+export function cdnUrl(path: string): string {
+  return CDN && path.startsWith("/") ? CDN + path : path;
+}
+
+/**
  * Must stay a subset of `images.deviceSizes` in next.config.ts — the optimiser
  * rejects any width outside deviceSizes + imageSizes with a 400.
  */
@@ -32,7 +51,7 @@ export const PHOTO_QUALITY = 82;
 
 /** One optimiser URL. `url` is a site-relative media path, e.g. /storage/... */
 export function optimizedSrc(url: string, width: number, quality = PHOTO_QUALITY): string {
-  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`;
+  return cdnUrl(`/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`);
 }
 
 /**
