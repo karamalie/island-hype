@@ -52,6 +52,23 @@ const displaySerif = Lora({
 });
 
 export const metadata: Metadata = {
+  /**
+   * The site's one true origin, and the reason it is now stated.
+   *
+   * The pages are reachable on two hostnames — the site's own and the CDN's,
+   * because a pull zone fronts the whole origin rather than a subset of it. With
+   * no canonical and `robots: index, follow`, a search engine that finds
+   * cdn.islandhypemaldives.com has two complete copies of the site and no way to
+   * know which one is meant. metadataBase makes every page declare the canonical
+   * host regardless of which one served it.
+   *
+   * The CDN should also be restricted to asset paths at the edge; this is the
+   * half that belongs in the application.
+   */
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.islandhypemaldives.com"
+  ),
+  alternates: { canonical: "./" },
   title: {
     default: "Island Hype - Maldives Travel Packages",
     template: "%s | Island Hype",

@@ -35,7 +35,10 @@ jobs:
           NEXT_PUBLIC_CDN_URL: "https://cdn.islandhypemaldives.com"
           # The real domain. This was the nip.io hostname, which getBaseUrl()
           # feeds into canonical URLs and any absolute link built from it.
-          NEXT_PUBLIC_SITE_URL: "https://www.islandhypemaldives.com"
+          # Non-www, because that is the hostname the site is actually linked
+          # and used as. Both resolve and neither redirects, so this is what
+          # decides which one search engines are told is the real one.
+          NEXT_PUBLIC_SITE_URL: "https://islandhypemaldives.com"
         run: npm run build
 
       - name: Assemble deploy bundle
