@@ -69,6 +69,8 @@ export default async function ContactPage({
                 slug: p.slug,
                 name: p.name,
                 eyebrow: p.locationName,
+                locationName: p.locationName,
+                stay: p.stay,
               }))}
               initialPackageId={initial}
               replyFrom={contact.email}

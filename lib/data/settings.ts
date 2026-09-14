@@ -25,7 +25,9 @@ export interface ContactDetails {
 // hours below still say Maldives time (GMT+5), and UAE is GMT+4. Worth confirming
 // which applies before launch.
 const DEFAULTS: ContactDetails = {
-  email: "info@islandhypemaldives.com",
+  // Where the contact form addresses its mail, and the reply-from shown to a
+  // guest. Overridable in admin via the contact_email setting.
+  email: "sales@islandhype.com",
   phone: "+971 50 350 7644",
   instagram: "islandhypemaldives",
   hours: [

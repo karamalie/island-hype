@@ -372,6 +372,8 @@ export default async function PackageDetailPage({
             <BookingRail
               packageId={pkg.id}
               packageName={pkg.name}
+              locationName={pkg.locationName}
+              stayName={pkg.accommodation.name}
               price={pkg.price}
               nights={pkg.nights}
               lifecycle={pkg.lifecycle}

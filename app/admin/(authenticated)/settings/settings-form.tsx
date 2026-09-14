@@ -36,7 +36,7 @@ export function SettingsForm({ initialEmails }: SettingsFormProps) {
             Notification Emails
           </h2>
           <p className="text-xs text-slate-500">
-            Email addresses that receive inquiry notifications
+            Not currently in use — the site does not send notification emails
           </p>
         </div>
       </div>
@@ -49,9 +49,15 @@ export function SettingsForm({ initialEmails }: SettingsFormProps) {
           placeholder="email1@example.com, email2@example.com"
           className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors resize-y"
         />
-        <p className="text-xs text-slate-400">
-          Separate multiple emails with commas. These addresses will receive
-          notifications when new inquiries or bookings are submitted.
+        {/* Kept, not deleted: the value is worth holding onto if notification
+            emails come back. What it must not do is keep promising something
+            that does not happen. */}
+        <p className="text-xs leading-5 text-slate-400">
+          Nothing is sent to these addresses at the moment. Enquiries reach you
+          directly — the contact form opens the guest&rsquo;s email app and the
+          booking rail opens WhatsApp — and every one is also listed under
+          Inquiries. Saved here in case notification emails are switched on
+          again.
         </p>
         <SubmitButton type="button" onClick={handleSave} loading={loading}>
           Save Settings

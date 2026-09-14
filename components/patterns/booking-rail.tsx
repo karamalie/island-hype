@@ -25,6 +25,9 @@ import type { PackagePrice } from "@/lib/design/pricing";
 export interface BookingRailProps {
   packageId: string;
   packageName: string;
+  /** Named in the prefilled message, so a reply does not have to ask. */
+  locationName: string;
+  stayName: string | null;
   price: PackagePrice | null;
   /** The package's length. Not a choice — the arrival date is the only choice. */
   nights: number;
@@ -132,6 +135,8 @@ export function BookingRail(props: BookingRailProps) {
       `Hi Island Hype — I'd like to check these dates.`,
       ``,
       `Package: ${props.packageName}`,
+      `Island: ${props.locationName}`,
+      ...(props.stayName ? [`Stay: ${props.stayName}`] : []),
     ];
     if (arrival) {
       lines.push(`Arrival: ${humanDate(arrival)}`);

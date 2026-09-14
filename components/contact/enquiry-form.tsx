@@ -15,28 +15,62 @@ import { submitDateEnquiry } from "@/lib/actions/enquiry";
 import { Button, FieldLabel, Input, Select, Textarea } from "@/components/ui";
 
 export interface EnquiryFormProps {
-  packages: { slug: string; id: string; name: string; eyebrow: string }[];
+  packages: {
+    slug: string;
+    id: string;
+    name: string;
+    eyebrow: string;
+    /** Named in the prefilled mail, so a reply does not have to ask. */
+    locationName: string;
+    stay: string | null;
+  }[];
   /** Preselected when arriving from a package page. */
   initialPackageId?: string;
-  /** Shown in the sent state, so the reply is expected from a named address. */
+  /** Where the enquiry is addressed, and the address a reply comes from. */
   replyFrom?: string;
 }
 
 export function EnquiryForm({ packages, initialPackageId, replyFrom }: EnquiryFormProps) {
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "sent">("idle");
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setState("sending");
-    setError(null);
-    const result = await submitDateEnquiry(new FormData(e.currentTarget));
-    if (result.success) {
-      setState("sent");
-    } else {
-      setState("error");
-      setError(result.error ?? "Something went wrong.");
-    }
+    const data = new FormData(e.currentTarget);
+
+    const get = (k: string) => String(data.get(k) ?? "").trim();
+    const packageId = get("packageId");
+    const chosen = packages.find((p) => p.id === packageId);
+
+    const lines = [
+      `Name: ${get("name")}`,
+      `Email: ${get("email")}`,
+      `Package: ${chosen ? chosen.name : "Still deciding"}`,
+      ...(chosen
+        ? [`Island: ${chosen.locationName}`, ...(chosen.stay ? [`Stay: ${chosen.stay}`] : [])]
+        : []),
+      `Arrival: ${get("arrival") || "not set"}`,
+      `Nights: ${get("nights")}`,
+      `Travelling: ${get("adults")} adults`,
+      "",
+      get("message") || "(no message)",
+    ];
+    if (data.get("optin")) lines.push("", "Happy to hear when a new island opens.");
+
+    const subject = chosen ? `Enquiry — ${chosen.name}` : "Maldives package enquiry";
+    const href = `mailto:${replyFrom}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\n"))}`;
+
+    // Opened synchronously inside the click, before anything is awaited. An
+    // await here ends the user-activation window and the browser refuses to
+    // hand off to the mail client.
+    window.location.href = href;
+
+    // Still recorded, and deliberately not awaited: the guest is already in
+    // their mail client, and a slow or failing write must not sit in front of
+    // them with an error they cannot act on.
+    setState("sent");
+    void submitDateEnquiry(data).catch(() => {
+      /* the enquiry is in their outbox either way */
+    });
   }
 
   if (state === "sent") {
@@ -44,9 +78,10 @@ export function EnquiryForm({ packages, initialPackageId, replyFrom }: EnquiryFo
       <div className="rounded-lg border border-ink-200 border-l-[3px] border-l-teal-bright bg-teal-tint p-6">
         <div className="mb-1.5 font-mono text-label-sm uppercase text-teal-deep">Sent</div>
         <p className="m-0 text-body-xs leading-[22px] text-ink-900">
-          Thanks — that&rsquo;s with us. You&rsquo;ll hear back from a person
-          {replyFrom ? <> at <strong className="font-medium">{replyFrom}</strong></> : null},
-          usually within a few hours.
+          Your email app should have opened with all of this filled in
+          {replyFrom ? <> to <strong className="font-medium">{replyFrom}</strong></> : null}.
+          Press send there and you&rsquo;ll hear back from a person, usually
+          within a few hours. If nothing opened, email us directly.
         </p>
       </div>
     );
@@ -133,17 +168,11 @@ export function EnquiryForm({ packages, initialPackageId, replyFrom }: EnquiryFo
         </span>
       </label>
 
-      {state === "error" && error && (
-        <div className="mb-5 border-l-[3px] border-meta-inverse bg-ink-50 p-4">
-          <div className="mb-1.5 font-mono text-label-sm uppercase text-meta">
-            Needs attention
-          </div>
-          <p className="m-0 text-body-xs leading-[22px] text-ink-900">{error}</p>
-        </div>
-      )}
 
-      <Button type="submit" size="lg" className="w-full" isLoading={state === "sending"}>
-        Send the enquiry
+      {/* No loading state: the handler hands off to the mail client
+          synchronously, so there is nothing to wait for. */}
+      <Button type="submit" size="lg" className="w-full">
+        Write the enquiry
       </Button>
       <p className="m-0 mt-4 text-center text-caption leading-5 text-meta">
         No payment now, and nothing is held until you&rsquo;ve seen the total.

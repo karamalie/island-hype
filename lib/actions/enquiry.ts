@@ -12,7 +12,6 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { checkDates } from "@/lib/design/availability";
-import { sendEmail, buildInquiryNotificationEmail } from "@/lib/email/send";
 import type { Market } from "@prisma/client";
 
 export interface EnquiryResult {
@@ -93,28 +92,11 @@ export async function submitDateEnquiry(formData: FormData): Promise<EnquiryResu
       },
     });
 
-    const recipients = await notificationEmails();
-    if (recipients.length > 0) {
-      await sendEmail({
-        to: recipients,
-        subject: pkg
-          ? `Date enquiry — ${pkg.name} — ${name}`
-          : `Date enquiry from ${name}`,
-        html: buildInquiryNotificationEmail({
-          name,
-          email,
-          packageName: pkg?.name ?? null,
-          message: message || "(no message)",
-          checkIn,
-          checkOut,
-          adults,
-          children,
-          infants: 0,
-          market,
-        }),
-        // A failed notification must not lose the enquiry — the row is already in.
-      }).catch(() => {});
-    }
+    // No notification email. The site used to send one through Resend and the
+    // key was never set, so lib/email/send.ts threw at import and took the
+    // enquiry down with it — the row below never got written. Enquiries are read
+    // in admin under Inquiries; the guest has already sent the same details
+    // themselves by WhatsApp or email, which is what actually reaches a person.
 
     return { success: true };
   } catch {
@@ -122,25 +104,3 @@ export async function submitDateEnquiry(formData: FormData): Promise<EnquiryResu
   }
 }
 
-/**
- * Where enquiry notifications go. Editable in admin settings, and falling back to
- * the business address rather than to nothing — an unset row used to mean every
- * enquiry landed in the database and nobody was told about it.
- */
-async function notificationEmails(): Promise<string[]> {
-  try {
-    const rows = await prisma.siteSetting.findMany({
-      where: { key: { in: ["notification_emails", "contact_email"] } },
-    });
-    const explicit = (rows.find((r) => r.key === "notification_emails")?.value ?? "")
-      .split(",")
-      .map((e) => e.trim())
-      .filter(Boolean);
-    if (explicit.length > 0) return explicit;
-
-    const fallback = rows.find((r) => r.key === "contact_email")?.value?.trim();
-    return fallback ? [fallback] : ["info@islandhypemaldives.com"];
-  } catch {
-    return ["info@islandhypemaldives.com"];
-  }
-}
