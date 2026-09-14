@@ -27,7 +27,7 @@ export interface ContactDetails {
 const DEFAULTS: ContactDetails = {
   // Where the contact form addresses its mail, and the reply-from shown to a
   // guest. Overridable in admin via the contact_email setting.
-  email: "sales@islandhype.com",
+  email: "sales@islandhypemaldives.com",
   phone: "+971 50 350 7644",
   instagram: "islandhypemaldives",
   hours: [

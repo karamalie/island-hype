@@ -195,11 +195,19 @@ async function processAndWrite(
     sequentialRead: true,
   });
 
-  // Alpha has to survive, so anything transparent becomes WebP and everything
-  // else becomes JPEG. JPEG for the common case on purpose: the master is also
-  // what someone gets if they open the /storage/ URL directly or save the image
-  // out of the admin panel, and JPEG is the format that opens everywhere.
-  const toWebp = Boolean(meta.hasAlpha);
+  // WebP when the source is already WebP or AVIF, or when it carries alpha.
+  // JPEG otherwise.
+  //
+  // The alpha half is obvious. The first half was learned the hard way: a
+  // 2240x1260 WebP hero went in at 379 KB and came out a 662 KB JPEG, because
+  // JPEG is simply less efficient at the same visual quality and the file was
+  // already under the resize cap — so the pipeline re-encoded it for no reason
+  // and made it three-quarters larger. Re-encoding a modern format into an older
+  // one is a downgrade, not a normalisation.
+  //
+  // JPEG stays the default for everything else because the master is also what
+  // someone gets opening the /storage/ URL directly, and JPEG opens anywhere.
+  const toWebp = Boolean(meta.hasAlpha) || format === "webp" || format === "avif";
   const extension = toWebp ? "webp" : "jpg";
 
   let output: Buffer;

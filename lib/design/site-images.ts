@@ -57,7 +57,10 @@ export const SITE_IMAGES = {
    */
   packagesHead: "guide/overwater-villas-aerial.jpg",
   locationsHead: "guide/hero-aerial.jpg",
-  staysHead: "guide/atoll-formation.jpg",
+  // A resort seen from the water, chosen by the client. 2240px wide, which is
+  // above the 1920 a full-bleed band needs on a standard display and short of
+  // the 3000 cap, so it is served without upscaling at every width that matters.
+  staysHead: "hero/maldives-resort.webp",
 
   /** The guide's own opener, and the largest file in the library at 5800px. */
   guideHero: "guide/seaplane-water.jpg",

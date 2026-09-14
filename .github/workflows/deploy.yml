@@ -75,3 +75,29 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             "cd /var/www/island-hype && pm2 startOrReload ecosystem.config.cjs && pm2 save"
+
+      # The image cache survives a deploy (see the rsync exclusion above), but a
+      # page whose hero changed still costs the FIRST visitor the resize — 1.9
+      # seconds, measured, for a hero on this box. Requesting the four heroes at
+      # the widths a real browser asks for moves that cost here, where nobody is
+      # waiting, instead of onto whoever lands next.
+      #
+      # Best-effort throughout: a warm that fails must never fail a deploy that
+      # has already succeeded.
+      - name: Warm the hero image cache
+        continue-on-error: true
+        run: |
+          BASE="https://www.islandhypemaldives.com"
+          sleep 5
+          for PAGE in / /packages /locations /accommodations; do
+            curl -sS --max-time 20 "$BASE$PAGE" -o /tmp/page.html || continue
+            # The srcsets the page just rendered, so this follows the images in
+            # use rather than a list here that would go stale.
+            grep -o '/_next/image?url=[^" ]*' /tmp/page.html \
+              | sed 's/&amp;/\&/g' | sort -u | head -20 \
+              | while read -r U; do
+                  curl -sS --max-time 30 -o /dev/null \
+                    -H 'Accept: image/webp,*/*' "$BASE$U" || true
+                done
+            echo "warmed $PAGE"
+          done

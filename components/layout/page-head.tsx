@@ -80,6 +80,40 @@ export function PageHead({
       )}
       style={image ? undefined : { background: "var(--ground-photo)" }}
     >
+      {/* Preloaded, because this photograph is the page's largest contentful
+          paint and without a preload the browser does not discover it until it
+          has parsed the CSS. The media queries mirror the <picture> below
+          exactly — without them a phone would preload the desktop crop and then
+          download the mobile one as well, which is the double fetch the
+          <picture> exists to avoid. */}
+      {image && (
+        <>
+          {/* href AND imagesrcset together, deliberately. React hoists a
+              preload into <head> keyed on href — drop the href and the link is
+              not hoisted at all, which I verified by doing it: the hero
+              preloads vanished from the head entirely. The browser still
+              selects from imagesrcset, as the spec requires; href is the
+              fallback. React emits a second, srcset-only entry alongside each
+              of these, which is harmless — both name the same candidates, so
+              the browser makes one request. */}
+          {mobileImage && (
+            <link
+              rel="preload"
+              as="image"
+              media="(max-width: 767px)"
+              href={mobileImage}
+              {...(mobileSet ? { imageSrcSet: mobileSet, imageSizes: "100vw" } : {})}
+            />
+          )}
+          <link
+            rel="preload"
+            as="image"
+            media={mobileImage ? "(min-width: 768px)" : undefined}
+            href={image}
+            {...(desktopSet ? { imageSrcSet: desktopSet, imageSizes: "100vw" } : {})}
+          />
+        </>
+      )}
       {image && (
         /* A <picture> rather than two next/image elements toggled with CSS:
            hiding an <img> does not stop the browser fetching it, so the CSS
